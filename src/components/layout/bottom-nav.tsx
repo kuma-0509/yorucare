@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 import type { AppTab } from "@/lib/types";
 
 const TABS: { id: AppTab; label: string; icon: React.ElementType }[] = [
-  { id: "today", label: "今日の記録", icon: CalendarDays },
-  { id: "records", label: "記録", icon: ClipboardList },
-  { id: "selfcare", label: "セルフケア", icon: Heart },
+  { id: "today", label: "書く", icon: CalendarDays },
+  { id: "records", label: "これまで", icon: ClipboardList },
+  { id: "selfcare", label: "できること", icon: Heart },
   { id: "reflection", label: "ふりかえり", icon: Sparkles },
 ];
 
@@ -18,7 +18,7 @@ interface BottomNavProps {
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-white/95 backdrop-blur-sm pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-sm pb-safe">
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-1 pt-2">
         {TABS.map(({ id, label, icon: Icon }) => {
           const active = activeTab === id;
@@ -34,6 +34,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
                   : "text-muted-foreground"
               )}
               aria-current={active ? "page" : undefined}
+              aria-label={label}
             >
               <Icon className={cn("h-5 w-5", active && "stroke-[2.5]")} />
               <span className="leading-tight">{label}</span>

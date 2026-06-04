@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { CollapsibleSection } from "@/components/shared/collapsible-section";
 import { ChipButton, OptionButton } from "@/components/shared/option-button";
 import {
   MEDICATION_OPTIONS,
@@ -201,7 +202,7 @@ export function TodayRecordTab({
             {savedRecord.note && (
               <div className="text-base pt-1 border-t">
                 <span className="text-muted-foreground">
-                  特記事項：
+                  自由メモ：
                 </span>
                 <p className="mt-1 whitespace-pre-wrap">{savedRecord.note}</p>
               </div>
@@ -218,14 +219,14 @@ export function TodayRecordTab({
               loadForm(targetDate);
             }}
           >
-            今日の記録を編集する
+            {targetDate === today ? "今日の記録を編集する" : "昨日の記録を編集する"}
           </Button>
           <Button
             variant="outline"
             size="lg"
             onClick={() => onNavigateTab("records")}
           >
-            記録一覧を見る
+            これまでの記録を見る
           </Button>
           <Button
             variant="ghost"
@@ -242,11 +243,11 @@ export function TodayRecordTab({
   return (
     <div className="space-y-4 pb-4">
       <header>
-        <h1 className="text-xl font-bold">今日のセルフケア記録</h1>
+        <h1 className="text-xl font-bold">今日の記録</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           今日のことを少しだけ残しておきましょう。
           <br />
-          気分だけでも大丈夫です。
+          気分だけ選んで保存しても大丈夫です。
         </p>
       </header>
 
@@ -267,72 +268,75 @@ export function TodayRecordTab({
         {formatDisplayDate(targetDate)}
       </p>
 
-      {/* 気分 */}
+      {/* 気分（最短ルート） */}
       <Card>
         <CardHeader>
           <CardTitle>今日の気分</CardTitle>
+          <CardDescription>まずは総合気分だけ選んでも保存できます。</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label className="mb-2 block text-sm text-muted-foreground">
-              総合気分
-            </Label>
-            <div className="space-y-2">
-              {MOOD_OPTIONS.map(({ score, label }) => (
-                <OptionButton
-                  key={score}
-                  selected={form.moodScore === score}
-                  onClick={() =>
-                    setForm((prev) => ({
-                      ...prev,
-                      moodScore: prev.moodScore === score ? null : score,
-                    }))
-                  }
-                >
-                  {label}
-                </OptionButton>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label className="mb-2 block text-sm text-muted-foreground">
-              感情タグ（最大3つ）
-            </Label>
-            {moodLimitMessage && (
-              <p className="mb-2 rounded-lg bg-orange-50 px-3 py-2 text-sm text-orange-800">
-                {moodLimitMessage}
-              </p>
-            )}
-            <MoodLabelGroup
-              title="ポジティブ"
-              labels={MOOD_LABEL_POSITIVE}
-              selected={form.moodLabels}
-              onToggle={toggleMoodLabel}
-            />
-            <MoodLabelGroup
-              title="中間・ゆらぎ"
-              labels={MOOD_LABEL_NEUTRAL}
-              selected={form.moodLabels}
-              onToggle={toggleMoodLabel}
-            />
-            <MoodLabelGroup
-              title="ネガティブ"
-              labels={MOOD_LABEL_NEGATIVE}
-              selected={form.moodLabels}
-              onToggle={toggleMoodLabel}
-            />
+        <CardContent>
+          <Label className="mb-2 block text-sm text-muted-foreground">
+            総合気分
+          </Label>
+          <div className="space-y-2">
+            {MOOD_OPTIONS.map(({ score, label }) => (
+              <OptionButton
+                key={score}
+                selected={form.moodScore === score}
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    moodScore: prev.moodScore === score ? null : score,
+                  }))
+                }
+              >
+                {label}
+              </OptionButton>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* 睡眠 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>睡眠</CardTitle>
-          <CardDescription>だいたいの時間で大丈夫です。</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <CollapsibleSection
+        title="くわしく書く（任意）"
+        description="気持ちのタグ、睡眠、お薬の記録"
+      >
+        <div>
+          <Label className="mb-2 block text-sm text-muted-foreground">
+            気持ち（最大3つ）
+          </Label>
+          {moodLimitMessage && (
+            <p className="mb-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive-foreground">
+              {moodLimitMessage}
+            </p>
+          )}
+          <MoodLabelGroup
+            title="よかった気持ち"
+            labels={MOOD_LABEL_POSITIVE}
+            selected={form.moodLabels}
+            onToggle={toggleMoodLabel}
+          />
+          <MoodLabelGroup
+            title="どちらでもない・ゆらぎ"
+            labels={MOOD_LABEL_NEUTRAL}
+            selected={form.moodLabels}
+            onToggle={toggleMoodLabel}
+          />
+          <MoodLabelGroup
+            title="しんどい気持ち"
+            labels={MOOD_LABEL_NEGATIVE}
+            selected={form.moodLabels}
+            onToggle={toggleMoodLabel}
+          />
+        </div>
+
+        <div className="space-y-4 border-t border-border pt-4">
+          <div>
+            <p className="text-base font-semibold">睡眠</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              だいたいの時間で大丈夫です。
+            </p>
+          </div>
           <div>
             <Label htmlFor="sleep-start">寝た時間</Label>
             <Input
@@ -368,18 +372,18 @@ export function TodayRecordTab({
             <span className="font-medium">
               {form.sleepStart && form.sleepEnd
                 ? formatSleepDuration(sleepMinutes)
-                : "未計算"}
+                : "—"}
             </span>
           </p>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* 服薬 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>服薬</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+        <div className="space-y-2 border-t border-border pt-4">
+          <div>
+            <p className="text-base font-semibold">お薬</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              処方など、お薬の記録です。該当がなければ「該当なし」で大丈夫です。
+            </p>
+          </div>
           {MEDICATION_OPTIONS.map(({ value, label }) => (
             <OptionButton
               key={value}
@@ -394,83 +398,79 @@ export function TodayRecordTab({
               {label}
             </OptionButton>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleSection>
 
-      {/* 注意サイン */}
-      <Card>
-        <CardHeader>
-          <CardTitle>注意サイン</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            {WARNING_LEVEL_OPTIONS.map(({ value, label }) => (
-              <OptionButton
-                key={value}
-                selected={form.warningLevel === value}
-                onClick={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    warningLevel: prev.warningLevel === value ? null : value,
-                    warningTags:
-                      value === "none" ? [] : prev.warningTags,
-                    warningNote:
-                      value === "none" ? "" : prev.warningNote,
-                  }))
-                }
-              >
-                {label}
-              </OptionButton>
-            ))}
+      <CollapsibleSection
+        title="しんどさのサイン（任意）"
+        description="いつもと違うしんどさがあれば。なくても大丈夫です。"
+        variant="caution"
+      >
+        <div className="space-y-2">
+          {WARNING_LEVEL_OPTIONS.map(({ value, label }) => (
+            <OptionButton
+              key={value}
+              selected={form.warningLevel === value}
+              onClick={() =>
+                setForm((prev) => ({
+                  ...prev,
+                  warningLevel: prev.warningLevel === value ? null : value,
+                  warningTags: value === "none" ? [] : prev.warningTags,
+                  warningNote: value === "none" ? "" : prev.warningNote,
+                }))
+              }
+            >
+              {label}
+            </OptionButton>
+          ))}
+        </div>
+
+        {showWarningTags && (
+          <div className="space-y-4 border-t border-border pt-4">
+            <WarningTagGroup
+              title="睡眠・生活リズム"
+              tags={WARNING_TAGS_SLEEP}
+              selected={form.warningTags}
+              onToggle={toggleWarningTag}
+            />
+            <WarningTagGroup
+              title="気分・感情"
+              tags={WARNING_TAGS_MOOD}
+              selected={form.warningTags}
+              onToggle={toggleWarningTag}
+            />
+            <WarningTagGroup
+              title="仕事・外出"
+              tags={WARNING_TAGS_WORK}
+              selected={form.warningTags}
+              onToggle={toggleWarningTag}
+            />
+            <WarningTagGroup
+              title="その他"
+              tags={WARNING_TAGS_OTHER}
+              selected={form.warningTags}
+              onToggle={toggleWarningTag}
+            />
+            {form.warningTags.includes("その他") && (
+              <div>
+                <Label htmlFor="warning-note">その他の内容</Label>
+                <Textarea
+                  id="warning-note"
+                  className="mt-2"
+                  value={form.warningNote}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      warningNote: e.target.value,
+                    }))
+                  }
+                  placeholder="気になることを自由に書いてください"
+                />
+              </div>
+            )}
           </div>
-
-          {showWarningTags && (
-            <div className="space-y-4 border-t pt-4">
-              <WarningTagGroup
-                title="睡眠・生活リズム"
-                tags={WARNING_TAGS_SLEEP}
-                selected={form.warningTags}
-                onToggle={toggleWarningTag}
-              />
-              <WarningTagGroup
-                title="気分・感情"
-                tags={WARNING_TAGS_MOOD}
-                selected={form.warningTags}
-                onToggle={toggleWarningTag}
-              />
-              <WarningTagGroup
-                title="仕事・外出"
-                tags={WARNING_TAGS_WORK}
-                selected={form.warningTags}
-                onToggle={toggleWarningTag}
-              />
-              <WarningTagGroup
-                title="その他"
-                tags={WARNING_TAGS_OTHER}
-                selected={form.warningTags}
-                onToggle={toggleWarningTag}
-              />
-              {form.warningTags.includes("その他") && (
-                <div>
-                  <Label htmlFor="warning-note">その他の内容</Label>
-                  <Textarea
-                    id="warning-note"
-                    className="mt-2"
-                    value={form.warningNote}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        warningNote: e.target.value,
-                      }))
-                    }
-                    placeholder="気になることを自由に書いてください"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </CollapsibleSection>
 
       {/* セルフケア */}
       <Card>
@@ -533,7 +533,7 @@ export function TodayRecordTab({
             className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm text-primary"
             onClick={() => setShowMemo(!showMemo)}
           >
-            <span>＋ メモを書く</span>
+            <span>＋ セルフケアのメモを書く</span>
             {showMemo ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
@@ -561,10 +561,10 @@ export function TodayRecordTab({
         </CardContent>
       </Card>
 
-      {/* 特記事項 */}
+      {/* 自由メモ */}
       <Card>
         <CardHeader>
-          <CardTitle>特記事項</CardTitle>
+          <CardTitle>自由メモ（任意）</CardTitle>
           <CardDescription>
             今日のことで、少し残しておきたいことがあれば書いてください。
             空欄でも大丈夫です。

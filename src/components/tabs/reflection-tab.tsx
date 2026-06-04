@@ -7,32 +7,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { REFLECTION_FUTURE_FEATURES } from "@/lib/constants";
-import { Sparkles } from "lucide-react";
+import { REFLECTION_USER_FEATURES } from "@/lib/constants";
 
 export function ReflectionTab() {
   return (
     <div className="space-y-4 pb-4">
       <header>
         <h1 className="text-xl font-bold">ふりかえり</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          1週間の記録から、今週のまとめが出る機能を準備しています。
+        </p>
       </header>
 
-      <Card className="border-accent bg-accent/30">
-        <CardHeader className="items-center text-center">
-          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-white">
-            <Sparkles className="h-7 w-7 text-accent-foreground" />
-          </div>
+      <Card>
+        <CardHeader>
           <CardTitle>準備中</CardTitle>
           <CardDescription className="text-base leading-relaxed">
-            ここに、1週間の記録から「今週のふりかえり」が出る予定です。
+            記録がたまったら、ここで「今週のふりかえり」を見られるようにします。
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="mb-3 text-sm font-medium text-muted-foreground">
-            今後追加予定
+            予定していること
           </p>
           <ul className="space-y-2">
-            {REFLECTION_FUTURE_FEATURES.map((feature) => (
+            {REFLECTION_USER_FEATURES.map((feature) => (
               <li
                 key={feature}
                 className="flex items-start gap-2 text-sm leading-relaxed"

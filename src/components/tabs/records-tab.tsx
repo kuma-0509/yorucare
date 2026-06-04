@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DataBackupPanel } from "@/components/shared/data-backup-panel";
 import { formatDisplayDate, getLast7Days, getTodayString, getYesterdayString } from "@/lib/dates";
 import {
   formatSelfCareSummary,
@@ -22,12 +23,12 @@ import {
   getMoodLabel,
   getWarningLabel,
   buildRecordSummaryLines,
+  isMeaningfulSummaryValue,
 } from "@/lib/format";
 import {
   getAllRecords,
   getAllSelfCareItems,
   initSelfCareIfEmpty,
-  isRecordedDay,
 } from "@/lib/storage";
 import type { AppTab } from "@/lib/types";
 import type { DailyRecord, SelfCareItem } from "@/lib/types";
@@ -35,12 +36,15 @@ import type { DailyRecord, SelfCareItem } from "@/lib/types";
 interface RecordsTabProps {
   onNavigateTab: (tab: AppTab, options?: { recordDate?: string }) => void;
   refreshKey?: number;
+  onDataImported?: () => void;
 }
 
 export function RecordsTab({
   onNavigateTab,
   refreshKey = 0,
+  onDataImported,
 }: RecordsTabProps) {
+  const [loaded, setLoaded] = useState(false);
   const [records, setRecords] = useState<DailyRecord[]>([]);
   const [selfCareItems, setSelfCareItems] = useState<SelfCareItem[]>([]);
   const [detailRecord, setDetailRecord] = useState<DailyRecord | null>(null);
@@ -49,10 +53,15 @@ export function RecordsTab({
   const today = getTodayString();
   const yesterday = getYesterdayString();
 
-  useEffect(() => {
+  const reload = () => {
     initSelfCareIfEmpty();
     setRecords(getAllRecords());
     setSelfCareItems(getAllSelfCareItems());
+    setLoaded(true);
+  };
+
+  useEffect(() => {
+    reload();
   }, [refreshKey]);
 
   const getRecord = (date: string) =>
@@ -61,19 +70,30 @@ export function RecordsTab({
   const canEditDate = (date: string) =>
     date === today || date === yesterday;
 
+  if (!loaded) {
+    return (
+      <div className="space-y-4 pb-4">
+        <header>
+          <h1 className="text-xl font-bold">これまで</h1>
+          <p className="mt-2 text-sm text-muted-foreground">読み込み中…</p>
+        </header>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 pb-4">
       <header>
-        <h1 className="text-xl font-bold">記録</h1>
+        <h1 className="text-xl font-bold">これまで</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          直近7日の記録です。
+          直近7日の記録です。今日と昨日だけ直せます。
         </p>
       </header>
 
       <div className="space-y-3">
         {[...days].reverse().map((date) => {
           const record = getRecord(date);
-          const hasRecord = isRecordedDay(date);
+          const hasRecord = record !== null;
 
           if (!hasRecord) {
             return (
@@ -108,6 +128,23 @@ export function RecordsTab({
             );
           }
 
+          const previewLines = [
+            { label: "気分", value: getMoodLabel(record.moodScore) },
+            ...(record.moodLabels.length > 0
+              ? [{ label: "気持ち", value: record.moodLabels.join("、") }]
+              : []),
+            { label: "睡眠", value: formatSleepSummary(record) },
+            { label: "お薬", value: getMedicationLabel(record.medication) },
+            {
+              label: "しんどさのサイン",
+              value: getWarningLabel(record.warningLevel),
+            },
+            {
+              label: "今日できたこと",
+              value: formatSelfCareSummary(record, selfCareItems),
+            },
+          ].filter((line) => isMeaningfulSummaryValue(line.value));
+
           return (
             <Card key={date}>
               <CardHeader className="pb-2">
@@ -116,32 +153,13 @@ export function RecordsTab({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <RecordPreviewLine
-                  label="気分"
-                  value={getMoodLabel(record!.moodScore)}
-                />
-                {record!.moodLabels.length > 0 && (
+                {previewLines.map((line) => (
                   <RecordPreviewLine
-                    label="気持ち"
-                    value={record!.moodLabels.join("、")}
+                    key={line.label}
+                    label={line.label}
+                    value={line.value}
                   />
-                )}
-                <RecordPreviewLine
-                  label="睡眠"
-                  value={formatSleepSummary(record!)}
-                />
-                <RecordPreviewLine
-                  label="服薬"
-                  value={getMedicationLabel(record!.medication)}
-                />
-                <RecordPreviewLine
-                  label="注意サイン"
-                  value={getWarningLabel(record!.warningLevel)}
-                />
-                <RecordPreviewLine
-                  label="セルフケア"
-                  value={formatSelfCareSummary(record!, selfCareItems)}
-                />
+                ))}
                 <div className="flex flex-col gap-2 pt-3">
                   <Button
                     variant="outline"
@@ -165,6 +183,13 @@ export function RecordsTab({
           );
         })}
       </div>
+
+      <DataBackupPanel
+        onImported={() => {
+          reload();
+          onDataImported?.();
+        }}
+      />
 
       <Dialog
         open={!!detailRecord}
@@ -191,7 +216,7 @@ export function RecordsTab({
               {detailRecord.warningTags.length > 0 && (
                 <div>
                   <span className="text-muted-foreground">
-                    注意サイン詳細：
+                    気になったこと（詳細）：
                   </span>
                   {detailRecord.warningTags.join("、")}
                 </div>
@@ -207,7 +232,7 @@ export function RecordsTab({
               {detailRecord.selfCareMemo && (
                 <div>
                   <span className="text-muted-foreground">
-                    セルフケアメモ：
+                    セルフケアのメモ：
                   </span>
                   <p className="whitespace-pre-wrap">
                     {detailRecord.selfCareMemo}
@@ -217,7 +242,7 @@ export function RecordsTab({
               {detailRecord.note && (
                 <div>
                   <span className="text-muted-foreground">
-                    特記事項：
+                    自由メモ：
                   </span>
                   <p className="whitespace-pre-wrap">{detailRecord.note}</p>
                 </div>

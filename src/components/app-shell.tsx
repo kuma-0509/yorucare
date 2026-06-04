@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { AppHeader } from "@/components/layout/app-header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { TodayRecordTab } from "@/components/tabs/today-record-tab";
 import { RecordsTab } from "@/components/tabs/records-tab";
@@ -34,6 +35,7 @@ export function AppShell() {
   return (
     <div className="min-h-dvh bg-background">
       <main className="mx-auto max-w-lg px-4 pt-6 pb-28">
+        <AppHeader />
         {activeTab === "today" && (
           <TodayRecordTab
             initialDate={recordDate}
@@ -45,6 +47,7 @@ export function AppShell() {
           <RecordsTab
             onNavigateTab={handleNavigateTab}
             refreshKey={refreshKey}
+            onDataImported={bumpRefresh}
           />
         )}
         {activeTab === "selfcare" && (

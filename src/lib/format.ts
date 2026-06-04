@@ -6,29 +6,35 @@ import {
 import { formatSleepDuration } from "./sleep";
 import type { DailyRecord, SelfCareItem } from "./types";
 
+const EMPTY_VALUES = new Set(["未入力", "未計算", "—"]);
+
+export function isMeaningfulSummaryValue(value: string): boolean {
+  return value.trim().length > 0 && !EMPTY_VALUES.has(value);
+}
+
 export function getMoodLabel(score: DailyRecord["moodScore"]): string {
-  if (score === null) return "未入力";
-  return MOOD_OPTIONS.find((o) => o.score === score)?.label ?? "未入力";
+  if (score === null) return "—";
+  return MOOD_OPTIONS.find((o) => o.score === score)?.label ?? "—";
 }
 
 export function getMedicationLabel(
   value: DailyRecord["medication"]
 ): string {
-  if (value === null) return "未入力";
-  return MEDICATION_OPTIONS.find((o) => o.value === value)?.label ?? "未入力";
+  if (value === null) return "—";
+  return MEDICATION_OPTIONS.find((o) => o.value === value)?.label ?? "—";
 }
 
 export function getWarningLabel(
   value: DailyRecord["warningLevel"]
 ): string {
-  if (value === null) return "未入力";
-  return WARNING_LEVEL_OPTIONS.find((o) => o.value === value)?.label ?? "未入力";
+  if (value === null) return "—";
+  return WARNING_LEVEL_OPTIONS.find((o) => o.value === value)?.label ?? "—";
 }
 
 export function formatSleepSummary(record: DailyRecord): string {
-  if (!record.sleepStart && !record.sleepEnd) return "未入力";
+  if (!record.sleepStart && !record.sleepEnd) return "—";
   if (!record.sleepStart || !record.sleepEnd) {
-    return "未計算";
+    return "—";
   }
   const duration = formatSleepDuration(record.sleepMinutes);
   return `${record.sleepStart}〜${record.sleepEnd}（${duration}）`;
@@ -41,7 +47,7 @@ export function formatSelfCareSummary(
   const titles = record.selfCareIds
     .map((id) => items.find((i) => i.id === id)?.title)
     .filter(Boolean) as string[];
-  if (titles.length === 0) return "未入力";
+  if (titles.length === 0) return "—";
   return titles.join("、");
 }
 
@@ -49,39 +55,27 @@ export function buildRecordSummaryLines(
   record: DailyRecord,
   selfCareItems: SelfCareItem[]
 ): { label: string; value: string }[] {
-  const lines: { label: string; value: string }[] = [];
-
-  lines.push({
-    label: "気分",
-    value: getMoodLabel(record.moodScore),
-  });
+  const candidates: { label: string; value: string }[] = [
+    { label: "気分", value: getMoodLabel(record.moodScore) },
+  ];
 
   if (record.moodLabels.length > 0) {
-    lines.push({
+    candidates.push({
       label: "気持ち",
       value: record.moodLabels.join("、"),
     });
   }
 
-  lines.push({
-    label: "睡眠",
-    value: formatSleepSummary(record),
-  });
-
-  lines.push({
-    label: "服薬",
-    value: getMedicationLabel(record.medication),
-  });
-
-  lines.push({
-    label: "注意サイン",
-    value: getWarningLabel(record.warningLevel),
-  });
+  candidates.push(
+    { label: "睡眠", value: formatSleepSummary(record) },
+    { label: "お薬", value: getMedicationLabel(record.medication) },
+    { label: "しんどさのサイン", value: getWarningLabel(record.warningLevel) }
+  );
 
   const selfCare = formatSelfCareSummary(record, selfCareItems);
-  if (selfCare !== "未入力") {
-    lines.push({ label: "セルフケア", value: selfCare });
+  if (isMeaningfulSummaryValue(selfCare)) {
+    candidates.push({ label: "今日できたこと", value: selfCare });
   }
 
-  return lines;
+  return candidates.filter((line) => isMeaningfulSummaryValue(line.value));
 }

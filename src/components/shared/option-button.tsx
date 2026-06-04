@@ -22,8 +22,8 @@ export function OptionButton({
       className={cn(
         "min-h-12 w-full rounded-xl border-2 px-4 py-3 text-left text-base transition-colors",
         selected
-          ? "border-primary bg-blue-50 text-foreground"
-          : "border-border bg-white hover:bg-muted",
+          ? "border-primary bg-primary/10 text-foreground"
+          : "border-border bg-card hover:bg-muted",
         className
       )}
     >
@@ -46,8 +46,8 @@ export function ChipButton({ selected, onClick, children }: ChipButtonProps) {
       className={cn(
         "rounded-full border-2 px-4 py-2 text-sm transition-colors min-h-10",
         selected
-          ? "border-primary bg-blue-50"
-          : "border-border bg-white hover:bg-muted"
+          ? "border-primary bg-primary/10"
+          : "border-border bg-card hover:bg-muted"
       )}
     >
       {children}
