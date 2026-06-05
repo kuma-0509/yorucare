@@ -206,7 +206,7 @@ export function TodayRecordTab({
             {savedRecord.note && (
               <div className="text-base pt-1 border-t">
                 <span className="text-muted-foreground">
-                  自由メモ：
+                  特記事項：
                 </span>
                 <p className="mt-1 whitespace-pre-wrap">{savedRecord.note}</p>
               </div>
@@ -252,7 +252,7 @@ export function TodayRecordTab({
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           今日のことを少しだけ残しておきましょう。
           <br />
-          気分だけ選んで保存しても大丈夫です。
+          無理なく記録できればOKです。気分だけ選んで保存しても構いません。
         </p>
       </header>
 
@@ -277,7 +277,9 @@ export function TodayRecordTab({
       <Card>
         <CardHeader>
           <CardTitle>今日の気分</CardTitle>
-          <CardDescription>まずは総合気分だけ選んでも保存できます。</CardDescription>
+          <CardDescription>
+            今の状態に近いものを選んでください。総合気分だけでも保存できます。
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Label className="mb-2 block text-sm text-muted-foreground">
@@ -341,7 +343,7 @@ export function TodayRecordTab({
           <div>
             <p className="text-base font-semibold">睡眠</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              だいたいの時間で大丈夫です。
+              おおよその時間で構いません。書ける範囲で入力してください。
             </p>
           </div>
           <div>
@@ -388,7 +390,7 @@ export function TodayRecordTab({
           <div>
             <p className="text-base font-semibold">お薬</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              処方など、お薬の記録です。該当がなければ「該当なし」で大丈夫です。
+              処方など、お薬の記録です。該当がなければ「該当なし」を選んでください。
             </p>
           </div>
           {MEDICATION_OPTIONS.map(({ value, label }) => (
@@ -410,7 +412,7 @@ export function TodayRecordTab({
 
       <CollapsibleSection
         title="しんどさのサイン（任意）"
-        description="いつもと違うしんどさがあれば。なくても大丈夫です。"
+        description="いつもと違うしんどさがあれば選んでください。気になることがなければ、選ばなくても構いません。"
         variant="caution"
       >
         <div className="space-y-2">
@@ -568,24 +570,22 @@ export function TodayRecordTab({
         </CardContent>
       </Card>
 
-      {/* 自由メモ */}
+      {/* 特記事項 */}
       <Card>
         <CardHeader>
-          <CardTitle>自由メモ（任意）</CardTitle>
+          <CardTitle>特記事項（任意）</CardTitle>
           <CardDescription>
-            今日のことで、少し残しておきたいことがあれば書いてください。
-            空欄でも大丈夫です。
+            あとから見返せるように、気づいたことがあれば残しておきましょう。
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Textarea
+            id="record-note"
             value={form.note}
             onChange={(e) =>
               setForm((prev) => ({ ...prev, note: e.target.value }))
             }
-            placeholder={
-              "例：仕事後に疲れて、帰宅後は動けなかった。\n例：朝はしんどかったけど、夜は少し落ち着いた。\n例：散歩したら少し気分が切り替わった。"
-            }
+            placeholder="気になったこと、体調の変化、明日気をつけたいことなどがあれば入力してください"
           />
         </CardContent>
       </Card>

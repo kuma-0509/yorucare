@@ -56,7 +56,9 @@ export function AppShell() {
         {activeTab === "selfcare" && (
           <SelfCareTab onDataChange={bumpRefresh} />
         )}
-        {activeTab === "reflection" && <ReflectionTab />}
+        {activeTab === "reflection" && (
+          <ReflectionTab refreshKey={refreshKey} />
+        )}
         <BuildFooter />
       </main>
       <BottomNav

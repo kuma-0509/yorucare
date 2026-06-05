@@ -260,7 +260,7 @@ export function RecordsTab({
               {detailRecord.note && (
                 <div>
                   <span className="text-muted-foreground">
-                    自由メモ：
+                    特記事項：
                   </span>
                   <p className="whitespace-pre-wrap">{detailRecord.note}</p>
                 </div>

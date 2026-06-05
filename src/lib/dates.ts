@@ -44,3 +44,35 @@ export function formatShortDate(dateStr: string): string {
   const [, m, d] = dateStr.split("-");
   return `${Number(m)}/${Number(d)}`;
 }
+
+export type ChartPeriod = "week" | "month" | "6months" | "year";
+
+const PERIOD_DAYS: Record<ChartPeriod, number> = {
+  week: 7,
+  month: 30,
+  "6months": 180,
+  year: 365,
+};
+
+/** 期間内の日付一覧（古い順・今日を含む） */
+export function getDateRangeForPeriod(period: ChartPeriod): string[] {
+  const days = PERIOD_DAYS[period];
+  const result: string[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    result.push(toDateString(d));
+  }
+  return result;
+}
+
+export function formatChartAxisDate(
+  dateStr: string,
+  period: ChartPeriod
+): string {
+  const [, m, d] = dateStr.split("-");
+  if (period === "year" || period === "6months") {
+    return `${Number(m)}/${Number(d)}`;
+  }
+  return `${Number(d)}日`;
+}

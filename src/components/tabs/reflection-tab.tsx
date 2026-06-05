@@ -1,5 +1,6 @@
 "use client";
 
+import { ReflectionTrends } from "@/components/reflection/reflection-trends";
 import {
   Card,
   CardContent,
@@ -9,34 +10,37 @@ import {
 } from "@/components/ui/card";
 import { REFLECTION_USER_FEATURES } from "@/lib/constants";
 
-export function ReflectionTab() {
+interface ReflectionTabProps {
+  refreshKey?: number;
+}
+
+export function ReflectionTab({ refreshKey = 0 }: ReflectionTabProps) {
   return (
     <div className="space-y-4 pb-4">
       <header>
         <h1 className="text-xl font-bold">ふりかえり</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          1週間の記録から、今週のまとめが出る機能を準備しています。
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          記録を重ねた分だけ、自分の体調の波が見えてきます。
         </p>
       </header>
 
-      <Card>
+      <ReflectionTrends refreshKey={refreshKey} />
+
+      <Card className="border-dashed">
         <CardHeader>
-          <CardTitle>準備中</CardTitle>
-          <CardDescription className="text-base leading-relaxed">
-            記録がたまったら、ここで「今週のふりかえり」を見られるようにします。
+          <CardTitle className="text-base">これから追加予定</CardTitle>
+          <CardDescription className="text-sm leading-relaxed">
+            週のまとめや、相談前の整理など、さらにふりかえりしやすくしていきます。
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="mb-3 text-sm font-medium text-muted-foreground">
-            予定していること
-          </p>
           <ul className="space-y-2">
             {REFLECTION_USER_FEATURES.map((feature) => (
               <li
                 key={feature}
-                className="flex items-start gap-2 text-sm leading-relaxed"
+                className="flex items-start gap-2 text-sm leading-relaxed text-muted-foreground"
               >
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
                 {feature}
               </li>
             ))}

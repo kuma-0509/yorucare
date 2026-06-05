@@ -1,11 +1,11 @@
 import type { MedicationStatus, MoodScore, WarningLevel } from "./types";
 
 export const MOOD_OPTIONS: { score: MoodScore; label: string }[] = [
-  { score: 1, label: "かなりしんどい" },
-  { score: 2, label: "少ししんどい" },
-  { score: 3, label: "ふつう" },
-  { score: 4, label: "まあまあ良い" },
   { score: 5, label: "かなり良い" },
+  { score: 4, label: "まあまあ良い" },
+  { score: 3, label: "ふつう" },
+  { score: 2, label: "少ししんどい" },
+  { score: 1, label: "かなりしんどい" },
 ];
 
 export const MOOD_LABEL_POSITIVE = [
