@@ -15,7 +15,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DataBackupPanel } from "@/components/shared/data-backup-panel";
-import { formatDisplayDate, getLast7Days, getTodayString, getYesterdayString } from "@/lib/dates";
+import {
+  formatDisplayDate,
+  getLast7Days,
+  isWithinLast7Days,
+} from "@/lib/dates";
 import {
   formatSelfCareSummary,
   formatSleepSummary,
@@ -51,8 +55,6 @@ export function RecordsTab({
   const [detailRecord, setDetailRecord] = useState<DailyRecord | null>(null);
 
   const days = getLast7Days();
-  const today = getTodayString();
-  const yesterday = getYesterdayString();
 
   const reload = () => {
     initSelfCareIfEmpty();
@@ -68,8 +70,7 @@ export function RecordsTab({
   const getRecord = (date: string) =>
     records.find((r) => r.date === date) ?? null;
 
-  const canEditDate = (date: string) =>
-    date === today || date === yesterday;
+  const canEditDate = (date: string) => isWithinLast7Days(date);
 
   if (!loaded) {
     return (
@@ -87,7 +88,7 @@ export function RecordsTab({
       <header>
         <h1 className="text-xl font-bold">これまで</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          直近7日の記録です。今日と昨日だけ直せます。
+          直近7日の記録です。1週間以内ならあとから直せます。
         </p>
       </header>
 

@@ -27,9 +27,11 @@ import {
   WARNING_TAGS_WORK,
 } from "@/lib/constants";
 import {
+  formatDatePickerLabel,
   formatDisplayDate,
+  getLast7Days,
   getTodayString,
-  getYesterdayString,
+  isWithinLast7Days,
 } from "@/lib/dates";
 import { buildRecordSummaryLines } from "@/lib/format";
 import { calculateSleepMinutes, formatSleepDuration } from "@/lib/sleep";
@@ -65,11 +67,10 @@ export function TodayRecordTab({
   refreshKey = 0,
 }: TodayRecordTabProps) {
   const today = getTodayString();
-  const yesterday = getYesterdayString();
-  const allowedDates = [today, yesterday];
+  const weekDates = [...getLast7Days()].reverse();
 
   const [targetDate, setTargetDate] = useState(
-    initialDate && allowedDates.includes(initialDate) ? initialDate : today
+    initialDate && isWithinLast7Days(initialDate) ? initialDate : today
   );
   const [form, setForm] = useState<FormState>(() =>
     recordToFormState(null, today)
@@ -95,7 +96,7 @@ export function TodayRecordTab({
   }, [refreshKey]);
 
   useEffect(() => {
-    if (initialDate && allowedDates.includes(initialDate)) {
+    if (initialDate && isWithinLast7Days(initialDate)) {
       setTargetDate(initialDate);
     }
   }, [initialDate]);
@@ -223,7 +224,9 @@ export function TodayRecordTab({
               loadForm(targetDate);
             }}
           >
-            {targetDate === today ? "今日の記録を編集する" : "昨日の記録を編集する"}
+            {targetDate === today
+              ? "今日の記録を編集する"
+              : `${formatDisplayDate(targetDate)}の記録を編集する`}
           </Button>
           <Button
             variant="outline"
@@ -250,22 +253,32 @@ export function TodayRecordTab({
       <header>
         <h1 className="text-xl font-bold">今日の記録</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          今日のことを少しだけ残しておきましょう。
-          <br />
-          無理なく記録できればOKです。気分だけ選んで保存しても構いません。
+          {targetDate === today ? (
+            <>
+              今日のことを少しだけ残しておきましょう。
+              <br />
+              無理なく記録できればOKです。気分だけ選んで保存しても構いません。
+            </>
+          ) : (
+            <>
+              直近1週間の記録を、あとから残したり直したりできます。
+              <br />
+              気分だけ選んで保存しても構いません。
+            </>
+          )}
         </p>
       </header>
 
-      <div className="flex gap-2">
-        {[today, yesterday].map((d) => (
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        {weekDates.map((d) => (
           <Button
             key={d}
             type="button"
             variant={targetDate === d ? "default" : "outline"}
-            className="flex-1"
+            className="h-auto min-w-[4.25rem] shrink-0 py-2"
             onClick={() => setTargetDate(d)}
           >
-            {d === today ? "今日" : "昨日"}
+            {formatDatePickerLabel(d)}
           </Button>
         ))}
       </div>
@@ -276,7 +289,9 @@ export function TodayRecordTab({
       {/* 気分（最短ルート） */}
       <Card>
         <CardHeader>
-          <CardTitle>今日の気分</CardTitle>
+          <CardTitle>
+            {targetDate === today ? "今日の気分" : "気分"}
+          </CardTitle>
           <CardDescription>
             今の状態に近いものを選んでください。総合気分だけでも保存できます。
           </CardDescription>
@@ -484,7 +499,9 @@ export function TodayRecordTab({
       {/* セルフケア */}
       <Card>
         <CardHeader>
-          <CardTitle>今日できたセルフケア</CardTitle>
+          <CardTitle>
+            {targetDate === today ? "今日できたセルフケア" : "できたセルフケア"}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {selfCareItems.length === 0 ? (
@@ -533,7 +550,9 @@ export function TodayRecordTab({
               onClick={() => setShowAddSelfCare(true)}
             >
               <Plus className="h-4 w-4" />
-              今日できたセルフケアを追加
+              {targetDate === today
+                ? "今日できたセルフケアを追加"
+                : "セルフケアを追加"}
             </Button>
           )}
 
@@ -552,7 +571,9 @@ export function TodayRecordTab({
           {showMemo && (
             <div>
               <Label htmlFor="selfcare-memo">
-                今日のセルフケアについて、少し残したいこと
+                {targetDate === today
+                  ? "今日のセルフケアについて、少し残したいこと"
+                  : "セルフケアについて、少し残したいこと"}
               </Label>
               <Textarea
                 id="selfcare-memo"

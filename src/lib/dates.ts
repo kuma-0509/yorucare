@@ -27,6 +27,18 @@ export function getLast7Days(): string[] {
   return days;
 }
 
+/** 直近7日以内か（記録の入力・編集可能範囲） */
+export function isWithinLast7Days(dateStr: string): boolean {
+  return getLast7Days().includes(dateStr);
+}
+
+/** 日付切り替えボタン用の短いラベル */
+export function formatDatePickerLabel(dateStr: string): string {
+  if (dateStr === getTodayString()) return "今日";
+  if (dateStr === getYesterdayString()) return "昨日";
+  return formatShortDate(dateStr);
+}
+
 export function formatDisplayDate(dateStr: string): string {
   const [y, m, d] = dateStr.split("-").map(Number);
   const date = new Date(y, m - 1, d);
