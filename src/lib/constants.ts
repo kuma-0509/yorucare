@@ -97,6 +97,7 @@ export const SAMPLE_SELF_CARE = [
 export const STORAGE_KEYS = {
   records: "yorucare_daily_records",
   selfCare: "yorucare_self_care_items",
+  storageNoticeDismissed: "yorucare_storage_notice_dismissed",
 } as const;
 
 /** 利用者向けふりかえりタブに表示する予定機能（短く） */

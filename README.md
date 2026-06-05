@@ -45,9 +45,30 @@ npm run build
 npm start
 ```
 
+## 公開 URL（実機テスト用）
+
+デプロイ後は次の URL で最新版を確認してください。
+
+- **本番**: [https://yorucare.vercel.app](https://yorucare.vercel.app)
+
+画面フッターに `Phase 1 · 更新 YYYY-MM-DD` が表示されていれば、最新ビルドです。表示が古い場合は `main` を push して Vercel の再デプロイを待ってください。
+
 ## データ保存
 
 ブラウザの `localStorage` に保存します。ログイン・API・DB は Phase 1 では未実装です。
 
 - `yorucare_daily_records` — 日次記録
 - `yorucare_self_care_items` — セルフケア項目
+
+記録は**この端末のブラウザだけ**に残ります（別端末・別ブラウザでは共有されません）。
+
+## 自動チェックリスト（開発用）
+
+```bash
+pnpm start
+pnpm test:checklist
+# 本番確認:
+pnpm test:checklist https://yorucare.vercel.app
+```
+
+手順の詳細は [docs/smartphone-test-checklist.md](docs/smartphone-test-checklist.md) を参照してください。

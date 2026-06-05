@@ -198,4 +198,22 @@ export function isRecordedDay(date: string): boolean {
   return getRecordByDate(date) !== null;
 }
 
+/** 保存済みだが中身がほぼ空（気分など未入力） */
+export function isDailyRecordEmpty(record: DailyRecord): boolean {
+  return isRecordEmpty({
+    date: record.date,
+    moodScore: record.moodScore,
+    moodLabels: record.moodLabels,
+    sleepStart: record.sleepStart,
+    sleepEnd: record.sleepEnd,
+    medication: record.medication,
+    warningLevel: record.warningLevel,
+    warningTags: record.warningTags,
+    warningNote: record.warningNote,
+    selfCareIds: record.selfCareIds,
+    selfCareMemo: record.selfCareMemo,
+    note: record.note,
+  });
+}
+
 export { getTodayString };

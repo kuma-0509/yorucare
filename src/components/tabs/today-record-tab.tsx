@@ -43,6 +43,7 @@ import {
 } from "@/lib/storage";
 import type { AppTab } from "@/lib/types";
 import type { DailyRecord, SelfCareItem } from "@/lib/types";
+import { SaveRecordButton } from "@/components/shared/save-record-button";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 const MAX_MOOD_LABELS = 3;
@@ -182,6 +183,9 @@ export function TodayRecordTab({
           <p className="mt-2 text-sm leading-relaxed text-secondary-foreground opacity-90">
             今日の自分を残せたことも、セルフケアのひとつです。
           </p>
+          <p className="mt-3 text-xs leading-relaxed text-secondary-foreground/80">
+            記録はこの端末のブラウザだけに残ります。別のスマホやブラウザでは見えません。
+          </p>
         </div>
 
         <Card>
@@ -241,7 +245,8 @@ export function TodayRecordTab({
   }
 
   return (
-    <div className="space-y-4 pb-4">
+    <>
+    <div className="space-y-4 pb-36">
       <header>
         <h1 className="text-xl font-bold">今日の記録</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -296,6 +301,8 @@ export function TodayRecordTab({
           </div>
         </CardContent>
       </Card>
+
+      <SaveRecordButton onClick={handleSave} showHint />
 
       <CollapsibleSection
         title="くわしく書く（任意）"
@@ -480,7 +487,7 @@ export function TodayRecordTab({
         <CardContent className="space-y-3">
           {selfCareItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              セルフケアタブで登録すると、ここから選べます。
+              「できること」タブで登録すると、ここから選べます。
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -582,11 +589,14 @@ export function TodayRecordTab({
           />
         </CardContent>
       </Card>
-
-      <Button type="button" size="lg" className="w-full" onClick={handleSave}>
-        記録を保存する
-      </Button>
     </div>
+
+    <div className="fixed bottom-[4.75rem] left-0 right-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm pb-safe">
+      <div className="mx-auto max-w-lg">
+        <SaveRecordButton onClick={handleSave} />
+      </div>
+    </div>
+    </>
   );
 }
 

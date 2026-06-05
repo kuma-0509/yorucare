@@ -29,6 +29,7 @@ import {
   getAllRecords,
   getAllSelfCareItems,
   initSelfCareIfEmpty,
+  isDailyRecordEmpty,
 } from "@/lib/storage";
 import type { AppTab } from "@/lib/types";
 import type { DailyRecord, SelfCareItem } from "@/lib/types";
@@ -128,6 +129,8 @@ export function RecordsTab({
             );
           }
 
+          const isEmptySaved = isDailyRecordEmpty(record);
+
           const previewLines = [
             { label: "気分", value: getMoodLabel(record.moodScore) },
             ...(record.moodLabels.length > 0
@@ -146,20 +149,35 @@ export function RecordsTab({
           ].filter((line) => isMeaningfulSummaryValue(line.value));
 
           return (
-            <Card key={date}>
+            <Card
+              key={date}
+              className={isEmptySaved ? "border-dashed bg-muted/40" : undefined}
+            >
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">
+                <CardTitle
+                  className={
+                    isEmptySaved
+                      ? "text-base font-medium text-muted-foreground"
+                      : "text-base"
+                  }
+                >
                   {formatDisplayDate(date)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                {previewLines.map((line) => (
-                  <RecordPreviewLine
-                    key={line.label}
-                    label={line.label}
-                    value={line.value}
-                  />
-                ))}
+                {isEmptySaved ? (
+                  <p className="leading-relaxed text-muted-foreground">
+                    保存だけした日です。気分など、あとから足せます。
+                  </p>
+                ) : (
+                  previewLines.map((line) => (
+                    <RecordPreviewLine
+                      key={line.label}
+                      label={line.label}
+                      value={line.value}
+                    />
+                  ))
+                )}
                 <div className="flex flex-col gap-2 pt-3">
                   <Button
                     variant="outline"

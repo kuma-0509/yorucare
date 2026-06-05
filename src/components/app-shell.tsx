@@ -2,7 +2,9 @@
 
 import { useCallback, useState } from "react";
 import { AppHeader } from "@/components/layout/app-header";
+import { BuildFooter } from "@/components/layout/build-footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { StorageNoticeBanner } from "@/components/shared/storage-notice-banner";
 import { TodayRecordTab } from "@/components/tabs/today-record-tab";
 import { RecordsTab } from "@/components/tabs/records-tab";
 import { SelfCareTab } from "@/components/tabs/selfcare-tab";
@@ -36,6 +38,7 @@ export function AppShell() {
     <div className="min-h-dvh bg-background">
       <main className="mx-auto max-w-lg px-4 pt-6 pb-28">
         <AppHeader />
+        <StorageNoticeBanner />
         {activeTab === "today" && (
           <TodayRecordTab
             initialDate={recordDate}
@@ -54,6 +57,7 @@ export function AppShell() {
           <SelfCareTab onDataChange={bumpRefresh} />
         )}
         {activeTab === "reflection" && <ReflectionTab />}
+        <BuildFooter />
       </main>
       <BottomNav
         activeTab={activeTab}

@@ -39,6 +39,14 @@ git push -u origin main
 
 以降、`main` への push で自動デプロイされます。
 
+### デプロイ後の確認
+
+1. 本番 URL を開く: **https://yorucare.vercel.app**
+2. 画面下部に **「ヨルケア · Phase 1 · 更新 （日付）」** が出ているか確認（古いままならデプロイ完了を待つ）
+3. 下部タブが **書く / これまで / できること / ふりかえり** になっているか確認
+4. 「書く」で気分を選び、**気分のすぐ下**または**画面下（タブの上）**の「記録を保存する」で保存できるか確認
+5. 実機テストは [docs/smartphone-test-checklist.md](docs/smartphone-test-checklist.md) を参照
+
 ### 方法 B: CLI
 
 ```powershell
