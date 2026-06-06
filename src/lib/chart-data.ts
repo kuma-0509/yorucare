@@ -12,11 +12,34 @@ import type { DailyRecord, WarningLevel } from "./types";
 
 export type ChartMetricId = "mood" | "sleep" | "warning" | "selfCare";
 
-/** なし／少しあり／あり の3段階軸ラベル（下→上） */
-export const THREE_LEVEL_AXIS_LABELS = ["なし", "少しあり", "あり"] as const;
+/** しんどさのサイン：Recharts 描画用の数値（なし=中央、あり=下） */
+export const DISTRESS_SIGN_VALUE_MAP = {
+  none: 0,
+  small: -1,
+  yes: -2,
+  なし: 0,
+  少しあり: -1,
+  あり: -2,
+} as const;
 
-export function formatThreeLevelAxisTick(value: number): string {
-  return THREE_LEVEL_AXIS_LABELS[value] ?? "";
+const DISTRESS_SIGN_LABEL_MAP: Record<number, string> = {
+  0: "なし",
+  [-1]: "少しあり",
+  [-2]: "あり",
+};
+
+export function formatDistressSignAxisTick(value: number): string {
+  if (value === 0) return "なし";
+  if (value === -1) return "少しあり";
+  if (value === -2) return "あり";
+  return "";
+}
+
+export function formatDistressSignValue(value: number): string {
+  if (Number.isInteger(value)) {
+    return DISTRESS_SIGN_LABEL_MAP[value] ?? String(value);
+  }
+  return value.toFixed(1);
 }
 
 export interface ChartMetricConfig {
@@ -60,11 +83,10 @@ export const CHART_METRICS: ChartMetricConfig[] = [
     label: COPY.warningSign,
     description: COPY.chartWarningDescription,
     yAxisLabel: COPY.chartWarningAxis,
-    domain: [0, 2],
-    axisTicks: [0, 1, 2],
-    formatAxisTick: formatThreeLevelAxisTick,
-    formatValue: (v) =>
-      Number.isInteger(v) ? formatThreeLevelAxisTick(v) : v.toFixed(1),
+    domain: [-2, 2],
+    axisTicks: [-2, -1, 0],
+    formatAxisTick: formatDistressSignAxisTick,
+    formatValue: formatDistressSignValue,
   },
   {
     id: "selfCare",
@@ -78,9 +100,7 @@ export const CHART_METRICS: ChartMetricConfig[] = [
 
 function warningLevelToValue(level: WarningLevel | null): number | null {
   if (level === null) return null;
-  if (level === "none") return 0;
-  if (level === "small") return 1;
-  return 2;
+  return DISTRESS_SIGN_VALUE_MAP[level] ?? null;
 }
 
 function extractMetricValue(
