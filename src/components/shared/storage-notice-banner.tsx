@@ -39,11 +39,10 @@ export function StorageNoticeBanner({ onNavigateTab }: StorageNoticeBannerProps)
       role="status"
     >
       <p className="text-sm leading-relaxed text-foreground">
-        記録は<strong className="font-semibold">この端末のブラウザだけ</strong>
-        に保存されます。別のスマホ・別ブラウザでは見えません。ブラウザのデータを消すと記録も消えることがあります。
+        {COPY.storageDeviceOnly}
       </p>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        {COPY.storageBackupHint}
+        {COPY.storageMayBeLost}
       </p>
       <div className="mt-3 flex flex-col gap-2">
         {onNavigateTab && (

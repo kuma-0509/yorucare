@@ -105,7 +105,7 @@ export function RecordsTab({
     return (
       <div className="space-y-4 pb-4">
         <header>
-          <h1 className="text-xl font-bold">これまで</h1>
+          <h1 className="text-xl font-bold">{COPY.tab.records}</h1>
           <p className="mt-2 text-sm text-muted-foreground">読み込み中…</p>
         </header>
       </div>
@@ -115,7 +115,7 @@ export function RecordsTab({
   return (
     <div className="space-y-4 pb-4">
       <header>
-        <h1 className="text-xl font-bold">これまで</h1>
+        <h1 className="text-xl font-bold">{COPY.tab.records}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           直近7日の記録です。1週間以内ならあとから直せます。
         </p>
@@ -185,11 +185,11 @@ export function RecordsTab({
             { label: "睡眠", value: formatSleepSummary(record) },
             { label: "お薬", value: getMedicationLabel(record.medication) },
             {
-              label: "しんどさのサイン",
+              label: COPY.warningSign,
               value: getWarningLabel(record.warningLevel),
             },
             {
-              label: "今日できたこと",
+              label: COPY.doneToday,
               value: formatSelfCareSummary(record, selfCareItems),
             },
           ].filter((line) => isMeaningfulSummaryValue(line.value));
@@ -241,12 +241,6 @@ export function RecordsTab({
                       編集する
                     </Button>
                   )}
-                  <Button
-                    variant="warning"
-                    onClick={() => setDeleteRecordTarget(record)}
-                  >
-                    この記録を削除
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -261,22 +255,24 @@ export function RecordsTab({
         }}
       />
 
-      <Card className="border-orange-200 bg-orange-50/40">
+      <Card className="border-caution-border/50 bg-caution/40">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">共有端末で使い終わったら</CardTitle>
+          <CardTitle className="text-base">
+            {COPY.deleteAllSharedDeviceHeading}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm leading-relaxed text-muted-foreground">
-            この端末のブラウザに保存されたYoruCareの記録だけを削除します。セルフケア項目や他のlocalStorageデータは削除しません。
+            {COPY.deleteAllSharedDeviceBody}
           </p>
           <Button
             type="button"
-            variant="warning"
+            variant="destructive"
             className="w-full"
             disabled={records.length === 0}
             onClick={() => setDeleteAllOpen(true)}
           >
-            すべての記録を削除
+            {COPY.deleteAllTitle}
           </Button>
         </CardContent>
       </Card>
@@ -340,14 +336,14 @@ export function RecordsTab({
               <div className="border-t pt-4">
                 <Button
                   type="button"
-                  variant="warning"
+                  variant="destructive"
                   className="w-full"
                   onClick={() => {
                     setDeleteRecordTarget(detailRecord);
                     setDetailRecord(null);
                   }}
                 >
-                  この記録を削除
+                  {COPY.delete}
                 </Button>
               </div>
             </div>
@@ -367,15 +363,19 @@ export function RecordsTab({
             この記録を削除しますか？この操作は元に戻せません。
           </p>
           <div className="flex flex-col gap-2">
-            <Button type="button" variant="warning" onClick={handleDeleteRecord}>
-              この記録を削除
-            </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => setDeleteRecordTarget(null)}
             >
-              キャンセル
+              {COPY.cancel}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDeleteRecord}
+            >
+              {COPY.delete}
             </Button>
           </div>
         </DialogContent>
@@ -387,28 +387,28 @@ export function RecordsTab({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>すべての記録を削除</DialogTitle>
+            <DialogTitle>{COPY.deleteAllTitle}</DialogTitle>
           </DialogHeader>
           <p className="text-sm leading-relaxed">
-            この端末に保存された記録をすべて削除しますか？この操作は元に戻せません。
+            {COPY.deleteAllConfirmBody}
           </p>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            削除するのは、この端末のlocalStorageに保存されたYoruCareの記録のみです。
+            {COPY.deleteAllConfirmNote}
           </p>
           <div className="flex flex-col gap-2">
-            <Button
-              type="button"
-              variant="warning"
-              onClick={handleDeleteAllRecords}
-            >
-              すべての記録を削除
-            </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => setDeleteAllOpen(false)}
             >
-              キャンセル
+              {COPY.cancel}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDeleteAllRecords}
+            >
+              {COPY.deleteAllTitle}
             </Button>
           </div>
         </DialogContent>

@@ -5,7 +5,7 @@ export function BuildFooter() {
   if (!buildDate) return null;
 
   return (
-    <footer className="mx-auto max-w-lg px-4 pb-2 pt-4 text-center text-[10px] text-muted-foreground">
+    <footer className="mx-auto max-w-lg px-4 pb-2 pt-4 text-center text-xs text-muted-foreground">
       ヨルケア · {phase} · 更新 {buildDate}
     </footer>
   );

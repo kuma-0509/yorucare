@@ -10,46 +10,27 @@ export const MAX_CUSTOM_MOOD_LABEL_LENGTH = 10;
 export const MOOD_CATEGORY_OPTIONS: {
   value: MoodLabelCategory;
   label: string;
-  chipClass: string;
-  chipSelectedClass: string;
   dotClass: string;
 }[] = [
-  {
-    value: "ポジティブ",
-    label: "ポジティブ",
-    chipClass: "border-[#e8b89a] bg-[#fceee6] text-[#5c4030]",
-    chipSelectedClass: "border-[#d9956f] bg-[#f5d0bc] ring-2 ring-[#d9956f]/30",
-    dotClass: "bg-[#e8956a]",
-  },
+  { value: "ポジティブ", label: "ポジティブ", dotClass: "bg-mood-positive" },
   {
     value: "ややポジティブ",
     label: "ややポジティブ",
-    chipClass: "border-[#e8d48a] bg-[#fdf6e3] text-[#5c5030]",
-    chipSelectedClass: "border-[#d4bc5c] bg-[#f7e8a8] ring-2 ring-[#d4bc5c]/30",
-    dotClass: "bg-[#e8c85a]",
+    dotClass: "bg-mood-slightly-positive",
   },
-  {
-    value: "普通",
-    label: "普通",
-    chipClass: "border-[#c5d9a8] bg-[#f0f6e8] text-[#3d5030]",
-    chipSelectedClass: "border-[#a8c488] bg-[#dcebc8] ring-2 ring-[#a8c488]/30",
-    dotClass: "bg-[#b8d088]",
-  },
+  { value: "普通", label: "普通", dotClass: "bg-mood-neutral" },
   {
     value: "ややネガティブ",
     label: "ややネガティブ",
-    chipClass: "border-[#a8cfc0] bg-[#eaf4f0] text-[#2d5048]",
-    chipSelectedClass: "border-[#88b8a8] bg-[#cce4dc] ring-2 ring-[#88b8a8]/30",
-    dotClass: "bg-[#8fb9a8]",
+    dotClass: "bg-mood-slightly-negative",
   },
-  {
-    value: "ネガティブ",
-    label: "ネガティブ",
-    chipClass: "border-[#9ebfd4] bg-[#e8f0f6] text-[#2d4558]",
-    chipSelectedClass: "border-[#7a9fbf] bg-[#c8dce8] ring-2 ring-[#7a9fbf]/30",
-    dotClass: "bg-[#6d92ab]",
-  },
+  { value: "ネガティブ", label: "ネガティブ", dotClass: "bg-mood-negative" },
 ];
+
+export function getMoodCategoryDotClass(category: MoodLabelCategory): string {
+  const option = MOOD_CATEGORY_OPTIONS.find((item) => item.value === category);
+  return option?.dotClass ?? MOOD_CATEGORY_OPTIONS[2].dotClass;
+}
 
 const ALL_PREDEFINED_LABELS = [
   ...MOOD_LABEL_POSITIVE,
@@ -174,16 +155,4 @@ export function isDuplicateMoodLabel(
 
 export function formatMoodLabelsDisplay(entries: MoodLabelEntry[]): string {
   return entries.map((entry) => entry.label).join("、");
-}
-
-export function getMoodCategoryStyles(category: MoodLabelCategory): {
-  chipClass: string;
-  chipSelectedClass: string;
-} {
-  const option = MOOD_CATEGORY_OPTIONS.find((item) => item.value === category);
-  return {
-    chipClass: option?.chipClass ?? MOOD_CATEGORY_OPTIONS[2].chipClass,
-    chipSelectedClass:
-      option?.chipSelectedClass ?? MOOD_CATEGORY_OPTIONS[2].chipSelectedClass,
-  };
 }

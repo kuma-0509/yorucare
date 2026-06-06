@@ -54,7 +54,7 @@ import { calculateSleepMinutes, formatSleepDuration } from "@/lib/sleep";
 import {
   createCustomMoodLabel,
   createPredefinedMoodLabel,
-  getMoodCategoryStyles,
+  getMoodCategoryDotClass,
   isDuplicateMoodLabel,
   isMoodLabelSelected,
 } from "@/lib/mood-labels";
@@ -301,15 +301,12 @@ export function TodayRecordTab({
     const lines = buildRecordSummaryLines(savedRecord, selfCareItems);
     return (
       <div className="flex flex-col gap-3">
-        <div className="shrink-0 rounded-xl bg-secondary px-3 py-2.5 text-center">
+        <div className="shrink-0 rounded-xl bg-secondary px-3 py-3 text-center">
           <p className="text-base font-medium text-secondary-foreground">
             記録できました。
           </p>
-          <p className="mt-0.5 text-xs leading-snug text-secondary-foreground/90">
+          <p className="mt-0.5 text-sm leading-snug text-secondary-foreground/90">
             今日の自分を残せたことも、セルフケアのひとつです。
-          </p>
-          <p className="mt-1 text-[11px] leading-snug text-secondary-foreground/75">
-            記録はこの端末のブラウザだけに残ります。別のスマホやブラウザでは見えません。
           </p>
         </div>
 
@@ -368,20 +365,8 @@ export function TodayRecordTab({
     <div className="space-y-4">
       <header>
         <h1 className="text-xl font-bold">{recordTitle}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          {targetDate === today ? (
-            <>
-              今日のことを少しだけ残しておきましょう。
-              <br />
-              無理なく記録できればOKです。気分だけ選んで保存しても構いません。
-            </>
-          ) : (
-            <>
-              直近1週間の記録を、あとから残したり直したりできます。
-              <br />
-              気分だけ選んで保存しても構いません。
-            </>
-          )}
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          気分だけ選んで保存してもOKです。
         </p>
       </header>
 
@@ -402,14 +387,14 @@ export function TodayRecordTab({
         {formatDisplayDate(targetDate)}
       </p>
 
-      {/* 気分（最短ルート） */}
-      <Card>
+      {/* 気分＝この画面の主役。視覚的な重みで序列を表す */}
+      <Card className="border-primary/30 shadow-md ring-1 ring-primary/10">
         <CardHeader>
-          <CardTitle>
-            {targetDate === today ? "今日の気分" : "気分"}
+          <CardTitle className="text-xl">
+            {targetDate === today ? "今日の気分はどうですか？" : "気分はどうでしたか？"}
           </CardTitle>
           <CardDescription>
-            今の状態に近いものを選んでください。総合気分だけでも保存できます。
+            近いものを1つ選んでください。これだけでも保存できます。
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -502,7 +487,7 @@ export function TodayRecordTab({
                 className="min-h-11 shrink-0 px-4"
                 onClick={handleCustomMoodAddClick}
               >
-                追加
+                {COPY.add}
               </Button>
             </div>
             {customMoodError && (
@@ -859,19 +844,16 @@ function CustomMoodChip({
   selected: boolean;
   onClick: () => void;
 }) {
-  const styles = getMoodCategoryStyles(entry.category);
-
   return (
-    <button
-      type="button"
-      aria-pressed={selected}
+    <SelectionControl
+      selected={selected}
+      layout="chip"
+      mode="checkbox"
+      accentDotClass={getMoodCategoryDotClass(entry.category)}
       onClick={onClick}
-      className={`inline-flex min-h-11 items-center justify-center rounded-full border-2 px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-        selected ? styles.chipSelectedClass : styles.chipClass
-      }`}
     >
       {entry.label}
-    </button>
+    </SelectionControl>
   );
 }
 

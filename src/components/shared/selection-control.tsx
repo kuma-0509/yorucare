@@ -35,13 +35,16 @@ interface SelectionControlProps
     VariantProps<typeof selectionControlVariants> {
   selected: boolean;
   mode?: SelectionMode;
+  /** 選択肢を識別するための装飾ドット（例: 気分カテゴリ色）。選択状態の表現には使わない */
+  accentDotClass?: string;
   children: React.ReactNode;
 }
 
 export function SelectionControl({
   selected,
   mode = "toggle",
-  layout,
+  layout = "row",
+  accentDotClass,
   className,
   children,
   ...props
@@ -51,21 +54,36 @@ export function SelectionControl({
       ? { role: "radio" as const, "aria-checked": selected }
       : { "aria-pressed": selected };
 
+  const isRow = layout === "row";
+
   return (
     <button
       type="button"
       className={cn(
         selectionControlVariants({ layout, selected }),
-        layout === "row" && selected && "gap-2",
+        (selected || accentDotClass) && "gap-1.5",
         className
       )}
       {...ariaProps}
       {...props}
     >
-      {layout === "row" && selected && (
-        <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+      {accentDotClass && (
+        <span
+          className={cn("h-2.5 w-2.5 shrink-0 rounded-full", accentDotClass)}
+          aria-hidden
+        />
       )}
-      <span className={layout === "row" ? "flex-1" : undefined}>{children}</span>
+      {/* 色だけに頼らない選択シグナル（全レイアウト共通） */}
+      {selected && (
+        <Check
+          className={cn(
+            "shrink-0 text-primary",
+            isRow ? "h-4 w-4" : "h-3.5 w-3.5"
+          )}
+          aria-hidden
+        />
+      )}
+      <span className={isRow ? "flex-1" : undefined}>{children}</span>
     </button>
   );
 }

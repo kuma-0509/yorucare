@@ -317,6 +317,15 @@ export const repository = {
     return writeSelfCareItems(payload.selfCareItems);
   },
 
+  clearImportRollback(): void {
+    if (!isBrowser()) return;
+    try {
+      localStorage.removeItem(IMPORT_ROLLBACK_KEY);
+    } catch {
+      /* 退避データの掃除に失敗しても本処理は継続する */
+    }
+  },
+
   importBackup(jsonText: string): Result<{ recordCount: number; selfCareCount: number }> {
     if (!isBrowser()) return err({ code: "BROWSER_ONLY" });
 
@@ -341,13 +350,59 @@ export const repository = {
     const applied = repository.applyImport(parsed.data);
     if (!applied.ok) {
       repository.restoreImportRollback();
+      // 復元後も退避データが残ると容量を二重に消費するため掃除する
+      repository.clearImportRollback();
       return applied;
     }
+
+    // 取り込み成功後は退避データを残さない（容量の二重消費を防ぐ）
+    repository.clearImportRollback();
 
     return ok({
       recordCount: parsed.data.records.length,
       selfCareCount: parsed.data.selfCareItems.length,
     });
+  },
+
+  /** 保存済みデータのスキーマ版を読む（未設定なら null） */
+  getStoredSchemaVersion(): number | null {
+    if (!isBrowser()) return null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.schemaVersion);
+      if (!raw) return null;
+      const parsed = Number(raw);
+      return Number.isFinite(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * 起動時のスキーマ移行ランナー。
+   * 保存版が現行版より古い（または未設定だがデータがある）場合、
+   * 読み込み（Zod transform による正規化）→書き戻しで保存形を最新化し、版を更新する。
+   * 破損時は何もしない（StorageHealthBanner が警告を表示する）。
+   */
+  runStorageMigrations(): void {
+    if (!isBrowser()) return;
+
+    const storedVersion = repository.getStoredSchemaVersion();
+    if (storedVersion === STORAGE_SCHEMA_VERSION) return;
+
+    const records = readRecords();
+    const selfCare = readSelfCareItems();
+    if (!records.ok || !selfCare.ok) return; // 破損時は触らない
+
+    const hasData = records.value.length > 0 || selfCare.value.length > 0;
+    if (storedVersion === null && !hasData) {
+      // 新規ユーザー。版だけ記録しておく。
+      writeRaw(STORAGE_KEYS.schemaVersion, String(STORAGE_SCHEMA_VERSION));
+      return;
+    }
+
+    // 正規化済みの値を書き戻し、保存形を最新スキーマに揃える。
+    writeRecords(records.value);
+    writeSelfCareItems(selfCare.value);
   },
 };
 

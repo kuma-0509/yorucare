@@ -16,8 +16,6 @@ const buttonVariants = cva(
         soft: "bg-accent text-accent-foreground hover:opacity-90",
         caution:
           "bg-caution text-caution-foreground border border-caution-border hover:opacity-90",
-        warning:
-          "bg-caution text-caution-foreground border border-caution-border hover:opacity-90",
         destructive:
           "bg-destructive text-destructive-foreground hover:opacity-90",
       },

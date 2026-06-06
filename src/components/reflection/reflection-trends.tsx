@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Card,
   CardContent,
@@ -10,7 +11,24 @@ import {
 } from "@/components/ui/card";
 import { MetricTabs } from "@/components/reflection/metric-tabs";
 import { PeriodTabs } from "@/components/reflection/period-tabs";
-import { TrendLineChart } from "@/components/reflection/trend-line-chart";
+
+// recharts は重いため、ふりかえりタブで実際にグラフを描くときだけ読み込む
+// （既定の「書く」タブの初期バンドルから除外する）
+const TrendLineChart = dynamic(
+  () =>
+    import("@/components/reflection/trend-line-chart").then(
+      (m) => m.TrendLineChart
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="h-[220px] w-full animate-pulse rounded-xl bg-muted sm:h-[240px]"
+        aria-hidden
+      />
+    ),
+  }
+);
 import {
   CHART_METRICS,
   buildTrendSeries,
@@ -41,7 +59,7 @@ export function ReflectionTrends({ refreshKey = 0 }: ReflectionTrendsProps) {
         <div>
           <CardTitle>体調の傾向</CardTitle>
           <CardDescription className="mt-1 text-base leading-relaxed">
-            記録を重ねると、自分の波のパターンが見えてきます。
+            期間と項目を選ぶと、その変化を線グラフで見られます。
           </CardDescription>
         </div>
         <PeriodTabs value={period} onChange={setPeriod} />

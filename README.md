@@ -72,7 +72,19 @@ npm start
 - 画面文言は `src/lib/copy.ts` が単一基準
 - 選択 UI の a11y 契約は `src/components/shared/selection-control.tsx`
 
-## 自動チェックリスト（開発用）
+## テスト
+
+lib 層の純粋ロジック（睡眠計算・日付・スキーマ・バックアップ判定・気分ラベル移行など）は Vitest で単体テストしています。
+
+```bash
+pnpm test          # 1回実行
+pnpm test:watch    # 監視実行
+pnpm test:coverage # カバレッジ
+```
+
+CI（`.github/workflows/ci.yml`）で push / PR ごとに lint・テスト・ビルドを実行します。
+
+### 自動チェックリスト（実機 E2E・開発用）
 
 ```bash
 pnpm start
@@ -82,3 +94,11 @@ pnpm test:checklist https://yorucare.vercel.app
 ```
 
 手順の詳細は [docs/smartphone-test-checklist.md](docs/smartphone-test-checklist.md) を参照してください。
+
+## 計測（パイロット検証用）
+
+匿名の利用イベントは、端末ごとの匿名 ID 付きで同一オリジンの `POST /api/events` に送信します（個人を特定しない値のみ）。現状は受信内容をサーバログに出力するだけで、継続率（D1/D7/D14）の集計に必要な永続ストアは未接続です。次の一手は [docs/phase2-plan.md](docs/phase2-plan.md) を参照してください。
+
+## バックアップの能動的リマインド
+
+最終ファイル保存からの経過日数を検知し、保存が必要なときだけ「ファイルに保存しておきましょう」と能動的に促します（`src/lib/backup-reminder.ts`）。判定ロジックは単体テスト済みです。

@@ -6,7 +6,9 @@ import { BuildFooter } from "@/components/layout/build-footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { StorageHealthBanner } from "@/components/shared/storage-health-banner";
 import { StorageNoticeBanner } from "@/components/shared/storage-notice-banner";
+import { BackupReminderBanner } from "@/components/shared/backup-reminder-banner";
 import { ReviewConsentDialog } from "@/components/shared/review-consent-dialog";
+import { repository } from "@/lib/repository";
 import { TodayRecordTab } from "@/components/tabs/today-record-tab";
 import { RecordsTab } from "@/components/tabs/records-tab";
 import { SelfCareTab } from "@/components/tabs/selfcare-tab";
@@ -26,6 +28,10 @@ export function AppShell() {
   const [activeTab, setActiveTab] = useState<AppTab>("today");
   const [recordDate, setRecordDate] = useState<string | undefined>();
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    repository.runStorageMigrations();
+  }, []);
 
   useEffect(() => {
     trackTabViewed(activeTab);
@@ -66,6 +72,12 @@ export function AppShell() {
         <AppHeader compact={todaySavedView} />
         <StorageHealthBanner />
         <StorageNoticeBanner onNavigateTab={handleNavigateTab} />
+        {!todaySavedView && (
+          <BackupReminderBanner
+            onNavigateTab={handleNavigateTab}
+            refreshKey={refreshKey}
+          />
+        )}
         {activeTab === "today" && (
           <TodayRecordTab
             initialDate={recordDate}

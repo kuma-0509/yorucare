@@ -133,7 +133,7 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-11 min-h-11 w-11 min-w-11 shrink-0 border-sky-200/80 bg-sky-50/70 hover:bg-sky-50"
+                    className="h-11 min-h-11 w-11 min-w-11 shrink-0 border-primary/30 bg-primary/5 hover:bg-primary/10"
                     aria-label="編集"
                     onClick={() => {
                       if (!item?.id) return;
@@ -141,20 +141,20 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
                       setEditTitle(item.title ?? "");
                     }}
                   >
-                    <Pencil className="h-5 w-5 text-sky-700" strokeWidth={2} />
+                    <Pencil className="h-5 w-5 text-primary" strokeWidth={2} />
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-11 min-h-11 w-11 min-w-11 shrink-0 border-red-200/80 bg-red-50/70 hover:bg-red-50"
+                    className="h-11 min-h-11 w-11 min-w-11 shrink-0 border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
                     aria-label="削除"
                     onClick={() => {
                       if (!item?.id) return;
                       setDeleteTarget(item);
                     }}
                   >
-                    <Trash2 className="h-5 w-5 text-red-600" strokeWidth={2} />
+                    <Trash2 className="h-5 w-5 text-destructive" strokeWidth={2} />
                   </Button>
                 </div>
               </CardContent>
@@ -208,10 +208,10 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
           </DialogHeader>
           <div className="flex flex-col gap-2">
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              キャンセル
+              {COPY.cancel}
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              削除する
+              {COPY.delete}
             </Button>
           </div>
         </DialogContent>

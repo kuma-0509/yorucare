@@ -8,6 +8,59 @@ export type AnalyticsEventName =
   | "backup_imported"
   | "tab_viewed";
 
+/** 同一オリジンの収集エンドポイント（CSP connect-src 'self' で許可済み） */
+const ANALYTICS_ENDPOINT = "/api/events";
+
+/**
+ * 端末ごとの匿名ID。継続率（D1/D7/D14）をサーバ側で算出するために、
+ * 個人を特定しない乱数IDを端末に1つだけ持つ。
+ */
+function getInstallId(): string {
+  if (!isBrowser()) return "";
+  try {
+    const existing = localStorage.getItem(STORAGE_KEYS.installId);
+    if (existing) return existing;
+    const id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(STORAGE_KEYS.installId, id);
+    return id;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * 匿名イベントを同一オリジンのエンドポイントへ送る。
+ * meta には日付・タブ名・件数など、個人を特定しない値のみを載せる。
+ * 送信失敗はコア機能に影響させない（握りつぶす）。
+ */
+function sendToServer(event: {
+  installId: string;
+  name: AnalyticsEventName;
+  at: string;
+  meta?: Record<string, string | number | boolean>;
+}): void {
+  if (!isBrowser() || !event.installId) return;
+  try {
+    const body = JSON.stringify(event);
+    if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
+      const blob = new Blob([body], { type: "application/json" });
+      navigator.sendBeacon(ANALYTICS_ENDPOINT, blob);
+      return;
+    }
+    void fetch(ANALYTICS_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* analytics must not break core flows */
+  }
+}
+
 type AnalyticsEvent = {
   name: AnalyticsEventName;
   at: string;
@@ -84,6 +137,8 @@ export function trackEvent(
   }
 
   writeSnapshot(snapshot);
+
+  sendToServer({ installId: getInstallId(), name, at, meta });
 
   if (typeof window !== "undefined") {
     window.dispatchEvent(

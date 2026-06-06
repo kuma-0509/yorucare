@@ -1,4 +1,5 @@
 import { trackEvent } from "./analytics";
+import { recordBackupDone } from "./backup-reminder";
 import { repository } from "./repository";
 import type { Result } from "./result";
 import type { ExportPayload } from "./schemas";
@@ -27,6 +28,7 @@ export function downloadBackup(): Result<void> {
   a.download = `yorucare-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
+  recordBackupDone();
   trackEvent("backup_exported");
   return { ok: true, value: undefined };
 }
@@ -36,6 +38,8 @@ export function importBackup(
 ): Result<{ recordCount: number; selfCareCount: number }> {
   const result = repository.importBackup(jsonText);
   if (result.ok) {
+    // 取り込んだ元ファイルが手元にある＝バックアップ済みとみなす
+    recordBackupDone();
     trackEvent("backup_imported", {
       recordCount: result.value.recordCount,
       selfCareCount: result.value.selfCareCount,

@@ -101,6 +101,8 @@ export const STORAGE_KEYS = {
   reviewConsent: "yorucare_review_consent",
   schemaVersion: "yorucare_schema_version",
   analytics: "yorucare_analytics",
+  lastBackupAt: "yorucare_last_backup_at",
+  installId: "yorucare_install_id",
 } as const;
 
 /** 利用者向けふりかえりタブに表示する予定機能（短く） */
