@@ -39,7 +39,7 @@ export function TrendLineChart({
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={points}
-          margin={{ top: 8, right: 8, left: -8, bottom: 0 }}
+          margin={{ top: 8, right: 8, left: 4, bottom: 0 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
@@ -48,7 +48,7 @@ export function TrendLineChart({
           />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tick={{ fontSize: 12, fill: "#64748b" }}
             tickLine={false}
             axisLine={{ stroke: "#e2e8f0" }}
             interval={tickInterval}
@@ -57,10 +57,10 @@ export function TrendLineChart({
           <YAxis
             domain={domain}
             allowDecimals={metric.id !== "selfCare"}
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tick={{ fontSize: 12, fill: "#64748b" }}
             tickLine={false}
             axisLine={false}
-            width={28}
+            width={32}
             tickCount={metric.domain ? 6 : 5}
           />
           <Tooltip

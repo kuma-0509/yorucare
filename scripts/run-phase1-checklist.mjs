@@ -158,9 +158,9 @@ async function main() {
     if (await page.getByText("睡眠・生活リズム").isVisible()) pass("C-5b");
     else fail("C-5b");
 
-    await page.getByRole("button", { name: "今日できたセルフケアを追加" }).click();
+    await page.getByRole("button", { name: "今日できたことを追加" }).click();
     const unique = `E2E-${Date.now()}`;
-    await page.getByPlaceholder("新しいセルフケアの名前").fill(unique);
+    await page.getByPlaceholder("新しいできることの名前").fill(unique);
     await page.getByRole("button", { name: "追加する" }).first().click();
     if (await page.getByRole("button", { name: unique }).isVisible()) pass("C-6b");
     else fail("C-6b");
@@ -286,7 +286,7 @@ async function main() {
     if (await page.getByRole("heading", { name: "ふりかえり" }).isVisible())
       pass("F-1");
     else fail("F-1");
-    if (await page.getByText("準備中").isVisible()) pass("F-2");
+    if (await page.getByText("体調の傾向").isVisible()) pass("F-2");
     else fail("F-2");
 
     // --- G ---

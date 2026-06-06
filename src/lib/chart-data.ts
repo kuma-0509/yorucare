@@ -1,5 +1,6 @@
+import { COPY } from "./copy";
 import { formatChartAxisDate, getDateRangeForPeriod, type ChartPeriod } from "./dates";
-import { getAllRecords } from "./storage";
+import { repository } from "./repository";
 import type { DailyRecord, WarningLevel } from "./types";
 
 export type ChartMetricId = "mood" | "sleep" | "warning" | "selfCare";
@@ -38,9 +39,9 @@ export const CHART_METRICS: ChartMetricConfig[] = [
   },
   {
     id: "warning",
-    label: "危険サイン",
-    description: "0=なし、1=少しあり、2=あり",
-    yAxisLabel: "強さ",
+    label: COPY.warningSign,
+    description: COPY.chartWarningDescription,
+    yAxisLabel: COPY.chartWarningAxis,
     domain: [0, 2],
     formatValue: (v) => {
       if (v === 0) return "なし";
@@ -50,8 +51,8 @@ export const CHART_METRICS: ChartMetricConfig[] = [
   },
   {
     id: "selfCare",
-    label: "セルフケア",
-    description: "その日にできたセルフケアの数",
+    label: COPY.selfCareAction,
+    description: "その日にできた「できること」の数",
     yAxisLabel: "件数",
     formatValue: (v) => `${Math.round(v)}件`,
   },
@@ -91,9 +92,9 @@ export function buildTrendSeries(
   metric: ChartMetricId
 ): TrendDataPoint[] {
   const dates = getDateRangeForPeriod(period);
-  const recordsByDate = new Map(
-    getAllRecords().map((record) => [record.date, record])
-  );
+  const recordsResult = repository.getAllRecords();
+  const records = recordsResult.ok ? recordsResult.value : [];
+  const recordsByDate = new Map(records.map((record) => [record.date, record]));
 
   return dates.map((date) => ({
     date,

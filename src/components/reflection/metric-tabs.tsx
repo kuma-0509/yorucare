@@ -1,8 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { SelectionControl } from "@/components/shared/selection-control";
 import { CHART_METRICS, type ChartMetricId } from "@/lib/chart-data";
-import { cn } from "@/lib/utils";
 
 interface MetricTabsProps {
   value: ChartMetricId;
@@ -13,29 +12,21 @@ export function MetricTabs({ value, onChange }: MetricTabsProps) {
   return (
     <div
       className="flex flex-wrap gap-2"
-      role="tablist"
+      role="group"
       aria-label="グラフの項目"
     >
-      {CHART_METRICS.map(({ id, label }) => {
-        const active = value === id;
-        return (
-          <Button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            variant={active ? "default" : "outline"}
-            size="sm"
-            className={cn(
-              "h-9 rounded-full px-3 text-sm",
-              !active && "bg-card"
-            )}
-            onClick={() => onChange(id)}
-          >
-            {label}
-          </Button>
-        );
-      })}
+      {CHART_METRICS.map(({ id, label }) => (
+        <SelectionControl
+          key={id}
+          selected={value === id}
+          layout="segment"
+          mode="radio"
+          onClick={() => onChange(id)}
+          className="min-w-[4.5rem] rounded-full px-4"
+        >
+          {label}
+        </SelectionControl>
+      ))}
     </div>
   );
 }

@@ -6,25 +6,26 @@ import { cn } from "@/lib/utils";
 interface SaveRecordButtonProps {
   onClick: () => void;
   className?: string;
-  /** 気分カード直下用の補足文 */
-  showHint?: boolean;
+  disabled?: boolean;
+  saving?: boolean;
 }
 
 export function SaveRecordButton({
   onClick,
   className,
-  showHint = false,
+  disabled = false,
+  saving = false,
 }: SaveRecordButtonProps) {
   return (
-    <div className={cn("space-y-2", className)}>
-      <Button type="button" size="lg" className="w-full" onClick={onClick}>
-        記録を保存する
-      </Button>
-      {showHint && (
-        <p className="text-center text-xs leading-relaxed text-muted-foreground">
-          くわしい内容は、あとから足せます。
-        </p>
-      )}
-    </div>
+    <Button
+      type="button"
+      size="lg"
+      className={cn("w-full", className)}
+      onClick={onClick}
+      disabled={disabled || saving}
+      aria-busy={saving}
+    >
+      {saving ? "保存中…" : "記録を保存する"}
+    </Button>
   );
 }

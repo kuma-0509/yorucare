@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --layout-nav: 3.5rem;
+  --layout-action: 3.5rem;
+  --layout-page-bottom: calc(
+    var(--layout-nav) + var(--layout-action) + var(--safe-bottom) + 1rem
+  );
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -11,5 +20,23 @@
     @apply bg-background text-foreground antialiased;
     font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
       "Yu Gothic", "Meiryo", sans-serif;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: calc(var(--safe-bottom) + 0.5rem);
+  }
+
+  .bottom-above-nav {
+    bottom: calc(var(--layout-nav) + var(--safe-bottom));
+  }
+
+  .pb-page {
+    padding-bottom: var(--layout-page-bottom);
+  }
+
+  .pb-nav {
+    padding-bottom: calc(var(--layout-nav) + 1rem);
   }
 }

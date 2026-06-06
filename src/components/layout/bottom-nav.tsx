@@ -1,14 +1,15 @@
 "use client";
 
 import { CalendarDays, ClipboardList, Heart, Sparkles } from "lucide-react";
+import { COPY } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import type { AppTab } from "@/lib/types";
 
 const TABS: { id: AppTab; label: string; icon: React.ElementType }[] = [
-  { id: "today", label: "書く", icon: CalendarDays },
-  { id: "records", label: "これまで", icon: ClipboardList },
-  { id: "selfcare", label: "できること", icon: Heart },
-  { id: "reflection", label: "ふりかえり", icon: Sparkles },
+  { id: "today", label: COPY.tab.today, icon: CalendarDays },
+  { id: "records", label: COPY.tab.records, icon: ClipboardList },
+  { id: "selfcare", label: COPY.tab.selfCare, icon: Heart },
+  { id: "reflection", label: COPY.tab.reflection, icon: Sparkles },
 ];
 
 interface BottomNavProps {
@@ -28,7 +29,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               type="button"
               onClick={() => onTabChange(id)}
               className={cn(
-                "flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-xs transition-colors",
+                "flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 active
                   ? "text-primary font-semibold"
                   : "text-muted-foreground"

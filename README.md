@@ -8,17 +8,19 @@
 - TypeScript
 - Tailwind CSS
 - shadcn/ui 相当の UI コンポーネント（Button / Card / Input / Textarea / Dialog など）
+- Zod（localStorage データのスキーマ検証）
 
 ## 機能（Phase 1）
 
 - 下部タブナビゲーション（書く / これまで / できること / ふりかえり）
 - 画面上部にプロダクト説明・端末保存の注意表示
-- 記録の JSON バックアップ（エクスポート / インポート）
-- 直近7日の記録入力・編集（localStorage 保存）
-- 気分・睡眠・服薬・注意サイン・セルフケア・特記事項
+- 記録の JSON バックアップ（エクスポート / インポート・復元前確認ダイアログ）
+- 直近7日の記録入力・編集（localStorage 保存・スキーマ検証付き）
+- 気分・睡眠・お薬・しんどさのサイン・できること・メモ
 - 直近7日の記録一覧
-- セルフケア辞書の CRUD
-- ふりかえりタブ（準備中）
+- 「できること」辞書の CRUD
+- ふりかえりタブ（気分・睡眠・しんどさのサイン・できることの期間別グラフ）
+- 匿名の利用イベント計測（保存・初回保存・タブ遷移・バックアップ操作）
 
 ## 開発
 
@@ -33,7 +35,7 @@ pnpm dev
 
 ```bash
 npm install
-npm run dev
+npm dev
 ```
 
 ブラウザで [http://localhost:3000](http://localhost:3000) を開いてください。
@@ -58,9 +60,17 @@ npm start
 ブラウザの `localStorage` に保存します。ログイン・API・DB は Phase 1 では未実装です。
 
 - `yorucare_daily_records` — 日次記録
-- `yorucare_self_care_items` — セルフケア項目
+- `yorucare_self_care_items` — 「できること」項目
+- `yorucare_schema_version` — データスキーマ版
+- `yorucare_analytics` — 匿名利用イベント（パイロット検証用）
 
 記録は**この端末のブラウザだけ**に残ります（別端末・別ブラウザでは共有されません）。
+
+## アーキテクチャメモ
+
+- データ操作は `src/lib/repository.ts` に一本化（Phase 2 で API 層へ差し替え可能）
+- 画面文言は `src/lib/copy.ts` が単一基準
+- 選択 UI の a11y 契約は `src/components/shared/selection-control.tsx`
 
 ## 自動チェックリスト（開発用）
 

@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { COPY } from "@/lib/copy";
 import {
   addSelfCareItem,
   deleteSelfCareItem,
@@ -50,7 +51,8 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
   const handleAdd = () => {
     const title = newTitle.trim();
     if (!title) return;
-    addSelfCareItem(title);
+    const result = addSelfCareItem(title);
+    if (!result.ok) return;
     setNewTitle("");
     reload();
   };
@@ -59,7 +61,8 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
     if (!editItem) return;
     const title = editTitle.trim();
     if (!title) return;
-    updateSelfCareItem(editItem.id, title);
+    const result = updateSelfCareItem(editItem.id, title);
+    if (!result.ok) return;
     setEditItem(null);
     setEditTitle("");
     reload();
@@ -67,7 +70,8 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    deleteSelfCareItem(deleteTarget.id);
+    const result = deleteSelfCareItem(deleteTarget.id);
+    if (!result.ok) return;
     setDeleteTarget(null);
     reload();
   };
@@ -75,9 +79,9 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
   return (
     <div className="space-y-4 pb-4">
       <header>
-        <h1 className="text-xl font-bold">セルフケア</h1>
+        <h1 className="text-xl font-bold">{COPY.selfCareAction}</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          自分に合うセルフケアを登録しましょう。
+          自分に合う「{COPY.selfCareAction}」を登録しましょう。
           よく使うものは、今日の記録で選べます。
         </p>
       </header>
@@ -101,7 +105,7 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
       </Card>
 
       <div className="space-y-3">
-        <h2 className="text-base font-semibold">登録済みセルフケア</h2>
+        <h2 className="text-base font-semibold">登録済みの{COPY.selfCareAction}</h2>
         {items.length === 0 ? (
           <Card>
             <CardContent className="py-6 text-center text-sm text-muted-foreground">
@@ -131,7 +135,7 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
                     aria-label="削除"
                     onClick={() => setDeleteTarget(item)}
                   >
-                    <Trash2 className="h-4 w-4 text-orange-700" />
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
               </CardContent>
@@ -146,7 +150,7 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>セルフケアを編集</DialogTitle>
+            <DialogTitle>{COPY.selfCareAction}を編集</DialogTitle>
           </DialogHeader>
           <Input
             value={editTitle}
@@ -172,7 +176,7 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
             過去の記録からも選べなくなります。
           </p>
           <div className="flex flex-col gap-2 mt-4">
-            <Button variant="warning" onClick={handleDelete}>
+            <Button variant="destructive" onClick={handleDelete}>
               削除する
             </Button>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>

@@ -29,7 +29,10 @@ import {
   buildRecordSummaryLines,
   isMeaningfulSummaryValue,
 } from "@/lib/format";
+import { COPY } from "@/lib/copy";
 import {
+  deleteAllRecords,
+  deleteRecord,
   getAllRecords,
   getAllSelfCareItems,
   initSelfCareIfEmpty,
@@ -53,6 +56,9 @@ export function RecordsTab({
   const [records, setRecords] = useState<DailyRecord[]>([]);
   const [selfCareItems, setSelfCareItems] = useState<SelfCareItem[]>([]);
   const [detailRecord, setDetailRecord] = useState<DailyRecord | null>(null);
+  const [deleteRecordTarget, setDeleteRecordTarget] =
+    useState<DailyRecord | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
 
   const days = getLast7Days();
 
@@ -71,6 +77,28 @@ export function RecordsTab({
     records.find((r) => r.date === date) ?? null;
 
   const canEditDate = (date: string) => isWithinLast7Days(date);
+
+  const handleDeleteRecord = () => {
+    if (!deleteRecordTarget) return;
+    const result = deleteRecord(deleteRecordTarget.date);
+    if (!result.ok) return;
+    setDetailRecord((current) =>
+      current?.date === deleteRecordTarget.date ? null : current
+    );
+    setDeleteRecordTarget(null);
+    reload();
+    onDataImported?.();
+  };
+
+  const handleDeleteAllRecords = () => {
+    const result = deleteAllRecords();
+    if (!result.ok) return;
+    setDetailRecord(null);
+    setDeleteRecordTarget(null);
+    setDeleteAllOpen(false);
+    reload();
+    onDataImported?.();
+  };
 
   if (!loaded) {
     return (
@@ -91,6 +119,17 @@ export function RecordsTab({
           直近7日の記録です。1週間以内ならあとから直せます。
         </p>
       </header>
+
+      <Card className="bg-muted/60">
+        <CardContent className="space-y-2 py-4 text-sm leading-relaxed text-muted-foreground">
+          <p>
+            記録はこの端末のブラウザ内に保存されます。共有端末では、個人情報の入力にご注意ください。不要になった記録は削除できます。
+          </p>
+          <p className="text-xs">
+            レビュー時は、本名・診断名・詳しい服薬名などを必要以上に入力しすぎないようご注意ください。
+          </p>
+        </CardContent>
+      </Card>
 
       <div className="space-y-3">
         {[...days].reverse().map((date) => {
@@ -196,6 +235,12 @@ export function RecordsTab({
                       編集する
                     </Button>
                   )}
+                  <Button
+                    variant="warning"
+                    onClick={() => setDeleteRecordTarget(record)}
+                  >
+                    この記録を削除
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -209,6 +254,26 @@ export function RecordsTab({
           onDataImported?.();
         }}
       />
+
+      <Card className="border-orange-200 bg-orange-50/40">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">共有端末で使い終わったら</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            この端末のブラウザに保存されたYoruCareの記録だけを削除します。セルフケア項目や他のlocalStorageデータは削除しません。
+          </p>
+          <Button
+            type="button"
+            variant="warning"
+            className="w-full"
+            disabled={records.length === 0}
+            onClick={() => setDeleteAllOpen(true)}
+          >
+            すべての記録を削除
+          </Button>
+        </CardContent>
+      </Card>
 
       <Dialog
         open={!!detailRecord}
@@ -251,7 +316,7 @@ export function RecordsTab({
               {detailRecord.selfCareMemo && (
                 <div>
                   <span className="text-muted-foreground">
-                    セルフケアのメモ：
+                    {COPY.selfCareAction}のメモ：
                   </span>
                   <p className="whitespace-pre-wrap">
                     {detailRecord.selfCareMemo}
@@ -261,13 +326,85 @@ export function RecordsTab({
               {detailRecord.note && (
                 <div>
                   <span className="text-muted-foreground">
-                    特記事項：
+                    {COPY.memo}：
                   </span>
                   <p className="whitespace-pre-wrap">{detailRecord.note}</p>
                 </div>
               )}
+              <div className="border-t pt-4">
+                <Button
+                  type="button"
+                  variant="warning"
+                  className="w-full"
+                  onClick={() => {
+                    setDeleteRecordTarget(detailRecord);
+                    setDetailRecord(null);
+                  }}
+                >
+                  この記録を削除
+                </Button>
+              </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!deleteRecordTarget}
+        onOpenChange={(open) => !open && setDeleteRecordTarget(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>削除の確認</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm leading-relaxed">
+            この記録を削除しますか？この操作は元に戻せません。
+          </p>
+          <div className="flex flex-col gap-2">
+            <Button type="button" variant="warning" onClick={handleDeleteRecord}>
+              この記録を削除
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteRecordTarget(null)}
+            >
+              キャンセル
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={deleteAllOpen}
+        onOpenChange={(open) => !open && setDeleteAllOpen(false)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>すべての記録を削除</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm leading-relaxed">
+            この端末に保存された記録をすべて削除しますか？この操作は元に戻せません。
+          </p>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            削除するのは、この端末のlocalStorageに保存されたYoruCareの記録のみです。
+          </p>
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              variant="warning"
+              onClick={handleDeleteAllRecords}
+            >
+              すべての記録を削除
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteAllOpen(false)}
+            >
+              キャンセル
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

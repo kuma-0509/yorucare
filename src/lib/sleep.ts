@@ -1,3 +1,5 @@
+import { COPY } from "./copy";
+
 /** 寝た・起きた時刻（HH:mm）から睡眠分数を計算。日付またぎに対応 */
 export function calculateSleepMinutes(
   sleepStart: string | null,
@@ -36,7 +38,7 @@ export function calculateSleepMinutes(
 }
 
 export function formatSleepDuration(minutes: number | null): string {
-  if (minutes === null) return "未計算";
+  if (minutes === null) return COPY.sleepNotEntered;
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (mins === 0) return `${hours}時間`;

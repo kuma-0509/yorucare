@@ -20,7 +20,7 @@ export const MOOD_LABEL_POSITIVE = [
 ] as const;
 
 export const MOOD_LABEL_NEUTRAL = [
-  "普通",
+  "ふつう",
   "穏やか",
   "ドキドキ",
   "モヤモヤ",
@@ -35,7 +35,7 @@ export const MOOD_LABEL_NEGATIVE = [
   "悲しい",
   "疲れた",
   "後悔",
-  "恐れる",
+  "こわい",
   "イライラ",
   "怒り",
   "嫌い",
@@ -48,7 +48,7 @@ export const MEDICATION_OPTIONS: {
   { value: "done", label: "できた" },
   { value: "partial", label: "一部できた" },
   { value: "forgot", label: "忘れた" },
-  { value: "none", label: "該当なし" },
+  { value: "none", label: "お薬は飲んでいない" },
 ];
 
 export const WARNING_LEVEL_OPTIONS: {
@@ -98,6 +98,8 @@ export const STORAGE_KEYS = {
   records: "yorucare_daily_records",
   selfCare: "yorucare_self_care_items",
   storageNoticeDismissed: "yorucare_storage_notice_dismissed",
+  schemaVersion: "yorucare_schema_version",
+  analytics: "yorucare_analytics",
 } as const;
 
 /** 利用者向けふりかえりタブに表示する予定機能（短く） */

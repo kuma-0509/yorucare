@@ -12,8 +12,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { StickyActionBar } from "@/components/layout/sticky-action-bar";
 import { CollapsibleSection } from "@/components/shared/collapsible-section";
-import { ChipButton, OptionButton } from "@/components/shared/option-button";
+import { LiveRegion } from "@/components/shared/live-region";
+import {
+  ChipButton,
+  SelectionControl,
+  SelectionGroup,
+} from "@/components/shared/option-button";
+import { SaveRecordButton } from "@/components/shared/save-record-button";
+import { trackRecordSaved } from "@/lib/analytics";
+import { COPY } from "@/lib/copy";
+import { storageErrorMessage } from "@/lib/result";
 import {
   MEDICATION_OPTIONS,
   MOOD_LABEL_NEGATIVE,
@@ -37,6 +47,7 @@ import { buildRecordSummaryLines } from "@/lib/format";
 import { calculateSleepMinutes, formatSleepDuration } from "@/lib/sleep";
 import {
   addSelfCareItem,
+  getAllRecords,
   getAllSelfCareItems,
   getRecordByDate,
   initSelfCareIfEmpty,
@@ -45,10 +56,11 @@ import {
 } from "@/lib/storage";
 import type { AppTab } from "@/lib/types";
 import type { DailyRecord, SelfCareItem } from "@/lib/types";
-import { SaveRecordButton } from "@/components/shared/save-record-button";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 const MAX_MOOD_LABELS = 3;
+const MAX_NOTE_LENGTH = 2000;
+const MAX_SELF_CARE_TITLE_LENGTH = 100;
 
 type FormState = Omit<
   DailyRecord,
@@ -82,6 +94,8 @@ export function TodayRecordTab({
   const [showMemo, setShowMemo] = useState(false);
   const [newSelfCareTitle, setNewSelfCareTitle] = useState("");
   const [showAddSelfCare, setShowAddSelfCare] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [liveMessage, setLiveMessage] = useState<string | null>(null);
 
   const loadForm = useCallback((date: string) => {
     const record = getRecordByDate(date);
@@ -150,25 +164,44 @@ export function TodayRecordTab({
   const handleAddSelfCareInline = () => {
     const title = newSelfCareTitle.trim();
     if (!title) return;
-    const item = addSelfCareItem(title);
+    const result = addSelfCareItem(title);
+    if (!result.ok) {
+      setLiveMessage(storageErrorMessage(result.error));
+      return;
+    }
     setSelfCareItems(getAllSelfCareItems());
     setForm((prev) => ({
       ...prev,
-      selfCareIds: [...prev.selfCareIds, item.id],
+      selfCareIds: [...prev.selfCareIds, result.value.id],
     }));
     setNewSelfCareTitle("");
     setShowAddSelfCare(false);
   };
 
   const handleSave = () => {
-    const record = saveRecord(targetDate, {
+    if (saving) return;
+    setSaving(true);
+    const hadRecordsBefore = getAllRecords().length > 0;
+    const result = saveRecord(targetDate, {
       ...form,
       id: getRecordByDate(targetDate)?.id,
     });
-    setSavedRecord(record);
+    setSaving(false);
+    if (!result.ok) {
+      setLiveMessage(storageErrorMessage(result.error));
+      return;
+    }
+    trackRecordSaved(targetDate, !hadRecordsBefore);
+    setSavedRecord(result.value);
     setShowSaved(true);
+    setLiveMessage("記録できました。");
     setSelfCareItems(getAllSelfCareItems());
   };
+
+  const recordTitle =
+    targetDate === today
+      ? "今日の記録"
+      : `${formatDisplayDate(targetDate)}の記録`;
 
   const showWarningTags =
     form.warningLevel === "small" || form.warningLevel === "yes";
@@ -207,7 +240,7 @@ export function TodayRecordTab({
             {savedRecord.note && (
               <div className="text-base pt-1 border-t">
                 <span className="text-muted-foreground">
-                  特記事項：
+                  {COPY.memo}：
                 </span>
                 <p className="mt-1 whitespace-pre-wrap">{savedRecord.note}</p>
               </div>
@@ -249,9 +282,9 @@ export function TodayRecordTab({
 
   return (
     <>
-    <div className="space-y-4 pb-36">
+    <div className="space-y-4">
       <header>
-        <h1 className="text-xl font-bold">今日の記録</h1>
+        <h1 className="text-xl font-bold">{recordTitle}</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           {targetDate === today ? (
             <>
@@ -297,14 +330,13 @@ export function TodayRecordTab({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Label className="mb-2 block text-sm text-muted-foreground">
-            総合気分
-          </Label>
-          <div className="space-y-2">
+          <SelectionGroup legend="総合気分" mode="radio">
             {MOOD_OPTIONS.map(({ score, label }) => (
-              <OptionButton
+              <SelectionControl
                 key={score}
                 selected={form.moodScore === score}
+                mode="radio"
+                layout="row"
                 onClick={() =>
                   setForm((prev) => ({
                     ...prev,
@@ -313,24 +345,22 @@ export function TodayRecordTab({
                 }
               >
                 {label}
-              </OptionButton>
+              </SelectionControl>
             ))}
-          </div>
+          </SelectionGroup>
         </CardContent>
       </Card>
 
-      <SaveRecordButton onClick={handleSave} showHint />
-
       <CollapsibleSection
         title="くわしく書く（任意）"
-        description="気持ちのタグ、睡眠、お薬の記録"
+        description="気持ち、睡眠、お薬の記録"
       >
         <div>
           <Label className="mb-2 block text-sm text-muted-foreground">
             気持ち（最大3つ）
           </Label>
           {moodLimitMessage && (
-            <p className="mb-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive-foreground">
+            <p className="mb-2 rounded-lg bg-caution px-3 py-2 text-sm text-caution-foreground">
               {moodLimitMessage}
             </p>
           )}
@@ -396,7 +426,7 @@ export function TodayRecordTab({
             <span className="font-medium">
               {form.sleepStart && form.sleepEnd
                 ? formatSleepDuration(sleepMinutes)
-                : "—"}
+                : COPY.sleepNotEntered}
             </span>
           </p>
         </div>
@@ -405,36 +435,42 @@ export function TodayRecordTab({
           <div>
             <p className="text-base font-semibold">お薬</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              処方など、お薬の記録です。該当がなければ「該当なし」を選んでください。
+              処方など、お薬の記録です。該当がなければ「{COPY.medicationNone}」を選んでください。
             </p>
           </div>
-          {MEDICATION_OPTIONS.map(({ value, label }) => (
-            <OptionButton
-              key={value}
-              selected={form.medication === value}
-              onClick={() =>
-                setForm((prev) => ({
-                  ...prev,
-                  medication: prev.medication === value ? null : value,
-                }))
-              }
-            >
-              {label}
-            </OptionButton>
-          ))}
+          <SelectionGroup legend="お薬" mode="radio">
+            {MEDICATION_OPTIONS.map(({ value, label }) => (
+              <SelectionControl
+                key={value}
+                selected={form.medication === value}
+                mode="radio"
+                layout="row"
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    medication: prev.medication === value ? null : value,
+                  }))
+                }
+              >
+                {label}
+              </SelectionControl>
+            ))}
+          </SelectionGroup>
         </div>
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="しんどさのサイン（任意）"
+        title={`${COPY.warningSign}（任意）`}
         description="いつもと違うしんどさがあれば選んでください。気になることがなければ、選ばなくても構いません。"
         variant="caution"
       >
-        <div className="space-y-2">
+        <SelectionGroup legend={COPY.warningSign} mode="radio">
           {WARNING_LEVEL_OPTIONS.map(({ value, label }) => (
-            <OptionButton
+            <SelectionControl
               key={value}
               selected={form.warningLevel === value}
+              mode="radio"
+              layout="row"
               onClick={() =>
                 setForm((prev) => ({
                   ...prev,
@@ -445,9 +481,9 @@ export function TodayRecordTab({
               }
             >
               {label}
-            </OptionButton>
+            </SelectionControl>
           ))}
-        </div>
+        </SelectionGroup>
 
         {showWarningTags && (
           <div className="space-y-4 border-t border-border pt-4">
@@ -481,6 +517,7 @@ export function TodayRecordTab({
                 <Textarea
                   id="warning-note"
                   className="mt-2"
+                  maxLength={MAX_NOTE_LENGTH}
                   value={form.warningNote}
                   onChange={(e) =>
                     setForm((prev) => ({
@@ -496,17 +533,16 @@ export function TodayRecordTab({
         )}
       </CollapsibleSection>
 
-      {/* セルフケア */}
       <Card>
         <CardHeader>
           <CardTitle>
-            {targetDate === today ? "今日できたセルフケア" : "できたセルフケア"}
+            {targetDate === today ? COPY.doneTodayToday : COPY.doneToday}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {selfCareItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              「できること」タブで登録すると、ここから選べます。
+              「{COPY.tab.selfCare}」タブで登録すると、ここから選べます。
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -527,7 +563,8 @@ export function TodayRecordTab({
               <Input
                 value={newSelfCareTitle}
                 onChange={(e) => setNewSelfCareTitle(e.target.value)}
-                placeholder="新しいセルフケアの名前"
+                maxLength={MAX_SELF_CARE_TITLE_LENGTH}
+                placeholder="新しいできることの名前"
               />
               <div className="flex gap-2">
                 <Button type="button" className="flex-1" onClick={handleAddSelfCareInline}>
@@ -551,17 +588,17 @@ export function TodayRecordTab({
             >
               <Plus className="h-4 w-4" />
               {targetDate === today
-                ? "今日できたセルフケアを追加"
-                : "セルフケアを追加"}
+                ? `${COPY.doneTodayToday}を追加`
+                : `${COPY.doneToday}を追加`}
             </Button>
           )}
 
           <button
             type="button"
-            className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm text-primary"
+            className="flex min-h-11 w-full items-center justify-between rounded-xl px-2 py-2 text-sm text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             onClick={() => setShowMemo(!showMemo)}
           >
-            <span>＋ セルフケアのメモを書く</span>
+            <span>＋ {COPY.selfCareAction}のメモを書く</span>
             {showMemo ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
@@ -572,12 +609,13 @@ export function TodayRecordTab({
             <div>
               <Label htmlFor="selfcare-memo">
                 {targetDate === today
-                  ? "今日のセルフケアについて、少し残したいこと"
-                  : "セルフケアについて、少し残したいこと"}
+                  ? `今日の${COPY.selfCareAction}について、少し残したいこと`
+                  : `${COPY.selfCareAction}について、少し残したいこと`}
               </Label>
               <Textarea
                 id="selfcare-memo"
                 className="mt-2"
+                maxLength={MAX_NOTE_LENGTH}
                 value={form.selfCareMemo}
                 onChange={(e) =>
                   setForm((prev) => ({
@@ -591,17 +629,20 @@ export function TodayRecordTab({
         </CardContent>
       </Card>
 
-      {/* 特記事項 */}
       <Card>
         <CardHeader>
-          <CardTitle>特記事項（任意）</CardTitle>
+          <CardTitle>{COPY.memoOptional}</CardTitle>
           <CardDescription>
-            あとから見返せるように、気づいたことがあれば残しておきましょう。
+            思いついたこと、体調の変化など、自由に残せます。
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Label htmlFor="record-note" className="sr-only">
+            {COPY.memoOptional}
+          </Label>
           <Textarea
             id="record-note"
+            maxLength={MAX_NOTE_LENGTH}
             value={form.note}
             onChange={(e) =>
               setForm((prev) => ({ ...prev, note: e.target.value }))
@@ -612,11 +653,10 @@ export function TodayRecordTab({
       </Card>
     </div>
 
-    <div className="fixed bottom-[4.75rem] left-0 right-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur-sm pb-safe">
-      <div className="mx-auto max-w-lg">
-        <SaveRecordButton onClick={handleSave} />
-      </div>
-    </div>
+    <StickyActionBar>
+      <SaveRecordButton onClick={handleSave} saving={saving} />
+    </StickyActionBar>
+    <LiveRegion message={liveMessage} />
     </>
   );
 }
