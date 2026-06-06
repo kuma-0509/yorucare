@@ -98,6 +98,7 @@ export const STORAGE_KEYS = {
   records: "yorucare_daily_records",
   selfCare: "yorucare_self_care_items",
   storageNoticeDismissed: "yorucare_storage_notice_dismissed",
+  reviewConsent: "yorucare_review_consent",
   schemaVersion: "yorucare_schema_version",
   analytics: "yorucare_analytics",
 } as const;

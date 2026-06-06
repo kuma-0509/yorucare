@@ -6,6 +6,7 @@ import { BuildFooter } from "@/components/layout/build-footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { StorageHealthBanner } from "@/components/shared/storage-health-banner";
 import { StorageNoticeBanner } from "@/components/shared/storage-notice-banner";
+import { ReviewConsentDialog } from "@/components/shared/review-consent-dialog";
 import { TodayRecordTab } from "@/components/tabs/today-record-tab";
 import { RecordsTab } from "@/components/tabs/records-tab";
 import { SelfCareTab } from "@/components/tabs/selfcare-tab";
@@ -79,6 +80,7 @@ export function AppShell() {
           setActiveTab(tab);
         }}
       />
+      <ReviewConsentDialog />
     </div>
   );
 }
