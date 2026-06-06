@@ -25,6 +25,10 @@ import { trackRecordSaved } from "@/lib/analytics";
 import { COPY } from "@/lib/copy";
 import { storageErrorMessage } from "@/lib/result";
 import {
+  MAX_NOTE_LENGTH,
+  MAX_SELF_CARE_TITLE_LENGTH,
+} from "@/lib/schemas";
+import {
   MEDICATION_OPTIONS,
   MOOD_LABEL_NEGATIVE,
   MOOD_LABEL_NEUTRAL,
@@ -59,8 +63,6 @@ import type { DailyRecord, SelfCareItem } from "@/lib/types";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 const MAX_MOOD_LABELS = 3;
-const MAX_NOTE_LENGTH = 2000;
-const MAX_SELF_CARE_TITLE_LENGTH = 100;
 
 type FormState = Omit<
   DailyRecord,

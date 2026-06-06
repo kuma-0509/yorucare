@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { COPY } from "@/lib/copy";
+import { MAX_SELF_CARE_TITLE_LENGTH } from "@/lib/schemas";
 import {
   addSelfCareItem,
   deleteSelfCareItem,
@@ -38,15 +39,15 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
   const [editTitle, setEditTitle] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<SelfCareItem | null>(null);
 
-  const reload = () => {
+  const reload = useCallback(() => {
     initSelfCareIfEmpty();
     setItems(getAllSelfCareItems());
     onDataChange?.();
-  };
+  }, [onDataChange]);
 
   useEffect(() => {
     reload();
-  }, []);
+  }, [reload]);
 
   const handleAdd = () => {
     const title = newTitle.trim();
@@ -94,6 +95,7 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
           <Input
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
+            maxLength={MAX_SELF_CARE_TITLE_LENGTH}
             placeholder="例：帰宅後に10分横になる"
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           />
@@ -155,6 +157,7 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
           <Input
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
+            maxLength={MAX_SELF_CARE_TITLE_LENGTH}
             className="mt-2"
           />
           <Button className="w-full mt-4" onClick={handleUpdate}>

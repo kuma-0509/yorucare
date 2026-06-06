@@ -182,12 +182,12 @@ async function main() {
   // UI経由の復元（DataBackupPanel）
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.locator("nav.fixed").getByRole("button", { name: "これまで", exact: true }).click();
+  await page.evaluate(() => {
+    localStorage.setItem("yorucare_storage_notice_dismissed", "1");
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.locator("nav.fixed button").nth(1).click();
   await page.waitForTimeout(300);
-
-  const fileChooserPromise = page.waitForEvent("filechooser");
-  await page.getByRole("button", { name: "保存したファイルから復元する" }).click();
-  const fileChooser = await fileChooserPromise;
 
   const fs = await import("fs");
   const path = await import("path");
@@ -198,10 +198,14 @@ async function main() {
     JSON.stringify(valid, null, 2),
     "utf8"
   );
-  await fileChooser.setFiles(tmpFile);
+  await page.locator('input[type="file"]').setInputFiles(tmpFile);
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "復元する", exact: true })
+    .click();
   await page.waitForTimeout(500);
 
-  const uiMessage = await page.getByText("バックアップを読み込みました").isVisible();
+  const uiMessage = await page.getByText("バックアップを読み込みました").first().isVisible();
   const uiStored = await getStoredRecords(page);
   record(
     "UIから正常バックアップを復元",
@@ -212,12 +216,13 @@ async function main() {
   // UI経由の壊れたファイル
   const badFile = path.join(os.tmpdir(), "yorucare-verify-bad.json");
   fs.writeFileSync(badFile, "{broken", "utf8");
-  const badChooserPromise = page.waitForEvent("filechooser");
-  await page.getByRole("button", { name: "保存したファイルから復元する" }).click();
-  const badChooser = await badChooserPromise;
-  await badChooser.setFiles(badFile);
+  await page.locator('input[type="file"]').setInputFiles(badFile);
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "復元する", exact: true })
+    .click();
   await page.waitForTimeout(500);
-  const badMsg = await page.getByText("ファイルを読み込めませんでした").isVisible();
+  const badMsg = await page.getByText("ファイルを読み込めませんでした").first().isVisible();
   record("UIから壊れたJSONを拒否", badMsg);
 
   try {

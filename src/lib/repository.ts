@@ -71,7 +71,15 @@ function readSelfCareItems(): Result<SelfCareItem[]> {
 }
 
 function writeRecords(records: DailyRecord[]): Result<void> {
-  const result = writeRaw(STORAGE_KEYS.records, JSON.stringify(records));
+  const parsed = parseRecordsJson(records);
+  if (!parsed.success) {
+    return err({
+      code: "VALIDATION_FAILED",
+      message: "記録の形式が正しくないため保存できませんでした。",
+    });
+  }
+
+  const result = writeRaw(STORAGE_KEYS.records, JSON.stringify(parsed.data));
   if (result.ok) {
     writeRaw(STORAGE_KEYS.schemaVersion, String(STORAGE_SCHEMA_VERSION));
   }
@@ -79,7 +87,15 @@ function writeRecords(records: DailyRecord[]): Result<void> {
 }
 
 function writeSelfCareItems(items: SelfCareItem[]): Result<void> {
-  const result = writeRaw(STORAGE_KEYS.selfCare, JSON.stringify(items));
+  const parsed = parseSelfCareJson(items);
+  if (!parsed.success) {
+    return err({
+      code: "VALIDATION_FAILED",
+      message: "できることの形式が正しくないため保存できませんでした。",
+    });
+  }
+
+  const result = writeRaw(STORAGE_KEYS.selfCare, JSON.stringify(parsed.data));
   if (result.ok) {
     writeRaw(STORAGE_KEYS.schemaVersion, String(STORAGE_SCHEMA_VERSION));
   }

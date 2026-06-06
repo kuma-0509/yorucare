@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -29,10 +29,8 @@ export function ReflectionTrends({ refreshKey = 0 }: ReflectionTrendsProps) {
 
   const metric = CHART_METRICS.find((m) => m.id === metricId) ?? CHART_METRICS[0];
 
-  const points = useMemo(
-    () => buildTrendSeries(period, metricId),
-    [period, metricId, refreshKey]
-  );
+  void refreshKey;
+  const points = buildTrendSeries(period, metricId);
 
   const recordedCount = countRecordedPoints(points);
 

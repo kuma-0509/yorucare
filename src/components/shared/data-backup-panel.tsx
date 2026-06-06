@@ -25,6 +25,8 @@ interface DataBackupPanelProps {
   onImported?: () => void;
 }
 
+const MAX_BACKUP_FILE_BYTES = 2 * 1024 * 1024;
+
 export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -41,11 +43,19 @@ export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
   };
 
   const handleImport = (file: File) => {
+    if (file.size > MAX_BACKUP_FILE_BYTES) {
+      setMessage("ファイルが大きすぎるため読み込めませんでした。");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       const text = typeof reader.result === "string" ? reader.result : "";
       setPendingImport(text);
       setConfirmOpen(true);
+    };
+    reader.onerror = () => {
+      setMessage("ファイルを読み込めませんでした。");
     };
     reader.readAsText(file);
   };
@@ -75,6 +85,9 @@ export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          <p className="rounded-xl bg-caution px-3 py-2 text-sm leading-relaxed text-caution-foreground">
+            {COPY.backupPlaintextNotice}
+          </p>
           <Button
             type="button"
             variant="outline"
