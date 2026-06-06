@@ -29,6 +29,7 @@ import {
   buildRecordSummaryLines,
   isMeaningfulSummaryValue,
 } from "@/lib/format";
+import { formatMoodLabelsDisplay } from "@/lib/mood-labels";
 import { COPY } from "@/lib/copy";
 import {
   deleteAllRecords,
@@ -174,7 +175,12 @@ export function RecordsTab({
           const previewLines = [
             { label: "気分", value: getMoodLabel(record.moodScore) },
             ...(record.moodLabels.length > 0
-              ? [{ label: "気持ち", value: record.moodLabels.join("、") }]
+              ? [
+                  {
+                    label: "気持ち",
+                    value: formatMoodLabelsDisplay(record.moodLabels),
+                  },
+                ]
               : []),
             { label: "睡眠", value: formatSleepSummary(record) },
             { label: "お薬", value: getMedicationLabel(record.medication) },

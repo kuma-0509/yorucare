@@ -11,7 +11,11 @@ import {
 } from "recharts";
 import type { ChartMetricConfig, TrendDataPoint } from "@/lib/chart-data";
 import { getYAxisDomain } from "@/lib/chart-data";
-import type { ChartPeriod } from "@/lib/dates";
+import {
+  formatChartTooltipLabel,
+  isMonthlyChartPeriod,
+  type ChartPeriod,
+} from "@/lib/dates";
 
 interface TrendLineChartProps {
   points: TrendDataPoint[];
@@ -20,10 +24,9 @@ interface TrendLineChartProps {
 }
 
 function getTickInterval(period: ChartPeriod, pointCount: number): number {
-  if (period === "week") return 0;
-  if (period === "month") return Math.max(1, Math.floor(pointCount / 6));
-  if (period === "6months") return Math.max(1, Math.floor(pointCount / 8));
-  return Math.max(1, Math.floor(pointCount / 6));
+  if (period === "week" || isMonthlyChartPeriod(period)) return 0;
+  if (period === "month") return Math.max(1, Math.floor(pointCount / 5));
+  return Math.max(1, Math.floor(pointCount / 5));
 }
 
 export function TrendLineChart({
@@ -33,13 +36,15 @@ export function TrendLineChart({
 }: TrendLineChartProps) {
   const domain = getYAxisDomain(metric, points);
   const tickInterval = getTickInterval(period, points.length);
+  const isCategoricalAxis = metric.axisTicks !== undefined;
+  const yAxisWidth = isCategoricalAxis ? 72 : 32;
 
   return (
     <div className="h-[220px] w-full sm:h-[240px]">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={points}
-          margin={{ top: 8, right: 8, left: 4, bottom: 0 }}
+          margin={{ top: 8, right: 8, left: isCategoricalAxis ? 0 : 4, bottom: 0 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
@@ -52,16 +57,27 @@ export function TrendLineChart({
             tickLine={false}
             axisLine={{ stroke: "#e2e8f0" }}
             interval={tickInterval}
-            minTickGap={16}
+            minTickGap={
+              period === "week" ? 16 : isMonthlyChartPeriod(period) ? 8 : 24
+            }
           />
           <YAxis
             domain={domain}
-            allowDecimals={metric.id !== "selfCare"}
-            tick={{ fontSize: 12, fill: "#64748b" }}
+            allowDecimals={!isCategoricalAxis && metric.id !== "selfCare"}
+            ticks={metric.axisTicks}
+            tickFormatter={
+              metric.formatAxisTick
+                ? (value) => metric.formatAxisTick!(Number(value))
+                : undefined
+            }
+            tick={{
+              fontSize: isCategoricalAxis ? 11 : 12,
+              fill: "#64748b",
+            }}
             tickLine={false}
             axisLine={false}
-            width={32}
-            tickCount={metric.domain ? 6 : 5}
+            width={yAxisWidth}
+            tickCount={isCategoricalAxis ? undefined : metric.domain ? 6 : 5}
           />
           <Tooltip
             contentStyle={{
@@ -75,7 +91,8 @@ export function TrendLineChart({
             }}
             labelFormatter={(_, payload) => {
               const item = payload?.[0]?.payload as TrendDataPoint | undefined;
-              return item?.date ?? "";
+              if (!item?.date) return "";
+              return formatChartTooltipLabel(item.date, period);
             }}
           />
           <Line

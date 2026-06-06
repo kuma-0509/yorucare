@@ -21,12 +21,14 @@ import {
   SelectionGroup,
 } from "@/components/shared/option-button";
 import { SaveRecordButton } from "@/components/shared/save-record-button";
+import { MoodCategoryDialog } from "@/components/mood/mood-category-dialog";
 import { trackRecordSaved } from "@/lib/analytics";
 import { COPY } from "@/lib/copy";
 import { storageErrorMessage } from "@/lib/result";
 import {
   MAX_NOTE_LENGTH,
   MAX_SELF_CARE_TITLE_LENGTH,
+  MAX_MOOD_LABEL_LENGTH,
 } from "@/lib/schemas";
 import {
   MEDICATION_OPTIONS,
@@ -50,6 +52,13 @@ import {
 import { buildRecordSummaryLines } from "@/lib/format";
 import { calculateSleepMinutes, formatSleepDuration } from "@/lib/sleep";
 import {
+  createCustomMoodLabel,
+  createPredefinedMoodLabel,
+  getMoodCategoryStyles,
+  isDuplicateMoodLabel,
+  isMoodLabelSelected,
+} from "@/lib/mood-labels";
+import {
   addSelfCareItem,
   getAllRecords,
   getAllSelfCareItems,
@@ -59,7 +68,7 @@ import {
   saveRecord,
 } from "@/lib/storage";
 import type { AppTab } from "@/lib/types";
-import type { DailyRecord, SelfCareItem } from "@/lib/types";
+import type { DailyRecord, MoodLabelCategory, MoodLabelEntry, SelfCareItem } from "@/lib/types";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 const MAX_MOOD_LABELS = 3;
@@ -73,12 +82,14 @@ interface TodayRecordTabProps {
   initialDate?: string;
   onNavigateTab: (tab: AppTab, options?: { recordDate?: string }) => void;
   refreshKey?: number;
+  onSavedViewChange?: (showing: boolean) => void;
 }
 
 export function TodayRecordTab({
   initialDate,
   onNavigateTab,
   refreshKey = 0,
+  onSavedViewChange,
 }: TodayRecordTabProps) {
   const today = getTodayString();
   const weekDates = [...getLast7Days()].reverse();
@@ -91,6 +102,10 @@ export function TodayRecordTab({
   );
   const [selfCareItems, setSelfCareItems] = useState<SelfCareItem[]>([]);
   const [moodLimitMessage, setMoodLimitMessage] = useState("");
+  const [customMoodInput, setCustomMoodInput] = useState("");
+  const [customMoodError, setCustomMoodError] = useState("");
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [pendingCustomLabel, setPendingCustomLabel] = useState("");
   const [showSaved, setShowSaved] = useState(false);
   const [savedRecord, setSavedRecord] = useState<DailyRecord | null>(null);
   const [showMemo, setShowMemo] = useState(false);
@@ -104,6 +119,11 @@ export function TodayRecordTab({
     setForm(recordToFormState(record, date));
     setShowSaved(false);
     setSavedRecord(null);
+    setCustomMoodInput("");
+    setCustomMoodError("");
+    setMoodLimitMessage("");
+    setShowCategoryModal(false);
+    setPendingCustomLabel("");
   }, []);
 
   useEffect(() => {
@@ -121,25 +141,94 @@ export function TodayRecordTab({
     loadForm(targetDate);
   }, [targetDate, loadForm, refreshKey]);
 
+  useEffect(() => {
+    onSavedViewChange?.(showSaved);
+    return () => onSavedViewChange?.(false);
+  }, [showSaved, onSavedViewChange]);
+
   const sleepMinutes = calculateSleepMinutes(form.sleepStart, form.sleepEnd);
 
   const toggleMoodLabel = (label: string) => {
     setMoodLimitMessage("");
+    setCustomMoodError("");
     setForm((prev) => {
-      const has = prev.moodLabels.includes(label);
+      const has = isMoodLabelSelected(prev.moodLabels, label);
       if (has) {
         return {
           ...prev,
-          moodLabels: prev.moodLabels.filter((l) => l !== label),
+          moodLabels: prev.moodLabels.filter((entry) => entry.label !== label),
         };
       }
       if (prev.moodLabels.length >= MAX_MOOD_LABELS) {
-        setMoodLimitMessage("最大3つまで選べます");
+        setMoodLimitMessage("気持ちは3つまで選べます");
         return prev;
       }
-      return { ...prev, moodLabels: [...prev.moodLabels, label] };
+      const entry = createPredefinedMoodLabel(label);
+      if (!entry) return prev;
+      return { ...prev, moodLabels: [...prev.moodLabels, entry] };
     });
   };
+
+  const toggleCustomMoodLabel = (entry: MoodLabelEntry) => {
+    setMoodLimitMessage("");
+    setCustomMoodError("");
+    setForm((prev) => {
+      const has = isMoodLabelSelected(prev.moodLabels, entry.label);
+      if (has) {
+        return {
+          ...prev,
+          moodLabels: prev.moodLabels.filter(
+            (item) => item.label !== entry.label
+          ),
+        };
+      }
+      if (prev.moodLabels.length >= MAX_MOOD_LABELS) {
+        setMoodLimitMessage("気持ちは3つまで選べます");
+        return prev;
+      }
+      return { ...prev, moodLabels: [...prev.moodLabels, entry] };
+    });
+  };
+
+  const handleCustomMoodAddClick = () => {
+    setCustomMoodError("");
+    setMoodLimitMessage("");
+
+    const trimmed = customMoodInput.trim();
+    if (!trimmed) {
+      setCustomMoodError("気持ちを入力してください");
+      return;
+    }
+    if (trimmed.length > MAX_MOOD_LABEL_LENGTH) {
+      setCustomMoodError("10文字以内で入力してください");
+      return;
+    }
+    if (isDuplicateMoodLabel(form.moodLabels, trimmed)) {
+      setCustomMoodError("同じ気持ちはすでに追加されています");
+      return;
+    }
+    if (form.moodLabels.length >= MAX_MOOD_LABELS) {
+      setMoodLimitMessage("気持ちは3つまで選べます");
+      return;
+    }
+
+    setPendingCustomLabel(trimmed);
+    setShowCategoryModal(true);
+  };
+
+  const handleCategorySelect = (category: MoodLabelCategory) => {
+    const entry = createCustomMoodLabel(pendingCustomLabel, category);
+    setForm((prev) => ({
+      ...prev,
+      moodLabels: [...prev.moodLabels, entry],
+    }));
+    setCustomMoodInput("");
+    setPendingCustomLabel("");
+    setShowCategoryModal(false);
+    setCustomMoodError("");
+  };
+
+  const customMoodEntries = form.moodLabels.filter((entry) => entry.isCustom);
 
   const toggleWarningTag = (tag: string) => {
     setForm((prev) => {
@@ -211,49 +300,46 @@ export function TodayRecordTab({
   if (showSaved && savedRecord) {
     const lines = buildRecordSummaryLines(savedRecord, selfCareItems);
     return (
-      <div className="space-y-5 pb-4">
-        <div className="rounded-2xl bg-secondary p-5 text-center">
-          <p className="text-lg font-medium text-secondary-foreground">
+      <div className="flex flex-col gap-3">
+        <div className="shrink-0 rounded-xl bg-secondary px-3 py-2.5 text-center">
+          <p className="text-base font-medium text-secondary-foreground">
             記録できました。
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-secondary-foreground opacity-90">
+          <p className="mt-0.5 text-xs leading-snug text-secondary-foreground/90">
             今日の自分を残せたことも、セルフケアのひとつです。
           </p>
-          <p className="mt-3 text-xs leading-relaxed text-secondary-foreground/80">
+          <p className="mt-1 text-[11px] leading-snug text-secondary-foreground/75">
             記録はこの端末のブラウザだけに残ります。別のスマホやブラウザでは見えません。
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>
+        <Card className="min-h-0">
+          <CardHeader className="gap-0 p-3 pb-1">
+            <CardTitle className="text-base">
               {targetDate === today ? "今日の記録" : "記録のまとめ"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-1 px-3 pb-3 pt-0">
             {lines.map(({ label, value }) => (
-              <div key={label} className="text-base">
-                <span className="text-muted-foreground">
-                  {label}：
-                </span>
+              <div key={label} className="text-sm leading-snug">
+                <span className="text-muted-foreground">{label}：</span>
                 <span>{value}</span>
               </div>
             ))}
             {savedRecord.note && (
-              <div className="text-base pt-1 border-t">
-                <span className="text-muted-foreground">
-                  {COPY.memo}：
-                </span>
-                <p className="mt-1 whitespace-pre-wrap">{savedRecord.note}</p>
+              <div className="border-t pt-1.5 text-sm leading-snug">
+                <span className="text-muted-foreground">{COPY.memo}：</span>
+                <p className="mt-0.5 max-h-14 overflow-y-auto whitespace-pre-wrap">
+                  {savedRecord.note}
+                </p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex shrink-0 flex-col gap-2">
           <Button
             variant="default"
-            size="lg"
             onClick={() => {
               setShowSaved(false);
               loadForm(targetDate);
@@ -265,16 +351,11 @@ export function TodayRecordTab({
           </Button>
           <Button
             variant="outline"
-            size="lg"
             onClick={() => onNavigateTab("records")}
           >
             これまでの記録を見る
           </Button>
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={() => setShowSaved(false)}
-          >
+          <Button variant="ghost" onClick={() => setShowSaved(false)}>
             閉じる
           </Button>
         </div>
@@ -384,6 +465,52 @@ export function TodayRecordTab({
             selected={form.moodLabels}
             onToggle={toggleMoodLabel}
           />
+
+          {customMoodEntries.length > 0 && (
+            <CustomMoodLabelGroup
+              entries={customMoodEntries}
+              selected={form.moodLabels}
+              onToggle={toggleCustomMoodLabel}
+            />
+          )}
+
+          <div className="mt-4 space-y-2 border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">
+              選択肢にない気持ちは、自分の言葉で追加できます
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={customMoodInput}
+                onChange={(e) => {
+                  setCustomMoodInput(e.target.value);
+                  setCustomMoodError("");
+                }}
+                maxLength={MAX_MOOD_LABEL_LENGTH}
+                placeholder="気持ちを追加"
+                aria-label="気持ちを追加"
+                className="min-h-11 flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCustomMoodAddClick();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                className="min-h-11 shrink-0 px-4"
+                onClick={handleCustomMoodAddClick}
+              >
+                追加
+              </Button>
+            </div>
+            {customMoodError && (
+              <p className="rounded-lg bg-caution px-3 py-2 text-sm text-caution-foreground">
+                {customMoodError}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4 border-t border-border pt-4">
@@ -659,6 +786,11 @@ export function TodayRecordTab({
       <SaveRecordButton onClick={handleSave} saving={saving} />
     </StickyActionBar>
     <LiveRegion message={liveMessage} />
+    <MoodCategoryDialog
+      open={showCategoryModal}
+      onOpenChange={setShowCategoryModal}
+      onSelect={handleCategorySelect}
+    />
     </>
   );
 }
@@ -671,7 +803,7 @@ function MoodLabelGroup({
 }: {
   title: string;
   labels: readonly string[];
-  selected: string[];
+  selected: MoodLabelEntry[];
   onToggle: (label: string) => void;
 }) {
   return (
@@ -681,7 +813,7 @@ function MoodLabelGroup({
         {labels.map((label) => (
           <ChipButton
             key={label}
-            selected={selected.includes(label)}
+            selected={isMoodLabelSelected(selected, label)}
             onClick={() => onToggle(label)}
           >
             {label}
@@ -689,6 +821,57 @@ function MoodLabelGroup({
         ))}
       </div>
     </div>
+  );
+}
+
+function CustomMoodLabelGroup({
+  entries,
+  selected,
+  onToggle,
+}: {
+  entries: MoodLabelEntry[];
+  selected: MoodLabelEntry[];
+  onToggle: (entry: MoodLabelEntry) => void;
+}) {
+  return (
+    <div className="mb-3">
+      <p className="mb-2 text-xs text-muted-foreground">自分で追加した気持ち</p>
+      <div className="flex flex-wrap gap-2">
+        {entries.map((entry) => (
+          <CustomMoodChip
+            key={entry.label}
+            entry={entry}
+            selected={isMoodLabelSelected(selected, entry.label)}
+            onClick={() => onToggle(entry)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CustomMoodChip({
+  entry,
+  selected,
+  onClick,
+}: {
+  entry: MoodLabelEntry;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  const styles = getMoodCategoryStyles(entry.category);
+
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={`inline-flex min-h-11 items-center justify-center rounded-full border-2 px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+        selected ? styles.chipSelectedClass : styles.chipClass
+      }`}
+    >
+      {entry.label}
+    </button>
   );
 }
 

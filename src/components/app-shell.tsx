@@ -12,6 +12,8 @@ import { RecordsTab } from "@/components/tabs/records-tab";
 import { SelfCareTab } from "@/components/tabs/selfcare-tab";
 import { ReflectionTab } from "@/components/tabs/reflection-tab";
 import { trackTabViewed } from "@/lib/analytics";
+import { useKeyboardInset } from "@/lib/keyboard-scroll";
+import { resetScrollPosition } from "@/lib/utils";
 import type { AppTab } from "@/lib/types";
 
 interface NavigateOptions {
@@ -19,6 +21,8 @@ interface NavigateOptions {
 }
 
 export function AppShell() {
+  useKeyboardInset();
+
   const [activeTab, setActiveTab] = useState<AppTab>("today");
   const [recordDate, setRecordDate] = useState<string | undefined>();
   const [refreshKey, setRefreshKey] = useState(0);
@@ -26,6 +30,14 @@ export function AppShell() {
   useEffect(() => {
     trackTabViewed(activeTab);
   }, [activeTab]);
+
+  useEffect(() => {
+    resetScrollPosition();
+    const frame = requestAnimationFrame(() => {
+      resetScrollPosition();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [activeTab, recordDate]);
 
   const handleNavigateTab = useCallback(
     (tab: AppTab, options?: NavigateOptions) => {
@@ -39,16 +51,19 @@ export function AppShell() {
     []
   );
 
-  const bumpRefresh = () => setRefreshKey((k) => k + 1);
+  const bumpRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  const showActionBarPadding = activeTab === "today";
+  const [todaySavedView, setTodaySavedView] = useState(false);
+
+  const showActionBarPadding = activeTab === "today" && !todaySavedView;
+  const mainPaddingBottom = showActionBarPadding ? "pb-page" : "pb-nav pb-safe";
 
   return (
     <div className="min-h-dvh bg-background">
       <main
-        className={`mx-auto max-w-lg px-4 pt-6 ${showActionBarPadding ? "pb-page" : "pb-nav pb-safe"}`}
+        className={`mx-auto max-w-lg px-4 ${todaySavedView ? "pt-4" : "pt-6"} ${mainPaddingBottom}`}
       >
-        <AppHeader />
+        <AppHeader compact={todaySavedView} />
         <StorageHealthBanner />
         <StorageNoticeBanner onNavigateTab={handleNavigateTab} />
         {activeTab === "today" && (
@@ -56,6 +71,7 @@ export function AppShell() {
             initialDate={recordDate}
             onNavigateTab={handleNavigateTab}
             refreshKey={refreshKey}
+            onSavedViewChange={setTodaySavedView}
           />
         )}
         {activeTab === "records" && (
@@ -68,15 +84,16 @@ export function AppShell() {
         {activeTab === "selfcare" && (
           <SelfCareTab onDataChange={bumpRefresh} />
         )}
-        {activeTab === "reflection" && (
-          <ReflectionTab refreshKey={refreshKey} />
-        )}
-        <BuildFooter />
+        {activeTab === "reflection" && <ReflectionTab refreshKey={refreshKey} />}
+        {!todaySavedView && <BuildFooter />}
       </main>
       <BottomNav
         activeTab={activeTab}
         onTabChange={(tab) => {
-          if (tab !== "today") setRecordDate(undefined);
+          if (tab !== "today") {
+            setRecordDate(undefined);
+            setTodaySavedView(false);
+          }
           setActiveTab(tab);
         }}
       />

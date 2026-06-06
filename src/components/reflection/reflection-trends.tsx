@@ -17,7 +17,7 @@ import {
   countRecordedPoints,
   type ChartMetricId,
 } from "@/lib/chart-data";
-import type { ChartPeriod } from "@/lib/dates";
+import { isMonthlyChartPeriod, type ChartPeriod } from "@/lib/dates";
 
 interface ReflectionTrendsProps {
   refreshKey?: number;
@@ -33,6 +33,7 @@ export function ReflectionTrends({ refreshKey = 0 }: ReflectionTrendsProps) {
   const points = buildTrendSeries(period, metricId);
 
   const recordedCount = countRecordedPoints(points);
+  const isMonthly = isMonthlyChartPeriod(period);
 
   return (
     <Card>
@@ -61,7 +62,9 @@ export function ReflectionTrends({ refreshKey = 0 }: ReflectionTrendsProps) {
             <p className="text-xs leading-relaxed text-muted-foreground">
               {metric.description}
               {recordedCount < points.length &&
-                ` · 記録がある日だけ線でつながります（${recordedCount}日分）`}
+                (isMonthly
+                  ? ` · 記録がある月だけ線でつながります（${recordedCount}ヶ月分）`
+                  : ` · 記録がある日だけ線でつながります（${recordedCount}日分）`)}
             </p>
           </>
         )}

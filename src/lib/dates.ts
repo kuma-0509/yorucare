@@ -80,11 +80,57 @@ export function getDateRangeForPeriod(period: ChartPeriod): string[] {
 
 export function formatChartAxisDate(
   dateStr: string,
+  _period: ChartPeriod
+): string {
+  return formatShortDate(dateStr);
+}
+
+export function isMonthlyChartPeriod(period: ChartPeriod): boolean {
+  return period === "6months" || period === "year";
+}
+
+/** 月キー YYYY-MM */
+export function toMonthKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+/** 6ヶ月・年表示用の月一覧（古い順） */
+export function getMonthRangeForPeriod(period: ChartPeriod): string[] {
+  if (period === "6months") {
+    const months: string[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(toMonthKey(d));
+    }
+    return months;
+  }
+
+  if (period === "year") {
+    const year = new Date().getFullYear();
+    return Array.from({ length: 12 }, (_, i) => {
+      const m = String(i + 1).padStart(2, "0");
+      return `${year}-${m}`;
+    });
+  }
+
+  return [];
+}
+
+export function formatChartMonthLabel(monthKey: string): string {
+  const [, m] = monthKey.split("-");
+  return `${Number(m)}月`;
+}
+
+export function formatChartTooltipLabel(
+  key: string,
   period: ChartPeriod
 ): string {
-  const [, m, d] = dateStr.split("-");
-  if (period === "year" || period === "6months") {
-    return `${Number(m)}/${Number(d)}`;
+  if (isMonthlyChartPeriod(period)) {
+    const [y, m] = key.split("-");
+    return `${y}年${Number(m)}月`;
   }
-  return `${Number(d)}日`;
+  return formatDisplayDate(key);
 }

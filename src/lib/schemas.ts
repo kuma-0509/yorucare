@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { normalizeMoodLabels } from "./mood-labels";
 
 export const STORAGE_SCHEMA_VERSION = 1;
 export const EXPORT_VERSION = 1;
 export const MAX_NOTE_LENGTH = 2000;
 export const MAX_SELF_CARE_TITLE_LENGTH = 100;
+export const MAX_MOOD_LABEL_LENGTH = 10;
 export const MAX_IMPORT_RECORDS = 5000;
 export const MAX_IMPORT_SELF_CARE = 1000;
 
@@ -27,11 +29,35 @@ const moodScoreSchema = z.union([
 const medicationStatusSchema = z.enum(["done", "partial", "forgot", "none"]);
 const warningLevelSchema = z.enum(["none", "small", "yes"]);
 
+const moodLabelCategorySchema = z.enum([
+  "ポジティブ",
+  "ややポジティブ",
+  "普通",
+  "ややネガティブ",
+  "ネガティブ",
+]);
+
+const moodLabelEntrySchema = z.object({
+  label: z.string().trim().min(1).max(MAX_MOOD_LABEL_LENGTH),
+  category: moodLabelCategorySchema,
+  isCustom: z.boolean(),
+});
+
+const legacyOrMoodLabelSchema = z.union([
+  z.string().min(1).max(40),
+  moodLabelEntrySchema,
+]);
+
+const moodLabelsSchema = z
+  .array(legacyOrMoodLabelSchema)
+  .max(3)
+  .transform((items) => normalizeMoodLabels(items));
+
 export const dailyRecordSchema = z.object({
   id: idSchema,
   date: dateSchema,
   moodScore: moodScoreSchema.nullable(),
-  moodLabels: z.array(z.string().min(1).max(40)).max(3),
+  moodLabels: moodLabelsSchema,
   sleepStart: timeSchema,
   sleepEnd: timeSchema,
   sleepMinutes: z.number().int().min(0).max(24 * 60).nullable(),

@@ -4,11 +4,24 @@ export type MedicationStatus = "done" | "partial" | "forgot" | "none";
 
 export type WarningLevel = "none" | "small" | "yes";
 
+export type MoodLabelCategory =
+  | "ポジティブ"
+  | "ややポジティブ"
+  | "普通"
+  | "ややネガティブ"
+  | "ネガティブ";
+
+export interface MoodLabelEntry {
+  label: string;
+  category: MoodLabelCategory;
+  isCustom: boolean;
+}
+
 export interface DailyRecord {
   id: string;
   date: string;
   moodScore: MoodScore | null;
-  moodLabels: string[];
+  moodLabels: MoodLabelEntry[];
   sleepStart: string | null;
   sleepEnd: string | null;
   sleepMinutes: number | null;

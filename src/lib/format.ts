@@ -4,6 +4,7 @@ import {
   WARNING_LEVEL_OPTIONS,
 } from "./constants";
 import { COPY } from "./copy";
+import { formatMoodLabelsDisplay } from "./mood-labels";
 import { formatSleepDuration } from "./sleep";
 import type { DailyRecord, SelfCareItem } from "./types";
 
@@ -69,7 +70,7 @@ export function buildRecordSummaryLines(
   if (record.moodLabels.length > 0) {
     candidates.push({
       label: "気持ち",
-      value: record.moodLabels.join("、"),
+      value: formatMoodLabelsDisplay(record.moodLabels),
     });
   }
 

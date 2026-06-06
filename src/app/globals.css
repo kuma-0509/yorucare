@@ -4,6 +4,7 @@
 
 :root {
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --keyboard-inset: 0px;
   --layout-nav: 3.5rem;
   --layout-action: 3.5rem;
   --layout-page-bottom: calc(
@@ -33,10 +34,10 @@
   }
 
   .pb-page {
-    padding-bottom: var(--layout-page-bottom);
+    padding-bottom: calc(var(--layout-page-bottom) + var(--keyboard-inset));
   }
 
   .pb-nav {
-    padding-bottom: calc(var(--layout-nav) + 1rem);
+    padding-bottom: calc(var(--layout-nav) + 1rem + var(--keyboard-inset));
   }
 }

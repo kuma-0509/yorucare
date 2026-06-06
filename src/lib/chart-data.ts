@@ -1,9 +1,23 @@
 import { COPY } from "./copy";
-import { formatChartAxisDate, getDateRangeForPeriod, type ChartPeriod } from "./dates";
+import {
+  formatChartAxisDate,
+  formatChartMonthLabel,
+  getDateRangeForPeriod,
+  getMonthRangeForPeriod,
+  isMonthlyChartPeriod,
+  type ChartPeriod,
+} from "./dates";
 import { repository } from "./repository";
 import type { DailyRecord, WarningLevel } from "./types";
 
 export type ChartMetricId = "mood" | "sleep" | "warning" | "selfCare";
+
+/** なし／少しあり／あり の3段階軸ラベル（下→上） */
+export const THREE_LEVEL_AXIS_LABELS = ["なし", "少しあり", "あり"] as const;
+
+export function formatThreeLevelAxisTick(value: number): string {
+  return THREE_LEVEL_AXIS_LABELS[value] ?? "";
+}
 
 export interface ChartMetricConfig {
   id: ChartMetricId;
@@ -12,6 +26,9 @@ export interface ChartMetricConfig {
   yAxisLabel: string;
   /** 固定の縦軸範囲（未指定ならデータに合わせる） */
   domain?: [number, number];
+  /** カテゴリ軸の固定目盛り（数値は内部表現、表示は formatAxisTick で変換） */
+  axisTicks?: number[];
+  formatAxisTick?: (value: number) => string;
   formatValue: (value: number) => string;
 }
 
@@ -28,7 +45,8 @@ export const CHART_METRICS: ChartMetricConfig[] = [
     description: "5がいちばん良い状態です",
     yAxisLabel: "気分",
     domain: [1, 5],
-    formatValue: (v) => String(v),
+    formatValue: (v) =>
+      Number.isInteger(v) ? String(v) : v.toFixed(1),
   },
   {
     id: "sleep",
@@ -43,18 +61,18 @@ export const CHART_METRICS: ChartMetricConfig[] = [
     description: COPY.chartWarningDescription,
     yAxisLabel: COPY.chartWarningAxis,
     domain: [0, 2],
-    formatValue: (v) => {
-      if (v === 0) return "なし";
-      if (v === 1) return "少しあり";
-      return "あり";
-    },
+    axisTicks: [0, 1, 2],
+    formatAxisTick: formatThreeLevelAxisTick,
+    formatValue: (v) =>
+      Number.isInteger(v) ? formatThreeLevelAxisTick(v) : v.toFixed(1),
   },
   {
     id: "selfCare",
     label: COPY.selfCareAction,
     description: "その日にできた「できること」の数",
     yAxisLabel: "件数",
-    formatValue: (v) => `${Math.round(v)}件`,
+    formatValue: (v) =>
+      Number.isInteger(v) ? `${v}件` : `${v.toFixed(1)}件`,
   },
 ];
 
@@ -87,7 +105,11 @@ function extractMetricValue(
   }
 }
 
-export function buildTrendSeries(
+function roundMonthlyAverage(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function buildDailyTrendSeries(
   period: ChartPeriod,
   metric: ChartMetricId
 ): TrendDataPoint[] {
@@ -101,6 +123,56 @@ export function buildTrendSeries(
     label: formatChartAxisDate(date, period),
     value: extractMetricValue(recordsByDate.get(date), metric),
   }));
+}
+
+function buildMonthlyTrendSeries(
+  period: ChartPeriod,
+  metric: ChartMetricId
+): TrendDataPoint[] {
+  const monthKeys = getMonthRangeForPeriod(period);
+  const monthKeySet = new Set(monthKeys);
+  const recordsResult = repository.getAllRecords();
+  const records = recordsResult.ok ? recordsResult.value : [];
+
+  const valuesByMonth = new Map<string, number[]>();
+
+  for (const record of records) {
+    const monthKey = record.date.slice(0, 7);
+    if (!monthKeySet.has(monthKey)) continue;
+
+    const value = extractMetricValue(record, metric);
+    if (value === null) continue;
+
+    const existing = valuesByMonth.get(monthKey) ?? [];
+    existing.push(value);
+    valuesByMonth.set(monthKey, existing);
+  }
+
+  return monthKeys.map((monthKey) => {
+    const values = valuesByMonth.get(monthKey);
+    const average =
+      values && values.length > 0
+        ? roundMonthlyAverage(
+            values.reduce((sum, value) => sum + value, 0) / values.length
+          )
+        : null;
+
+    return {
+      date: monthKey,
+      label: formatChartMonthLabel(monthKey),
+      value: average,
+    };
+  });
+}
+
+export function buildTrendSeries(
+  period: ChartPeriod,
+  metric: ChartMetricId
+): TrendDataPoint[] {
+  if (isMonthlyChartPeriod(period)) {
+    return buildMonthlyTrendSeries(period, metric);
+  }
+  return buildDailyTrendSeries(period, metric);
 }
 
 export function countRecordedPoints(points: TrendDataPoint[]): number {

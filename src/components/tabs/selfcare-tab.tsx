@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -39,15 +40,23 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
   const [editTitle, setEditTitle] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<SelfCareItem | null>(null);
 
-  const reload = useCallback(() => {
+  const loadItems = () => {
     initSelfCareIfEmpty();
     setItems(getAllSelfCareItems());
+  };
+
+  const notifyDataChange = () => {
     onDataChange?.();
-  }, [onDataChange]);
+  };
 
   useEffect(() => {
-    reload();
-  }, [reload]);
+    loadItems();
+  }, []);
+
+  const reload = () => {
+    loadItems();
+    notifyDataChange();
+  };
 
   const handleAdd = () => {
     const title = newTitle.trim();
@@ -117,27 +126,35 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
         ) : (
           items.map((item) => (
             <Card key={item.id}>
-              <CardContent className="flex items-center justify-between gap-3 py-4">
-                <p className="flex-1 text-base">{item.title}</p>
-                <div className="flex shrink-0 gap-2">
+              <CardContent className="flex items-center justify-between gap-2 py-4">
+                <p className="min-w-0 flex-1 text-base leading-snug">{item.title}</p>
+                <div className="flex shrink-0 gap-1.5">
                   <Button
+                    type="button"
                     variant="outline"
                     size="icon"
+                    className="h-11 min-h-11 w-11 min-w-11 shrink-0 border-sky-200/80 bg-sky-50/70 hover:bg-sky-50"
                     aria-label="編集"
                     onClick={() => {
+                      if (!item?.id) return;
                       setEditItem(item);
-                      setEditTitle(item.title);
+                      setEditTitle(item.title ?? "");
                     }}
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Pencil className="h-5 w-5 text-sky-700" strokeWidth={2} />
                   </Button>
                   <Button
+                    type="button"
                     variant="outline"
                     size="icon"
+                    className="h-11 min-h-11 w-11 min-w-11 shrink-0 border-red-200/80 bg-red-50/70 hover:bg-red-50"
                     aria-label="削除"
-                    onClick={() => setDeleteTarget(item)}
+                    onClick={() => {
+                      if (!item?.id) return;
+                      setDeleteTarget(item);
+                    }}
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-5 w-5 text-red-600" strokeWidth={2} />
                   </Button>
                 </div>
               </CardContent>
@@ -153,6 +170,9 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{COPY.selfCareAction}を編集</DialogTitle>
+            <DialogDescription className="sr-only">
+              登録済みの{COPY.selfCareAction}の名前を変更できます。
+            </DialogDescription>
           </DialogHeader>
           <Input
             value={editTitle}
@@ -173,17 +193,25 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>削除の確認</DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed">
+              この「{COPY.selfCareAction}」を削除しますか？
+              {deleteTarget?.title ? (
+                <>
+                  <br />
+                  <span className="mt-1 block font-medium text-foreground">
+                    「{deleteTarget.title}」
+                  </span>
+                </>
+              ) : null}
+              過去の記録からも選べなくなります。
+            </DialogDescription>
           </DialogHeader>
-          <p className="text-sm leading-relaxed">
-            「{deleteTarget?.title}」を削除しますか？
-            過去の記録からも選べなくなります。
-          </p>
-          <div className="flex flex-col gap-2 mt-4">
-            <Button variant="destructive" onClick={handleDelete}>
-              削除する
-            </Button>
+          <div className="flex flex-col gap-2">
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
               キャンセル
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              削除する
             </Button>
           </div>
         </DialogContent>
