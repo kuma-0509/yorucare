@@ -118,6 +118,56 @@
   .yc-anim-soft-rise {
     animation: yc-soft-rise 450ms ease-out forwards;
   }
+
+  /* 紙がやわらかい光に変わって消える（浄化・区切り） */
+  @keyframes yc-burn-paper {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+      filter: brightness(1);
+    }
+    40% {
+      transform: scale(0.9);
+      opacity: 1;
+      filter: brightness(1.4) sepia(0.6);
+    }
+    100% {
+      transform: scale(0.6) translateY(-24px);
+      opacity: 0;
+      filter: brightness(2) sepia(1);
+    }
+  }
+  /* 炎のゆらめき（小さなオーバル、赤みを抑えた暖色） */
+  @keyframes yc-flame-sway {
+    0%   { transform: scaleY(1)    scaleX(1)    translateY(0); }
+    25%  { transform: scaleY(1.12) scaleX(0.92) translateY(-3px); }
+    50%  { transform: scaleY(0.96) scaleX(1.06) translateY(1px); }
+    75%  { transform: scaleY(1.08) scaleX(0.95) translateY(-2px); }
+    100% { transform: scaleY(1)    scaleX(1)    translateY(0); }
+  }
+  /* 炎が静かに消える */
+  @keyframes yc-flame-fade {
+    0%   { opacity: 1; transform: scaleY(1); }
+    100% { opacity: 0; transform: scaleY(0.4) translateY(8px); }
+  }
+  /* 完了後、炎の跡にやわらかい光の粒が上がる */
+  @keyframes yc-ember-rise {
+    0%   { transform: translateY(0) scale(1); opacity: 0.8; }
+    100% { transform: translateY(-28px) scale(0.3); opacity: 0; }
+  }
+
+  .yc-anim-burn-paper {
+    animation: yc-burn-paper 1100ms ease-in forwards;
+  }
+  .yc-anim-flame-sway {
+    animation: yc-flame-sway 800ms ease-in-out infinite;
+  }
+  .yc-anim-flame-fade {
+    animation: yc-flame-fade 600ms ease-in forwards;
+  }
+  .yc-anim-ember-rise {
+    animation: yc-ember-rise 1000ms ease-out forwards;
+  }
 }
 
 /* アニメーションを控える設定の端末では、動きを止めて静かに完了させる */
@@ -126,7 +176,11 @@
   .yc-anim-book-shelve,
   .yc-anim-paper-crumple,
   .yc-anim-paper-drop,
-  .yc-anim-soft-rise {
+  .yc-anim-soft-rise,
+  .yc-anim-burn-paper,
+  .yc-anim-flame-sway,
+  .yc-anim-flame-fade,
+  .yc-anim-ember-rise {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
   }

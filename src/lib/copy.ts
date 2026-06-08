@@ -74,5 +74,6 @@ export const COPY = {
     shelfDone: "今日の記録を本棚にしまいました",
     paperDone: "今日のモヤモヤを手放しました",
     skipDone: "おつかれさまでした。また明日。",
+    burnDone: "今週のモヤモヤを手放しました",
   },
 } as const;

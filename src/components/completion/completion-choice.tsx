@@ -4,12 +4,20 @@ import { useState } from "react";
 import { BookMarked, CheckCircle2, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { COPY } from "@/lib/copy";
-import { recordCompletion, type CompletionStyle } from "@/lib/completion-log";
+import {
+  getActivePaperDates,
+  recordCompletion,
+  type CompletionStyle,
+} from "@/lib/completion-log";
 import { BookArchiveAnimation } from "./book-archive-animation";
 import { PaperTrashAnimation } from "./paper-trash-animation";
+import {
+  WeeklyBurnAnimation,
+  WeeklyBurnBanner,
+} from "./weekly-burn-animation";
 
-type Phase = "choosing" | "shelf" | "paper" | "done";
-type DoneKind = CompletionStyle | "skip";
+type Phase = "choosing" | "shelf" | "paper" | "burn" | "done";
+type DoneKind = CompletionStyle | "skip" | "burn";
 
 interface CompletionChoiceProps {
   /** 締めくくる対象の記録日（YYYY-MM-DD） */
@@ -26,6 +34,7 @@ const DONE_MESSAGE: Record<DoneKind, string> = {
   shelf: COPY.completion.shelfDone,
   paper: COPY.completion.paperDone,
   skip: COPY.completion.skipDone,
+  burn: COPY.completion.burnDone,
 };
 
 export function CompletionChoice({
@@ -36,6 +45,7 @@ export function CompletionChoice({
 }: CompletionChoiceProps) {
   const [phase, setPhase] = useState<Phase>("choosing");
   const [doneKind, setDoneKind] = useState<DoneKind>("skip");
+  const [burnPaperDates, setBurnPaperDates] = useState<string[]>([]);
 
   const finish = (kind: DoneKind) => {
     setDoneKind(kind);
@@ -66,6 +76,15 @@ export function CompletionChoice({
           {COPY.completion.skipAction}
         </Button>
       </div>
+    );
+  }
+
+  if (phase === "burn") {
+    return (
+      <WeeklyBurnAnimation
+        paperDates={burnPaperDates}
+        onDone={() => finish("burn")}
+      />
     );
   }
 
@@ -103,6 +122,14 @@ export function CompletionChoice({
         title={COPY.completion.paper}
         description={COPY.completion.paperDesc}
         onClick={() => handleSelect("paper")}
+      />
+
+      {/* 紙が7枚以上たまっていれば「燃やす」バナーを表示する */}
+      <WeeklyBurnBanner
+        onBurnStart={() => {
+          setBurnPaperDates(getActivePaperDates());
+          setPhase("burn");
+        }}
       />
 
       <Button
