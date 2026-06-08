@@ -22,6 +22,7 @@ import {
 } from "@/components/shared/option-button";
 import { SaveRecordButton } from "@/components/shared/save-record-button";
 import { MoodCategoryDialog } from "@/components/mood/mood-category-dialog";
+import { CompletionChoice } from "@/components/completion/completion-choice";
 import { trackRecordSaved } from "@/lib/analytics";
 import { COPY } from "@/lib/copy";
 import { storageErrorMessage } from "@/lib/result";
@@ -299,6 +300,33 @@ export function TodayRecordTab({
 
   if (showSaved && savedRecord) {
     const lines = buildRecordSummaryLines(savedRecord, selfCareItems);
+    const summaryTextLines = [
+      ...lines.map(({ label, value }) => `${label}：${value}`),
+      ...(savedRecord.note ? [`${COPY.memo}：${savedRecord.note}`] : []),
+    ];
+
+    const navButtons = (
+      <div className="flex shrink-0 flex-col gap-2">
+        <Button
+          variant="default"
+          onClick={() => {
+            setShowSaved(false);
+            loadForm(targetDate);
+          }}
+        >
+          {targetDate === today
+            ? "今日の記録を編集する"
+            : `${formatDisplayDate(targetDate)}の記録を編集する`}
+        </Button>
+        <Button variant="outline" onClick={() => onNavigateTab("records")}>
+          これまでの記録を見る
+        </Button>
+        <Button variant="ghost" onClick={() => setShowSaved(false)}>
+          閉じる
+        </Button>
+      </div>
+    );
+
     return (
       <div className="flex flex-col gap-3">
         <div className="shrink-0 rounded-xl bg-secondary px-3 py-3 text-center">
@@ -334,28 +362,14 @@ export function TodayRecordTab({
           </CardContent>
         </Card>
 
-        <div className="flex shrink-0 flex-col gap-2">
-          <Button
-            variant="default"
-            onClick={() => {
-              setShowSaved(false);
-              loadForm(targetDate);
-            }}
-          >
-            {targetDate === today
-              ? "今日の記録を編集する"
-              : `${formatDisplayDate(targetDate)}の記録を編集する`}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => onNavigateTab("records")}
-          >
-            これまでの記録を見る
-          </Button>
-          <Button variant="ghost" onClick={() => setShowSaved(false)}>
-            閉じる
-          </Button>
-        </div>
+        <CompletionChoice
+          date={targetDate}
+          lines={summaryTextLines}
+          footer={navButtons}
+          onLiveMessage={setLiveMessage}
+        />
+
+        <LiveRegion message={liveMessage} />
       </div>
     );
   }
