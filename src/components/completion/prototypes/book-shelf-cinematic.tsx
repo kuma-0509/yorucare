@@ -1,0 +1,157 @@
+"use client";
+
+import {
+  Component,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
+import { COPY } from "@/lib/copy";
+import { BookShelfMagic } from "./book-shelf-magic";
+
+const ArchiveCanvas = dynamic(
+  () => import("./r3f/archive-canvas").then((mod) => mod.ArchiveCanvas),
+  { ssr: false, loading: () => <SceneFallback /> }
+);
+
+interface BookShelfCinematicProps {
+  lines: string[];
+  heading?: string;
+  title?: string;
+  subtitle?: string;
+  soundEnabled?: boolean;
+  onDone?: () => void;
+}
+
+function SceneFallback() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-[#1a1510]">
+      <p className="text-sm text-[#c9a227]/70">書庫を準備しています…</p>
+    </div>
+  );
+}
+
+class R3fErrorBoundary extends Component<
+  { fallback: ReactNode; children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    if (this.state.failed) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+/**
+ * React Three Fiber 版「書庫に記録を保管する」シネマティック演出。
+ * WebGL 不可・reduced-motion 時は CSS 簡易版へフォールバック。
+ */
+export function BookShelfCinematic({
+  lines,
+  heading,
+  title = COPY.completion.bookDone,
+  subtitle = COPY.completion.bookDoneSub,
+  soundEnabled = false,
+  onDone,
+}: BookShelfCinematicProps) {
+  const [mode, setMode] = useState<"loading" | "r3f" | "css">("loading");
+  const [showMessage, setShowMessage] = useState(false);
+  const completedRef = useRef(false);
+
+  useEffect(() => {
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      setMode("css");
+      return;
+    }
+
+    try {
+      const canvas = document.createElement("canvas");
+      const gl =
+        canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+      setMode(gl ? "r3f" : "css");
+    } catch {
+      setMode("css");
+    }
+  }, []);
+
+  const handleDone = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    setShowMessage(true);
+    onDone?.();
+  }, [onDone]);
+
+  if (mode === "loading") {
+    return <SceneFallback />;
+  }
+
+  if (mode === "css") {
+    return (
+      <BookShelfMagic
+        lines={lines}
+        heading={heading}
+        title={title}
+        subtitle={subtitle}
+        onDone={handleDone}
+      />
+    );
+  }
+
+  return (
+    <R3fErrorBoundary
+      fallback={
+        <BookShelfMagic
+          lines={lines}
+          heading={heading}
+          title={title}
+          subtitle={subtitle}
+          onDone={handleDone}
+        />
+      }
+    >
+      <div className="absolute inset-0 overflow-hidden bg-[#1a1510]">
+        <ArchiveCanvas
+          lines={lines}
+          heading={heading}
+          soundEnabled={soundEnabled}
+          onDone={handleDone}
+        />
+
+        {/* ビネット */}
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_42%,rgba(10,8,6,0.55)_100%)]"
+          aria-hidden="true"
+        />
+
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-x-0 bottom-[9%] z-20 flex justify-center px-6 pb-[env(safe-area-inset-bottom)] transition-opacity duration-700 sm:bottom-[6%]",
+            showMessage ? "opacity-100" : "opacity-0"
+          )}
+          aria-live="polite"
+        >
+          <div className="max-w-sm text-center">
+            <p className="text-lg font-medium text-[#f0e6d0] drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+              {title}
+            </p>
+            {subtitle && (
+              <p className="mt-1.5 text-sm leading-relaxed text-[#c9a227]/75 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                {subtitle}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </R3fErrorBoundary>
+  );
+}

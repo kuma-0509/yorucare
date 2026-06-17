@@ -1,11 +1,17 @@
 "use client";
 
-import { CalendarDays, ClipboardList, Heart, Sparkles } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardList,
+  Heart,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 import { COPY } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import type { AppTab } from "@/lib/types";
 
-const TABS: { id: AppTab; label: string; icon: React.ElementType }[] = [
+const TABS: { id: AppTab; label: string; icon: LucideIcon }[] = [
   { id: "today", label: COPY.tab.today, icon: CalendarDays },
   { id: "records", label: COPY.tab.records, icon: ClipboardList },
   { id: "selfcare", label: COPY.tab.selfCare, icon: Heart },
