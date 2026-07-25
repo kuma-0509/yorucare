@@ -11,9 +11,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:checklist": "node scripts/run-phase1-checklist.mjs"
+    "test:checklist": "node scripts/run-phase1-checklist.mjs",
+    "db:analytics:setup": "node scripts/setup-analytics-db.mjs"
   },
   "dependencies": {
+    "@neondatabase/serverless": "1.1.0",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.2",

@@ -1,18 +1,15 @@
 import { STORAGE_KEYS } from "./constants";
 import { getTodayString } from "./dates";
+import { hasAnalyticsConsent } from "./analytics-consent";
+import type { AnalyticsEventName, AnalyticsTab } from "./analytics-events";
 
-export type AnalyticsEventName =
-  | "record_saved"
-  | "first_record_saved"
-  | "backup_exported"
-  | "backup_imported"
-  | "tab_viewed";
+export type { AnalyticsEventName } from "./analytics-events";
 
 /** 同一オリジンの収集エンドポイント（CSP connect-src 'self' で許可済み） */
 const ANALYTICS_ENDPOINT = "/api/events";
 
 /**
- * 端末ごとの匿名ID。継続率（D1/D7/D14）をサーバ側で算出するために、
+ * 端末ごとの匿名ID。Week 2 / Week 4 継続率をサーバ側で算出するために、
  * 個人を特定しない乱数IDを端末に1つだけ持つ。
  */
 function getInstallId(): string {
@@ -31,18 +28,26 @@ function getInstallId(): string {
   }
 }
 
+function createEventId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 /**
  * 匿名イベントを同一オリジンのエンドポイントへ送る。
- * meta には日付・タブ名・件数など、個人を特定しない値のみを載せる。
+ * 本人が任意同意した場合だけ、許可済みの日付・タブ名・件数を載せる。
+ * サーバ側では記録対象日を破棄し、入力本文は受け付けない。
  * 送信失敗はコア機能に影響させない（握りつぶす）。
  */
 function sendToServer(event: {
+  eventId: string;
   installId: string;
   name: AnalyticsEventName;
   at: string;
   meta?: Record<string, string | number | boolean>;
 }): void {
-  if (!isBrowser() || !event.installId) return;
+  if (!isBrowser() || !event.installId || !hasAnalyticsConsent()) return;
   try {
     const body = JSON.stringify(event);
     if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
@@ -62,6 +67,8 @@ function sendToServer(event: {
 }
 
 type AnalyticsEvent = {
+  /** 旧版の端末内データには存在しないため optional */
+  eventId?: string;
   name: AnalyticsEventName;
   at: string;
   meta?: Record<string, string | number | boolean>;
@@ -120,7 +127,8 @@ export function trackEvent(
 
   const snapshot = readSnapshot();
   const at = new Date().toISOString();
-  snapshot.events.push({ name, at, meta });
+  const eventId = createEventId();
+  snapshot.events.push({ eventId, name, at, meta });
   if (snapshot.events.length > MAX_EVENTS) {
     snapshot.events = snapshot.events.slice(-MAX_EVENTS);
   }
@@ -138,7 +146,9 @@ export function trackEvent(
 
   writeSnapshot(snapshot);
 
-  sendToServer({ installId: getInstallId(), name, at, meta });
+  if (hasAnalyticsConsent()) {
+    sendToServer({ eventId, installId: getInstallId(), name, at, meta });
+  }
 
   if (typeof window !== "undefined") {
     window.dispatchEvent(
@@ -156,7 +166,7 @@ export function trackRecordSaved(date: string, isFirstEver: boolean): void {
   }
 }
 
-export function trackTabViewed(tab: string): void {
+export function trackTabViewed(tab: AnalyticsTab): void {
   trackEvent("tab_viewed", { tab });
 }
 

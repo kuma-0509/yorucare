@@ -1,60 +1,110 @@
 import { NextResponse } from "next/server";
+import {
+  parseAnalyticsDeletionPayload,
+  parseAnalyticsEventPayload,
+} from "@/lib/analytics-events";
+import {
+  deleteAnonymousInstallEvents,
+  saveAnonymousEvent,
+} from "@/lib/server/analytics-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * 匿名利用イベントの収集エンドポイント（パイロット検証用）。
- *
- * 現状は受信内容をサーバログに出力するだけの最小実装。
- * D1/D7/D14 継続率を実際に集計するには、ここから永続ストア
- * （例: Vercel KV / Postgres など）へ書き込む処理を足す。
- * 永続化先の選定は Phase 2 のインフラ判断（docs/phase2-plan.md）に含める。
- *
- * 受け取るのは個人を特定しない値のみ（匿名 installId・イベント名・日付・件数など）。
- */
+const MAX_REQUEST_BYTES = 4_096;
+const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
 
-const ALLOWED_EVENTS = new Set([
-  "record_saved",
-  "first_record_saved",
-  "backup_exported",
-  "backup_imported",
-  "tab_viewed",
-]);
+function errorResponse(status: number): NextResponse {
+  return NextResponse.json(
+    { ok: false },
+    { status, headers: NO_STORE_HEADERS }
+  );
+}
 
-type IncomingEvent = {
-  installId?: unknown;
-  name?: unknown;
-  at?: unknown;
-  meta?: unknown;
-};
+function isSameOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  return !origin || origin === new URL(request.url).origin;
+}
 
-export async function POST(request: Request): Promise<NextResponse> {
-  let payload: IncomingEvent;
+async function readJson(request: Request): Promise<
+  | { ok: true; value: unknown }
+  | { ok: false; status: number }
+> {
+  const declaredLength = Number(request.headers.get("content-length") ?? 0);
+  if (declaredLength > MAX_REQUEST_BYTES) {
+    return { ok: false, status: 413 };
+  }
+
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    return { ok: false, status: 415 };
+  }
+
   try {
-    payload = (await request.json()) as IncomingEvent;
+    const text = await request.text();
+    if (new TextEncoder().encode(text).byteLength > MAX_REQUEST_BYTES) {
+      return { ok: false, status: 413 };
+    }
+    return { ok: true, value: JSON.parse(text) as unknown };
   } catch {
-    return NextResponse.json({ ok: false }, { status: 400 });
+    return { ok: false, status: 400 };
+  }
+}
+
+/**
+ * 本人が任意同意した匿名利用イベントだけを保存する。
+ *
+ * 記録本文、健康・服薬・面談内容、研究参加者ID、個人情報は受け付けない。
+ * 許可イベントとメタデータは parseAnalyticsEventPayload で固定し、
+ * installId と eventId は保存前に HMAC-SHA256 で不可逆化する。
+ */
+export async function POST(request: Request): Promise<NextResponse> {
+  if (!isSameOrigin(request)) return errorResponse(403);
+
+  const body = await readJson(request);
+  if (!body.ok) return errorResponse(body.status);
+
+  const parsed = parseAnalyticsEventPayload(body.value);
+  if (!parsed.ok) return errorResponse(400);
+
+  try {
+    await saveAnonymousEvent(parsed.value);
+  } catch {
+    return new NextResponse(null, {
+      status: 503,
+      headers: {
+        ...NO_STORE_HEADERS,
+        "Retry-After": "60",
+      },
+    });
   }
 
-  const installId = typeof payload.installId === "string" ? payload.installId : "";
-  const name = typeof payload.name === "string" ? payload.name : "";
+  return new NextResponse(null, { status: 204, headers: NO_STORE_HEADERS });
+}
 
-  if (!installId || !ALLOWED_EVENTS.has(name)) {
-    return NextResponse.json({ ok: false }, { status: 400 });
+/**
+ * 送信停止時に、現在の端末・ブラウザに対応する匿名イベントを削除する。
+ */
+export async function DELETE(request: Request): Promise<NextResponse> {
+  if (!isSameOrigin(request)) return errorResponse(403);
+
+  const body = await readJson(request);
+  if (!body.ok) return errorResponse(body.status);
+
+  const parsed = parseAnalyticsDeletionPayload(body.value);
+  if (!parsed.ok) return errorResponse(400);
+
+  try {
+    await deleteAnonymousInstallEvents(parsed.value.installId);
+  } catch {
+    return new NextResponse(null, {
+      status: 503,
+      headers: {
+        ...NO_STORE_HEADERS,
+        "Retry-After": "60",
+      },
+    });
   }
 
-  const record = {
-    installId: installId.slice(0, 80),
-    name,
-    at: typeof payload.at === "string" ? payload.at : new Date().toISOString(),
-    meta:
-      payload.meta && typeof payload.meta === "object" ? payload.meta : undefined,
-    receivedAt: new Date().toISOString(),
-  };
-
-  // TODO(phase2): 永続ストアへ保存して継続率を集計する。
-  console.log("[yorucare:event]", JSON.stringify(record));
-
-  return new NextResponse(null, { status: 204 });
+  return new NextResponse(null, { status: 204, headers: NO_STORE_HEADERS });
 }
