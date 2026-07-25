@@ -130,7 +130,9 @@ export async function saveAnonymousEvent(
     `,
     transaction`
       DELETE FROM anonymous_analytics_record_days
-      WHERE activity_date <= (${activityDate}::date - ${RETENTION_DAYS})
+      WHERE activity_date <= (
+        ${activityDate}::date - ${RETENTION_DAYS}::integer
+      )
     `,
   ]);
 }
@@ -169,7 +171,9 @@ export async function purgeExpiredAnonymousAnalytics(
     `,
     transaction`
       DELETE FROM anonymous_analytics_record_days
-      WHERE activity_date <= (${activityDate}::date - ${RETENTION_DAYS})
+      WHERE activity_date <= (
+        ${activityDate}::date - ${RETENTION_DAYS}::integer
+      )
     `,
   ]);
 }
