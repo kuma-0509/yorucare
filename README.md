@@ -20,7 +20,7 @@
 - 直近7日の記録一覧
 - 「できること」辞書の CRUD
 - ふりかえりタブ（気分・睡眠・しんどさのサイン・できることの期間別グラフ）
-- 匿名の利用イベント計測（保存・初回保存・タブ遷移・バックアップ操作）
+- 本人が任意同意した匿名利用イベント計測（保存・初回保存・タブ遷移・バックアップ操作）
 
 ## 開発
 
@@ -57,12 +57,13 @@ npm start
 
 ## データ保存
 
-ブラウザの `localStorage` に保存します。ログイン・API・DB は Phase 1 では未実装です。
+本人が入力したセルフケア記録は、ブラウザの `localStorage` に保存します。ログインと記録本文のクラウド保存は未実装です。
 
 - `yorucare_daily_records` — 日次記録
 - `yorucare_self_care_items` — 「できること」項目
 - `yorucare_schema_version` — データスキーマ版
 - `yorucare_analytics` — 匿名利用イベント（パイロット検証用）
+- `yorucare_analytics_consent` — 匿名利用イベントの送信可否
 
 記録は**この端末のブラウザだけ**に残ります（別端末・別ブラウザでは共有されません）。
 
@@ -97,7 +98,15 @@ pnpm test:checklist https://yorucare.vercel.app
 
 ## 計測（パイロット検証用）
 
-匿名の利用イベントは、端末ごとの匿名 ID 付きで同一オリジンの `POST /api/events` に送信します（個人を特定しない値のみ）。現状は受信内容をサーバログに出力するだけで、継続率（D1/D7/D14）の集計に必要な永続ストアは未接続です。次の一手は [docs/phase2-plan.md](docs/phase2-plan.md) を参照してください。
+匿名の利用イベントは、本人が任意同意した場合だけ、端末・ブラウザごとの匿名 ID 付きで同一オリジンの `POST /api/events` に送信します。入力した記録本文は送信しません。許可済みイベントはNeon Postgresへ180日間保存し、端末IDとイベントIDは保存前に不可逆化します。
+
+継続指標は、初週複数日記録率、Week 2継続率、Week 4継続率を日本時間のサーバ受信日から集計します。送信停止と保存済み匿名データの削除は「これまで」タブから行えます。詳しいデータ境界と運用手順は [docs/anonymous-analytics.md](docs/anonymous-analytics.md) を参照してください。
+
+DBを準備する場合は、`.env.example` を参考に `ANALYTICS_DATABASE_URL` と `ANALYTICS_ID_SALT` を設定し、次を実行します。
+
+```bash
+pnpm db:analytics:setup
+```
 
 ## バックアップの能動的リマインド
 

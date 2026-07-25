@@ -48,6 +48,15 @@ export const COPY = {
   backupReminderSnooze: "あとで",
   backupPlaintextNotice:
     "保存したファイルには、気分・睡眠・お薬・メモなど、体調に関わる内容がそのまま読める形で入っています。他の人が見られる場所には置かないでください。",
+  analyticsConsentTitle: "匿名の利用状況の送信",
+  analyticsConsentBody:
+    "記録の保存や画面の移動など、個人を特定しない利用状況だけを改善のために送信できます。気分・睡眠・お薬・メモなど、入力した内容は送りません。協力は任意で、あとから停止できます。",
+  analyticsConsentOption: "匿名の利用状況の送信に協力する（任意）",
+  analyticsEnabled: "匿名の利用状況を送信しています",
+  analyticsDisabled: "匿名の利用状況は送信していません",
+  analyticsEnableAction: "送信に協力する",
+  analyticsDisableAction: "送信を停止してデータを削除する",
+  analyticsRetryDeleteAction: "保存済みデータの削除を再試行する",
   importConfirmTitle: "バックアップを復元しますか？",
   importConfirmBody:
     "今の端末にある記録と「できること」は、ファイルの内容に置き換わります。保存したファイルには体調に関わる内容がそのまま読める形で入っているため、信頼できるファイルだけを読み込んでください。",

@@ -101,6 +101,7 @@ export const STORAGE_KEYS = {
   reviewConsent: "yorucare_review_consent",
   schemaVersion: "yorucare_schema_version",
   analytics: "yorucare_analytics",
+  analyticsConsent: "yorucare_analytics_consent",
   lastBackupAt: "yorucare_last_backup_at",
   installId: "yorucare_install_id",
   completionLog: "yorucare_completion_log",
