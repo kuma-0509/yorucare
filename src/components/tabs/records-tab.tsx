@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { DataBackupPanel } from "@/components/shared/data-backup-panel";
+import { AnonymousAnalyticsPanel } from "@/components/shared/anonymous-analytics-panel";
 import {
   formatDisplayDate,
   getLast7Days,
@@ -254,6 +255,8 @@ export function RecordsTab({
           onDataImported?.();
         }}
       />
+
+      <AnonymousAnalyticsPanel />
 
       <Card className="border-caution-border/50 bg-caution/40">
         <CardHeader className="pb-2">

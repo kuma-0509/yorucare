@@ -9,6 +9,8 @@ import {
   installReviewConsentResetHelper,
   saveReviewConsent,
 } from "@/lib/review-consent";
+import { saveAnalyticsConsent } from "@/lib/analytics-consent";
+import { COPY } from "@/lib/copy";
 
 type ConsentState = "checking" | "needsConsent" | "consented";
 
@@ -32,6 +34,7 @@ const PRIVATE_INFORMATION_EXAMPLES = [
 export function ReviewConsentDialog() {
   const [consentState, setConsentState] =
     useState<ConsentState>("checking");
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
 
   useEffect(() => {
     installReviewConsentResetHelper();
@@ -39,6 +42,7 @@ export function ReviewConsentDialog() {
   }, []);
 
   const handleAgree = () => {
+    saveAnalyticsConsent(analyticsEnabled);
     saveReviewConsent();
     setConsentState("consented");
   };
@@ -122,6 +126,26 @@ export function ReviewConsentDialog() {
                 <p className="mt-2 text-muted-foreground">
                   入力された記録は、この端末のブラウザ内に保存されます。共有端末では、個人情報の入力にご注意ください。不要になった記録は削除できます。
                 </p>
+              </section>
+
+              <section className="rounded-xl border border-border bg-muted/50 p-4">
+                <h2 className="text-base font-semibold text-foreground">
+                  {COPY.analyticsConsentTitle}
+                </h2>
+                <p className="mt-2 text-muted-foreground">
+                  {COPY.analyticsConsentBody}
+                </p>
+                <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-white p-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-5 w-5 shrink-0 accent-primary"
+                    checked={analyticsEnabled}
+                    onChange={(event) =>
+                      setAnalyticsEnabled(event.currentTarget.checked)
+                    }
+                  />
+                  <span>{COPY.analyticsConsentOption}</span>
+                </label>
               </section>
             </div>
           </div>
