@@ -1,3 +1,4 @@
+import { countDaysInRange, indexRecordsByDate } from "./range";
 import type {
   DailyRecord,
   MedicationStatus,
@@ -87,18 +88,6 @@ export type PeriodSummary = {
 const MINUTES_PER_DAY = 24 * 60;
 /** 正午。就寝時刻を「正午から翌正午まで」の窓に写すときの基準 */
 const NOON = 12 * 60;
-
-function isDateInRange(date: string, from: string, to: string): boolean {
-  // YYYY-MM-DD は辞書順と時系列順が一致する
-  return date >= from && date <= to;
-}
-
-function countDaysInRange(from: string, to: string): number {
-  const start = Date.parse(`${from}T00:00:00Z`);
-  const end = Date.parse(`${to}T00:00:00Z`);
-  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return 0;
-  return Math.round((end - start) / (MINUTES_PER_DAY * 60 * 1000)) + 1;
-}
 
 function parseTimeToMinutes(time: string): number | null {
   const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time);
@@ -244,12 +233,7 @@ export function summarizePeriod(
   from: string,
   to: string
 ): PeriodSummary {
-  const byDate = new Map<string, DailyRecord>();
-  for (const record of records) {
-    if (!isDateInRange(record.date, from, to)) continue;
-    byDate.set(record.date, record);
-  }
-  const target = [...byDate.values()];
+  const target = [...indexRecordsByDate(records, from, to).values()];
 
   return {
     range: { from, to },
