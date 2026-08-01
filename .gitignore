@@ -21,7 +21,11 @@
 # misc
 .DS_Store
 *.pem
+
+# バイナリの原本・書き出し（本文はテキスト版を追跡する）
 *.pdf
+*.docx
+*.pptx
 
 # debug
 npm-debug.log*
@@ -41,3 +45,6 @@ next-env.d.ts
 # 一時作業ディレクトリ・生成物
 /.tmp-ads-deploy/
 /outputs/
+
+# 別リポジトリとして管理している静的サイト
+/sites/
