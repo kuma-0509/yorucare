@@ -21,7 +21,11 @@
 # misc
 .DS_Store
 *.pem
+
+# バイナリの原本・書き出し（本文はテキスト版を追跡する）
 *.pdf
+*.docx
+*.pptx
 
 # debug
 npm-debug.log*
@@ -37,3 +41,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+
+# 一時作業ディレクトリ・生成物
+/.tmp-ads-deploy/
+/outputs/
+
+# 別リポジトリとして管理している静的サイト
+/sites/

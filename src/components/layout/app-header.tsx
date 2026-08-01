@@ -1,5 +1,6 @@
 import { COPY } from "@/lib/copy";
 import { cn } from "@/lib/utils";
+import { ConsultationLinksDialog } from "@/components/shared/consultation-links-dialog";
 
 interface AppHeaderProps {
   compact?: boolean;
@@ -13,17 +14,22 @@ export function AppHeader({ compact = false }: AppHeaderProps) {
         compact ? "mb-3 pb-2" : "mb-5 pb-3"
       )}
     >
-      <p className="text-lg font-bold tracking-tight text-foreground">
-        {COPY.productName}
-      </p>
-      <p
-        className={cn(
-          "text-sm text-muted-foreground",
-          compact ? "mt-0.5 leading-snug" : "mt-1 leading-relaxed"
-        )}
-      >
-        {COPY.tagline}
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-lg font-bold tracking-tight text-foreground">
+            {COPY.productName}
+          </p>
+          <p
+            className={cn(
+              "text-sm text-muted-foreground",
+              compact ? "mt-0.5 leading-snug" : "mt-1 leading-relaxed"
+            )}
+          >
+            {COPY.tagline}
+          </p>
+        </div>
+        <ConsultationLinksDialog compact={compact} />
+      </div>
     </header>
   );
 }

@@ -14,6 +14,50 @@ import type { DailyRecord, SelfCareItem } from "./types";
 
 const IMPORT_ROLLBACK_KEY = "yorucare_import_rollback";
 
+export type SaveRecordInput = Omit<
+  DailyRecord,
+  "id" | "date" | "sleepMinutes" | "createdAt" | "updatedAt"
+> & { id?: string };
+
+export type ImportSummary = {
+  recordCount: number;
+  selfCareCount: number;
+};
+
+export type StorageHealth = {
+  records: DailyRecord[];
+  selfCare: SelfCareItem[];
+};
+
+/**
+ * 端末内保存と将来の API 実装が同じ呼び出し規約を持つための境界。
+ * 実装方式にかかわらず、データ操作は例外を投げず Promise<Result<T>> で返す。
+ */
+export interface Repository {
+  getStorageHealth(): Promise<Result<StorageHealth>>;
+  getAllRecords(): Promise<Result<DailyRecord[]>>;
+  getRecordByDate(date: string): Promise<Result<DailyRecord | null>>;
+  saveRecord(date: string, data: SaveRecordInput): Promise<Result<DailyRecord>>;
+  deleteRecord(date: string): Promise<Result<void>>;
+  deleteAllRecords(): Promise<Result<void>>;
+  getAllSelfCareItems(): Promise<Result<SelfCareItem[]>>;
+  ensureSampleSelfCare(): Promise<Result<SelfCareItem[]>>;
+  addSelfCareItem(title: string): Promise<Result<SelfCareItem>>;
+  updateSelfCareItem(id: string, title: string): Promise<Result<SelfCareItem>>;
+  deleteSelfCareItem(id: string): Promise<Result<void>>;
+  buildExportPayload(): Promise<Result<ExportPayload>>;
+  importBackup(jsonText: string): Promise<Result<ImportSummary>>;
+  runStorageMigrations(): Promise<Result<void>>;
+}
+
+interface LocalStorageRepository extends Repository {
+  createImportRollback(): Promise<Result<void>>;
+  restoreImportRollback(): Promise<Result<void>>;
+  applyImport(payload: ExportPayload): Promise<Result<void>>;
+  clearImportRollback(): Promise<Result<void>>;
+  getStoredSchemaVersion(): Promise<Result<number | null>>;
+}
+
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -40,9 +84,9 @@ function writeRaw(key: string, value: string): Result<void> {
 
 function readRecords(): Result<DailyRecord[]> {
   if (!isBrowser()) return ok([]);
-  const raw = localStorage.getItem(STORAGE_KEYS.records);
-  if (!raw) return ok([]);
   try {
+    const raw = localStorage.getItem(STORAGE_KEYS.records);
+    if (!raw) return ok([]);
     const parsed = JSON.parse(raw) as unknown;
     const result = parseRecordsJson(parsed);
     if (!result.success) {
@@ -56,9 +100,9 @@ function readRecords(): Result<DailyRecord[]> {
 
 function readSelfCareItems(): Result<SelfCareItem[]> {
   if (!isBrowser()) return ok([]);
-  const raw = localStorage.getItem(STORAGE_KEYS.selfCare);
-  if (!raw) return ok([]);
   try {
+    const raw = localStorage.getItem(STORAGE_KEYS.selfCare);
+    if (!raw) return ok([]);
     const parsed = JSON.parse(raw) as unknown;
     const result = parseSelfCareJson(parsed);
     if (!result.success) {
@@ -102,36 +146,34 @@ function writeSelfCareItems(items: SelfCareItem[]): Result<void> {
   return result;
 }
 
-export type StorageHealth = {
-  records: Result<DailyRecord[]>;
-  selfCare: Result<SelfCareItem[]>;
-};
-
-export const repository = {
-  getStorageHealth(): StorageHealth {
-    return {
-      records: readRecords(),
-      selfCare: readSelfCareItems(),
-    };
+const localStorageRepository: LocalStorageRepository = {
+  async getStorageHealth(): Promise<Result<StorageHealth>> {
+    const records = readRecords();
+    if (!records.ok) return records;
+    const selfCare = readSelfCareItems();
+    if (!selfCare.ok) return selfCare;
+    return ok({
+      records: records.value,
+      selfCare: selfCare.value,
+    });
   },
 
-  getAllRecords(): Result<DailyRecord[]> {
+  async getAllRecords(): Promise<Result<DailyRecord[]>> {
     return readRecords();
   },
 
-  getRecordByDate(date: string): Result<DailyRecord | null> {
+  async getRecordByDate(
+    date: string
+  ): Promise<Result<DailyRecord | null>> {
     const records = readRecords();
     if (!records.ok) return records;
     return ok(records.value.find((r) => r.date === date) ?? null);
   },
 
-  saveRecord(
+  async saveRecord(
     date: string,
-    data: Omit<
-      DailyRecord,
-      "id" | "date" | "sleepMinutes" | "createdAt" | "updatedAt"
-    > & { id?: string }
-  ): Result<DailyRecord> {
+    data: SaveRecordInput
+  ): Promise<Result<DailyRecord>> {
     const recordsResult = readRecords();
     if (!recordsResult.ok) return recordsResult;
 
@@ -165,13 +207,13 @@ export const repository = {
     return ok(record);
   },
 
-  deleteRecord(date: string): Result<void> {
+  async deleteRecord(date: string): Promise<Result<void>> {
     const recordsResult = readRecords();
     if (!recordsResult.ok) return recordsResult;
     return writeRecords(recordsResult.value.filter((r) => r.date !== date));
   },
 
-  deleteAllRecords(): Result<void> {
+  async deleteAllRecords(): Promise<Result<void>> {
     if (!isBrowser()) return err({ code: "BROWSER_ONLY" });
     try {
       localStorage.removeItem(STORAGE_KEYS.records);
@@ -184,11 +226,11 @@ export const repository = {
     }
   },
 
-  getAllSelfCareItems(): Result<SelfCareItem[]> {
+  async getAllSelfCareItems(): Promise<Result<SelfCareItem[]>> {
     return readSelfCareItems();
   },
 
-  ensureSampleSelfCare(): Result<SelfCareItem[]> {
+  async ensureSampleSelfCare(): Promise<Result<SelfCareItem[]>> {
     const existing = readSelfCareItems();
     if (!existing.ok) return existing;
     if (existing.value.length > 0) return existing;
@@ -205,7 +247,7 @@ export const repository = {
     return ok(items);
   },
 
-  addSelfCareItem(title: string): Result<SelfCareItem> {
+  async addSelfCareItem(title: string): Promise<Result<SelfCareItem>> {
     const itemsResult = readSelfCareItems();
     if (!itemsResult.ok) return itemsResult;
 
@@ -221,7 +263,10 @@ export const repository = {
     return ok(item);
   },
 
-  updateSelfCareItem(id: string, title: string): Result<SelfCareItem> {
+  async updateSelfCareItem(
+    id: string,
+    title: string
+  ): Promise<Result<SelfCareItem>> {
     const itemsResult = readSelfCareItems();
     if (!itemsResult.ok) return itemsResult;
 
@@ -245,7 +290,7 @@ export const repository = {
     return ok(updated);
   },
 
-  deleteSelfCareItem(id: string): Result<void> {
+  async deleteSelfCareItem(id: string): Promise<Result<void>> {
     const itemsResult = readSelfCareItems();
     if (!itemsResult.ok) return itemsResult;
 
@@ -265,7 +310,7 @@ export const repository = {
     );
   },
 
-  buildExportPayload(): Result<ExportPayload> {
+  async buildExportPayload(): Promise<Result<ExportPayload>> {
     const records = readRecords();
     if (!records.ok) return records;
     const selfCare = readSelfCareItems();
@@ -279,22 +324,22 @@ export const repository = {
     });
   },
 
-  createImportRollback(): Result<void> {
-    const payload = repository.buildExportPayload();
+  async createImportRollback(): Promise<Result<void>> {
+    const payload = await localStorageRepository.buildExportPayload();
     if (!payload.ok) return payload;
     return writeRaw(IMPORT_ROLLBACK_KEY, JSON.stringify(payload.value));
   },
 
-  restoreImportRollback(): Result<void> {
+  async restoreImportRollback(): Promise<Result<void>> {
     if (!isBrowser()) return err({ code: "BROWSER_ONLY" });
-    const raw = localStorage.getItem(IMPORT_ROLLBACK_KEY);
-    if (!raw) {
-      return err({
-        code: "IMPORT_INVALID",
-        message: "復元用のバックアップが見つかりませんでした。",
-      });
-    }
     try {
+      const raw = localStorage.getItem(IMPORT_ROLLBACK_KEY);
+      if (!raw) {
+        return err({
+          code: "IMPORT_INVALID",
+          message: "復元用のバックアップが見つかりませんでした。",
+        });
+      }
       const parsed = parseExportPayload(JSON.parse(raw));
       if (!parsed.ok) {
         return err({
@@ -302,7 +347,7 @@ export const repository = {
           message: "復元用のバックアップが壊れています。",
         });
       }
-      return repository.applyImport(parsed.data);
+      return await localStorageRepository.applyImport(parsed.data);
     } catch {
       return err({
         code: "IMPORT_INVALID",
@@ -311,22 +356,26 @@ export const repository = {
     }
   },
 
-  applyImport(payload: ExportPayload): Result<void> {
+  async applyImport(payload: ExportPayload): Promise<Result<void>> {
     const recordsWrite = writeRecords(payload.records);
     if (!recordsWrite.ok) return recordsWrite;
     return writeSelfCareItems(payload.selfCareItems);
   },
 
-  clearImportRollback(): void {
-    if (!isBrowser()) return;
+  async clearImportRollback(): Promise<Result<void>> {
+    if (!isBrowser()) return err({ code: "BROWSER_ONLY" });
     try {
       localStorage.removeItem(IMPORT_ROLLBACK_KEY);
+      return ok(undefined);
     } catch {
-      /* 退避データの掃除に失敗しても本処理は継続する */
+      return err({
+        code: "WRITE_FAILED",
+        message: "退避データの削除に失敗しました。",
+      });
     }
   },
 
-  importBackup(jsonText: string): Result<{ recordCount: number; selfCareCount: number }> {
+  async importBackup(jsonText: string): Promise<Result<ImportSummary>> {
     if (!isBrowser()) return err({ code: "BROWSER_ONLY" });
 
     let raw: unknown;
@@ -344,19 +393,19 @@ export const repository = {
       return err({ code: "IMPORT_INVALID", message: parsed.message });
     }
 
-    const rollback = repository.createImportRollback();
+    const rollback = await localStorageRepository.createImportRollback();
     if (!rollback.ok) return rollback;
 
-    const applied = repository.applyImport(parsed.data);
+    const applied = await localStorageRepository.applyImport(parsed.data);
     if (!applied.ok) {
-      repository.restoreImportRollback();
+      await localStorageRepository.restoreImportRollback();
       // 復元後も退避データが残ると容量を二重に消費するため掃除する
-      repository.clearImportRollback();
+      await localStorageRepository.clearImportRollback();
       return applied;
     }
 
     // 取り込み成功後は退避データを残さない（容量の二重消費を防ぐ）
-    repository.clearImportRollback();
+    await localStorageRepository.clearImportRollback();
 
     return ok({
       recordCount: parsed.data.records.length,
@@ -365,15 +414,18 @@ export const repository = {
   },
 
   /** 保存済みデータのスキーマ版を読む（未設定なら null） */
-  getStoredSchemaVersion(): number | null {
-    if (!isBrowser()) return null;
+  async getStoredSchemaVersion(): Promise<Result<number | null>> {
+    if (!isBrowser()) return err({ code: "BROWSER_ONLY" });
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.schemaVersion);
-      if (!raw) return null;
+      if (!raw) return ok(null);
       const parsed = Number(raw);
-      return Number.isFinite(parsed) ? parsed : null;
+      return ok(Number.isFinite(parsed) ? parsed : null);
     } catch {
-      return null;
+      return err({
+        code: "WRITE_FAILED",
+        message: "保存データのバージョン確認に失敗しました。",
+      });
     }
   },
 
@@ -383,28 +435,37 @@ export const repository = {
    * 読み込み（Zod transform による正規化）→書き戻しで保存形を最新化し、版を更新する。
    * 破損時は何もしない（StorageHealthBanner が警告を表示する）。
    */
-  runStorageMigrations(): void {
-    if (!isBrowser()) return;
+  async runStorageMigrations(): Promise<Result<void>> {
+    if (!isBrowser()) return err({ code: "BROWSER_ONLY" });
 
-    const storedVersion = repository.getStoredSchemaVersion();
-    if (storedVersion === STORAGE_SCHEMA_VERSION) return;
+    const storedVersionResult =
+      await localStorageRepository.getStoredSchemaVersion();
+    if (!storedVersionResult.ok) return storedVersionResult;
+    const storedVersion = storedVersionResult.value;
+    if (storedVersion === STORAGE_SCHEMA_VERSION) return ok(undefined);
 
     const records = readRecords();
     const selfCare = readSelfCareItems();
-    if (!records.ok || !selfCare.ok) return; // 破損時は触らない
+    if (!records.ok) return records;
+    if (!selfCare.ok) return selfCare;
 
     const hasData = records.value.length > 0 || selfCare.value.length > 0;
     if (storedVersion === null && !hasData) {
       // 新規ユーザー。版だけ記録しておく。
-      writeRaw(STORAGE_KEYS.schemaVersion, String(STORAGE_SCHEMA_VERSION));
-      return;
+      return writeRaw(
+        STORAGE_KEYS.schemaVersion,
+        String(STORAGE_SCHEMA_VERSION)
+      );
     }
 
     // 正規化済みの値を書き戻し、保存形を最新スキーマに揃える。
-    writeRecords(records.value);
-    writeSelfCareItems(selfCare.value);
+    const recordsWrite = writeRecords(records.value);
+    if (!recordsWrite.ok) return recordsWrite;
+    return writeSelfCareItems(selfCare.value);
   },
 };
+
+export const repository: Repository = localStorageRepository;
 
 export function createEmptyRecordForm(date: string): Omit<
   DailyRecord,
@@ -465,10 +526,10 @@ export function isRecordEmpty(
   );
 }
 
-export function isRecordedDay(date: string): boolean {
-  const result = repository.getRecordByDate(date);
-  if (!result.ok) return false;
-  return result.value !== null;
+export async function isRecordedDay(date: string): Promise<Result<boolean>> {
+  const result = await repository.getRecordByDate(date);
+  if (!result.ok) return result;
+  return ok(result.value !== null);
 }
 
 export function isDailyRecordEmpty(record: DailyRecord): boolean {

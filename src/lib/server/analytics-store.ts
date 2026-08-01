@@ -12,7 +12,7 @@ import {
   type RetentionSummary,
 } from "@/lib/analytics-retention";
 
-const RETENTION_DAYS = 180;
+const RETENTION_DAYS = 365;
 const MINIMUM_SALT_LENGTH = 32;
 
 let cachedConnection:

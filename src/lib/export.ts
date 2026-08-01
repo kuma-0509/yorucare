@@ -7,17 +7,16 @@ import type { ExportPayload } from "./schemas";
 export type { ExportPayload as YorucareExport } from "./schemas";
 export { EXPORT_VERSION } from "./schemas";
 
-export function buildExportPayload(): ExportPayload | null {
-  const result = repository.buildExportPayload();
-  return result.ok ? result.value : null;
+export function buildExportPayload(): Promise<Result<ExportPayload>> {
+  return repository.buildExportPayload();
 }
 
-export function downloadBackup(): Result<void> {
+export async function downloadBackup(): Promise<Result<void>> {
   if (typeof window === "undefined") {
     return { ok: false, error: { code: "BROWSER_ONLY" } };
   }
 
-  const payload = repository.buildExportPayload();
+  const payload = await repository.buildExportPayload();
   if (!payload.ok) return payload;
 
   const json = JSON.stringify(payload.value, null, 2);
@@ -33,10 +32,10 @@ export function downloadBackup(): Result<void> {
   return { ok: true, value: undefined };
 }
 
-export function importBackup(
+export async function importBackup(
   jsonText: string
-): Result<{ recordCount: number; selfCareCount: number }> {
-  const result = repository.importBackup(jsonText);
+): Promise<Result<{ recordCount: number; selfCareCount: number }>> {
+  const result = await repository.importBackup(jsonText);
   if (result.ok) {
     // 取り込んだ元ファイルが手元にある＝バックアップ済みとみなす
     recordBackupDone();

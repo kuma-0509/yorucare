@@ -8,14 +8,16 @@ export function StorageHealthBanner() {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const health = repository.getStorageHealth();
-    if (!health.records.ok) {
-      setMessage(storageErrorMessage(health.records.error));
-      return;
-    }
-    if (!health.selfCare.ok) {
-      setMessage(storageErrorMessage(health.selfCare.error));
-    }
+    let active = true;
+
+    void repository.getStorageHealth().then((health) => {
+      if (!active || health.ok) return;
+      setMessage(storageErrorMessage(health.error));
+    });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (!message) return null;

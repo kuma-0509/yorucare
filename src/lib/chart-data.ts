@@ -8,6 +8,7 @@ import {
   type ChartPeriod,
 } from "./dates";
 import { repository } from "./repository";
+import { ok, type Result } from "./result";
 import type { DailyRecord, WarningLevel } from "./types";
 
 export type ChartMetricId = "mood" | "sleep" | "warning" | "selfCare";
@@ -131,11 +132,10 @@ function roundMonthlyAverage(value: number): number {
 
 function buildDailyTrendSeries(
   period: ChartPeriod,
-  metric: ChartMetricId
+  metric: ChartMetricId,
+  records: DailyRecord[]
 ): TrendDataPoint[] {
   const dates = getDateRangeForPeriod(period);
-  const recordsResult = repository.getAllRecords();
-  const records = recordsResult.ok ? recordsResult.value : [];
   const recordsByDate = new Map(records.map((record) => [record.date, record]));
 
   return dates.map((date) => ({
@@ -147,12 +147,11 @@ function buildDailyTrendSeries(
 
 function buildMonthlyTrendSeries(
   period: ChartPeriod,
-  metric: ChartMetricId
+  metric: ChartMetricId,
+  records: DailyRecord[]
 ): TrendDataPoint[] {
   const monthKeys = getMonthRangeForPeriod(period);
   const monthKeySet = new Set(monthKeys);
-  const recordsResult = repository.getAllRecords();
-  const records = recordsResult.ok ? recordsResult.value : [];
 
   const valuesByMonth = new Map<string, number[]>();
 
@@ -185,14 +184,24 @@ function buildMonthlyTrendSeries(
   });
 }
 
-export function buildTrendSeries(
+export function buildTrendSeriesFromRecords(
   period: ChartPeriod,
-  metric: ChartMetricId
+  metric: ChartMetricId,
+  records: DailyRecord[]
 ): TrendDataPoint[] {
   if (isMonthlyChartPeriod(period)) {
-    return buildMonthlyTrendSeries(period, metric);
+    return buildMonthlyTrendSeries(period, metric, records);
   }
-  return buildDailyTrendSeries(period, metric);
+  return buildDailyTrendSeries(period, metric, records);
+}
+
+export async function buildTrendSeries(
+  period: ChartPeriod,
+  metric: ChartMetricId
+): Promise<Result<TrendDataPoint[]>> {
+  const records = await repository.getAllRecords();
+  if (!records.ok) return records;
+  return ok(buildTrendSeriesFromRecords(period, metric, records.value));
 }
 
 export function countRecordedPoints(points: TrendDataPoint[]): number {

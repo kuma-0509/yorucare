@@ -30,7 +30,7 @@ export function AppShell() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    repository.runStorageMigrations();
+    void repository.runStorageMigrations();
   }, []);
 
   useEffect(() => {

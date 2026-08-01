@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { DataBackupPanel } from "@/components/shared/data-backup-panel";
 import { AnonymousAnalyticsPanel } from "@/components/shared/anonymous-analytics-panel";
+import { AiSharePanel } from "@/components/shared/ai-share-panel";
+import { LiveRegion } from "@/components/shared/live-region";
 import {
   formatDisplayDate,
   getLast7Days,
@@ -32,11 +34,11 @@ import {
 } from "@/lib/format";
 import { formatMoodLabelsDisplay } from "@/lib/mood-labels";
 import { COPY } from "@/lib/copy";
+import { storageErrorMessage } from "@/lib/result";
 import {
   deleteAllRecords,
   deleteRecord,
   getAllRecords,
-  getAllSelfCareItems,
   initSelfCareIfEmpty,
   isDailyRecordEmpty,
 } from "@/lib/storage";
@@ -61,44 +63,72 @@ export function RecordsTab({
   const [deleteRecordTarget, setDeleteRecordTarget] =
     useState<DailyRecord | null>(null);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const reloadRequestRef = useRef(0);
 
   const days = getLast7Days();
 
-  const reload = () => {
-    initSelfCareIfEmpty();
-    setRecords(getAllRecords());
-    setSelfCareItems(getAllSelfCareItems());
+  const reload = useCallback(async () => {
+    const requestId = ++reloadRequestRef.current;
+    const [recordsResult, selfCareResult] = await Promise.all([
+      getAllRecords(),
+      initSelfCareIfEmpty(),
+    ]);
+    if (requestId !== reloadRequestRef.current) return;
     setLoaded(true);
-  };
+    if (!recordsResult.ok) {
+      setMessage(storageErrorMessage(recordsResult.error));
+      return;
+    }
+    if (!selfCareResult.ok) {
+      setMessage(storageErrorMessage(selfCareResult.error));
+      return;
+    }
+    setRecords(recordsResult.value);
+    setSelfCareItems(selfCareResult.value);
+    setMessage(null);
+  }, []);
 
   useEffect(() => {
-    reload();
-  }, [refreshKey]);
+    void reload();
+  }, [refreshKey, reload]);
 
   const getRecord = (date: string) =>
     records.find((r) => r.date === date) ?? null;
 
   const canEditDate = (date: string) => isWithinLast7Days(date);
 
-  const handleDeleteRecord = () => {
-    if (!deleteRecordTarget) return;
-    const result = deleteRecord(deleteRecordTarget.date);
-    if (!result.ok) return;
+  const handleDeleteRecord = async () => {
+    if (!deleteRecordTarget || deleting) return;
+    setDeleting(true);
+    const result = await deleteRecord(deleteRecordTarget.date);
+    setDeleting(false);
+    if (!result.ok) {
+      setMessage(storageErrorMessage(result.error));
+      return;
+    }
     setDetailRecord((current) =>
       current?.date === deleteRecordTarget.date ? null : current
     );
     setDeleteRecordTarget(null);
-    reload();
+    await reload();
     onDataImported?.();
   };
 
-  const handleDeleteAllRecords = () => {
-    const result = deleteAllRecords();
-    if (!result.ok) return;
+  const handleDeleteAllRecords = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    const result = await deleteAllRecords();
+    setDeleting(false);
+    if (!result.ok) {
+      setMessage(storageErrorMessage(result.error));
+      return;
+    }
     setDetailRecord(null);
     setDeleteRecordTarget(null);
     setDeleteAllOpen(false);
-    reload();
+    await reload();
     onDataImported?.();
   };
 
@@ -121,6 +151,15 @@ export function RecordsTab({
           直近7日の記録です。1週間以内ならあとから直せます。
         </p>
       </header>
+
+      {message && (
+        <div
+          className="rounded-2xl border-2 border-destructive/40 bg-destructive/5 px-4 py-3"
+          role="alert"
+        >
+          <p className="text-sm leading-relaxed">{message}</p>
+        </div>
+      )}
 
       <Card className="bg-muted/60">
         <CardContent className="space-y-2 py-4 text-sm leading-relaxed text-muted-foreground">
@@ -249,9 +288,11 @@ export function RecordsTab({
         })}
       </div>
 
+      <AiSharePanel records={records} selfCareItems={selfCareItems} />
+
       <DataBackupPanel
         onImported={() => {
-          reload();
+          void reload();
           onDataImported?.();
         }}
       />
@@ -376,9 +417,10 @@ export function RecordsTab({
             <Button
               type="button"
               variant="destructive"
-              onClick={handleDeleteRecord}
+              onClick={() => void handleDeleteRecord()}
+              disabled={deleting}
             >
-              {COPY.delete}
+              {deleting ? "削除中…" : COPY.delete}
             </Button>
           </div>
         </DialogContent>
@@ -409,13 +451,15 @@ export function RecordsTab({
             <Button
               type="button"
               variant="destructive"
-              onClick={handleDeleteAllRecords}
+              onClick={() => void handleDeleteAllRecords()}
+              disabled={deleting}
             >
-              {COPY.deleteAllTitle}
+              {deleting ? "削除中…" : COPY.deleteAllTitle}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+      <LiveRegion message={message} />
     </div>
   );
 }

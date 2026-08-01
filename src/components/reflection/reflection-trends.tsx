@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   Card,
@@ -34,8 +34,10 @@ import {
   buildTrendSeries,
   countRecordedPoints,
   type ChartMetricId,
+  type TrendDataPoint,
 } from "@/lib/chart-data";
 import { isMonthlyChartPeriod, type ChartPeriod } from "@/lib/dates";
+import { storageErrorMessage } from "@/lib/result";
 
 interface ReflectionTrendsProps {
   refreshKey?: number;
@@ -44,11 +46,30 @@ interface ReflectionTrendsProps {
 export function ReflectionTrends({ refreshKey = 0 }: ReflectionTrendsProps) {
   const [period, setPeriod] = useState<ChartPeriod>("week");
   const [metricId, setMetricId] = useState<ChartMetricId>("mood");
+  const [points, setPoints] = useState<TrendDataPoint[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
 
   const metric = CHART_METRICS.find((m) => m.id === metricId) ?? CHART_METRICS[0];
 
-  void refreshKey;
-  const points = buildTrendSeries(period, metricId);
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setMessage(null);
+    void buildTrendSeries(period, metricId).then((result) => {
+      if (!active) return;
+      setLoading(false);
+      if (!result.ok) {
+        setPoints([]);
+        setMessage(storageErrorMessage(result.error));
+        return;
+      }
+      setPoints(result.value);
+    });
+    return () => {
+      active = false;
+    };
+  }, [period, metricId, refreshKey]);
 
   const recordedCount = countRecordedPoints(points);
   const isMonthly = isMonthlyChartPeriod(period);
@@ -66,7 +87,19 @@ export function ReflectionTrends({ refreshKey = 0 }: ReflectionTrendsProps) {
         <MetricTabs value={metricId} onChange={setMetricId} />
       </CardHeader>
       <CardContent className="space-y-3 pt-2">
-        {recordedCount === 0 ? (
+        {message ? (
+          <div
+            className="rounded-xl bg-destructive/5 px-4 py-3 text-sm text-foreground"
+            role="alert"
+          >
+            {message}
+          </div>
+        ) : loading ? (
+          <div
+            className="h-[220px] w-full animate-pulse rounded-xl bg-muted sm:h-[240px]"
+            aria-hidden
+          />
+        ) : recordedCount === 0 ? (
           <div className="flex min-h-[220px] items-center justify-center rounded-xl bg-muted px-4 py-8 text-center">
             <p className="text-sm leading-relaxed text-muted-foreground">
               この期間の記録がまだありません。

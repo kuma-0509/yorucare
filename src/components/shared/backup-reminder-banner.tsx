@@ -26,6 +26,7 @@ export function BackupReminderBanner({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    let active = true;
     let snoozed = false;
     try {
       snoozed = sessionStorage.getItem(SNOOZE_KEY) === "1";
@@ -34,9 +35,18 @@ export function BackupReminderBanner({
     }
     if (snoozed) {
       setVisible(false);
-      return;
+      return () => {
+        active = false;
+      };
     }
-    setVisible(getBackupReminder().shouldRemind);
+    void getBackupReminder().then((result) => {
+      if (active) {
+        setVisible(result.ok && result.value.shouldRemind);
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [refreshKey]);
 
   const snooze = () => {

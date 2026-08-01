@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from "./constants";
 import { repository } from "./repository";
+import { ok, type Result } from "./result";
 
 /** 初回バックアップを促すまでの猶予（記録開始からの日数） */
 export const FIRST_BACKUP_GRACE_DAYS = 3;
@@ -82,9 +83,12 @@ export function recordBackupDone(now: Date = new Date()): void {
 }
 
 /** 実データを読み取って通知要否を返す */
-export function getBackupReminder(now: Date = new Date()): BackupReminderState {
-  const recordsResult = repository.getAllRecords();
-  const records = recordsResult.ok ? recordsResult.value : [];
+export async function getBackupReminder(
+  now: Date = new Date()
+): Promise<Result<BackupReminderState>> {
+  const recordsResult = await repository.getAllRecords();
+  if (!recordsResult.ok) return recordsResult;
+  const records = recordsResult.value;
 
   const oldestRecordAt =
     records.length > 0
@@ -94,10 +98,12 @@ export function getBackupReminder(now: Date = new Date()): BackupReminderState {
         )
       : null;
 
-  return evaluateBackupReminder({
-    recordCount: records.length,
-    oldestRecordAt,
-    lastBackupAt: getLastBackupAt(),
-    now,
-  });
+  return ok(
+    evaluateBackupReminder({
+      recordCount: records.length,
+      oldestRecordAt,
+      lastBackupAt: getLastBackupAt(),
+      now,
+    })
+  );
 }
