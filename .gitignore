@@ -37,3 +37,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+
+# 一時作業ディレクトリ・生成物
+/.tmp-ads-deploy/
+/outputs/
