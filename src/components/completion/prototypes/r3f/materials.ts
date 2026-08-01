@@ -5,6 +5,7 @@ export const BOOK = {
   h: 1.85,
   t: 0.5,
   coverT: 0.075,
+  pageInset: 0.1,
 } as const;
 
 function createNoiseTexture(size = 64, repeat = 4): THREE.DataTexture {
@@ -38,19 +39,28 @@ export function createLeatherMaterial(color = "#4a3228"): THREE.MeshStandardMate
   return new THREE.MeshStandardMaterial({
     color,
     bumpMap: grain,
-    bumpScale: 0.045,
-    roughness: 0.68,
-    metalness: 0.04,
+    bumpScale: 0.038,
+    roughness: 0.62,
+    metalness: 0.05,
+  });
+}
+
+/** 表紙端の摩耗した革 */
+export function createLeatherEdgeMaterial(): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({
+    color: "#352418",
+    roughness: 0.78,
+    metalness: 0.02,
   });
 }
 
 export function createGoldMaterial(): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
-    color: "#c9a227",
-    roughness: 0.28,
-    metalness: 0.92,
-    emissive: "#6b4a10",
-    emissiveIntensity: 0.08,
+    color: "#c4a035",
+    roughness: 0.38,
+    metalness: 0.78,
+    emissive: "#5a4010",
+    emissiveIntensity: 0.06,
   });
 }
 
@@ -59,8 +69,8 @@ export function createPaperMaterial(): THREE.MeshStandardMaterial {
   return new THREE.MeshStandardMaterial({
     color: "#f0e6d0",
     bumpMap: grain,
-    bumpScale: 0.012,
-    roughness: 0.88,
+    bumpScale: 0.014,
+    roughness: 0.9,
     metalness: 0,
   });
 }
@@ -73,5 +83,14 @@ export function createWoodMaterial(): THREE.MeshStandardMaterial {
     bumpScale: 0.035,
     roughness: 0.82,
     metalness: 0.02,
+  });
+}
+
+/** 棚に収まった後の背表紙用 */
+export function createShelfSpineMaterial(): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({
+    color: "#4a3228",
+    roughness: 0.65,
+    metalness: 0.04,
   });
 }

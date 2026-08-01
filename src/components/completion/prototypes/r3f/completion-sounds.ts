@@ -25,150 +25,173 @@ function env(
   return g;
 }
 
-export function playPenScratch(volume = 0.12) {
+/** 控えめな万年筆音 */
+export function playPenScratch(volume = 0.08) {
   const ac = getCtx();
   if (!ac) return;
   const t0 = ac.currentTime;
-  const buf = ac.createBuffer(1, ac.sampleRate * 0.08, ac.sampleRate);
+  const buf = ac.createBuffer(1, ac.sampleRate * 0.06, ac.sampleRate);
   const data = buf.getChannelData(0);
-  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.4;
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.32;
   const src = ac.createBufferSource();
   src.buffer = buf;
   const bp = ac.createBiquadFilter();
   bp.type = "bandpass";
-  bp.frequency.value = 2800;
-  bp.Q.value = 0.8;
-  const g = env(ac, t0, 0.004, 0.07, volume);
+  bp.frequency.value = 2600;
+  bp.Q.value = 0.7;
+  const g = env(ac, t0, 0.003, 0.055, volume);
   src.connect(bp);
   bp.connect(g);
   g.connect(ac.destination);
   src.start(t0);
-  src.stop(t0 + 0.08);
+  src.stop(t0 + 0.06);
 }
 
-export function playPageFlip(volume = 0.18) {
+/** 短いページめくり */
+export function playPageFlip(volume = 0.14) {
   const ac = getCtx();
   if (!ac) return;
   const t0 = ac.currentTime;
-  const buf = ac.createBuffer(1, ac.sampleRate * 0.12, ac.sampleRate);
+  const buf = ac.createBuffer(1, ac.sampleRate * 0.09, ac.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < data.length; i++) {
     const f = 1 - i / data.length;
-    data[i] = (Math.random() * 2 - 1) * f * 0.55;
+    data[i] = (Math.random() * 2 - 1) * f * 0.45;
   }
   const src = ac.createBufferSource();
   src.buffer = buf;
   const hp = ac.createBiquadFilter();
   hp.type = "highpass";
-  hp.frequency.value = 900;
-  const g = env(ac, t0, 0.002, 0.1, volume);
+  hp.frequency.value = 850;
+  const g = env(ac, t0, 0.002, 0.075, volume);
   src.connect(hp);
   hp.connect(g);
   g.connect(ac.destination);
   src.start(t0);
-  src.stop(t0 + 0.12);
+  src.stop(t0 + 0.09);
 }
 
-/** 重厚な「ドスッ」 */
-export function playBookClose(volume = 0.42) {
+/** 低く柔らかい「ドスッ」— 閉じる山場 */
+export function playBookClose(volume = 0.48) {
   const ac = getCtx();
   if (!ac) return;
   const t0 = ac.currentTime;
-  const osc = ac.createOscillator();
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(95, t0);
-  osc.frequency.exponentialRampToValueAtTime(42, t0 + 0.22);
-  const g = env(ac, t0, 0.006, 0.35, volume);
-  const buf = ac.createBuffer(1, ac.sampleRate * 0.18, ac.sampleRate);
+
+  const thump = ac.createOscillator();
+  thump.type = "sine";
+  thump.frequency.setValueAtTime(78, t0);
+  thump.frequency.exponentialRampToValueAtTime(38, t0 + 0.28);
+  const thumpGain = env(ac, t0, 0.008, 0.42, volume);
+
+  const body = ac.createOscillator();
+  body.type = "triangle";
+  body.frequency.setValueAtTime(52, t0);
+  body.frequency.exponentialRampToValueAtTime(32, t0 + 0.35);
+  const bodyGain = env(ac, t0 + 0.01, 0.012, 0.38, volume * 0.55);
+
+  const buf = ac.createBuffer(1, ac.sampleRate * 0.16, ac.sampleRate);
   const data = buf.getChannelData(0);
-  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.25;
+  for (let i = 0; i < data.length; i++) {
+    const decay = 1 - i / data.length;
+    data[i] = (Math.random() * 2 - 1) * decay * 0.18;
+  }
   const noise = ac.createBufferSource();
   noise.buffer = buf;
   const lp = ac.createBiquadFilter();
   lp.type = "lowpass";
-  lp.frequency.value = 220;
-  const ng = env(ac, t0, 0.004, 0.14, volume * 0.55);
-  osc.connect(g);
+  lp.frequency.value = 180;
+  const noiseGain = env(ac, t0, 0.005, 0.12, volume * 0.35);
+
+  thump.connect(thumpGain);
+  body.connect(bodyGain);
   noise.connect(lp);
-  lp.connect(ng);
-  g.connect(ac.destination);
-  ng.connect(ac.destination);
-  osc.start(t0);
+  lp.connect(noiseGain);
+  thumpGain.connect(ac.destination);
+  bodyGain.connect(ac.destination);
+  noiseGain.connect(ac.destination);
+
+  thump.start(t0);
+  body.start(t0 + 0.01);
   noise.start(t0);
-  osc.stop(t0 + 0.4);
-  noise.stop(t0 + 0.18);
+  thump.stop(t0 + 0.45);
+  body.stop(t0 + 0.42);
+  noise.stop(t0 + 0.16);
 }
 
-export function playShelfSlide(volume = 0.22) {
+/** 棚へ滑り込む木と紙の摩擦 */
+export function playShelfSlide(volume = 0.2) {
   const ac = getCtx();
   if (!ac) return;
   const t0 = ac.currentTime;
-  const buf = ac.createBuffer(1, ac.sampleRate * 0.35, ac.sampleRate);
+  const buf = ac.createBuffer(1, ac.sampleRate * 0.42, ac.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < data.length; i++) {
     const t = i / data.length;
-    data[i] = (Math.random() * 2 - 1) * (0.25 + t * 0.15);
+    data[i] = (Math.random() * 2 - 1) * (0.18 + t * 0.12);
   }
   const src = ac.createBufferSource();
   src.buffer = buf;
   const bp = ac.createBiquadFilter();
   bp.type = "bandpass";
-  bp.frequency.setValueAtTime(600, t0);
-  bp.frequency.linearRampToValueAtTime(1200, t0 + 0.3);
-  const g = env(ac, t0, 0.02, 0.32, volume);
+  bp.frequency.setValueAtTime(480, t0);
+  bp.frequency.linearRampToValueAtTime(920, t0 + 0.35);
+  bp.Q.value = 0.6;
+  const g = env(ac, t0, 0.025, 0.38, volume);
   src.connect(bp);
   bp.connect(g);
   g.connect(ac.destination);
   src.start(t0);
-  src.stop(t0 + 0.35);
+  src.stop(t0 + 0.42);
 }
 
-export function playShelfSettle(volume = 0.3) {
+/** 棚に収まる接触音 */
+export function playShelfSettle(volume = 0.36) {
   const ac = getCtx();
   if (!ac) return;
   const t0 = ac.currentTime;
-  const osc = ac.createOscillator();
-  osc.type = "triangle";
-  osc.frequency.setValueAtTime(130, t0);
-  osc.frequency.exponentialRampToValueAtTime(70, t0 + 0.16);
 
-  const wood = ac.createBuffer(1, ac.sampleRate * 0.1, ac.sampleRate);
+  const knock = ac.createOscillator();
+  knock.type = "sine";
+  knock.frequency.setValueAtTime(118, t0);
+  knock.frequency.exponentialRampToValueAtTime(62, t0 + 0.18);
+  const knockGain = env(ac, t0, 0.004, 0.22, volume * 0.7);
+
+  const wood = ac.createBuffer(1, ac.sampleRate * 0.11, ac.sampleRate);
   const data = wood.getChannelData(0);
   for (let i = 0; i < data.length; i++) {
-    data[i] = (Math.random() * 2 - 1) * (1 - i / data.length) * 0.32;
+    data[i] = (Math.random() * 2 - 1) * (1 - i / data.length) * 0.28;
   }
-
-  const knock = ac.createBufferSource();
-  knock.buffer = wood;
+  const scrape = ac.createBufferSource();
+  scrape.buffer = wood;
   const lp = ac.createBiquadFilter();
   lp.type = "lowpass";
-  lp.frequency.value = 420;
-  const toneGain = env(ac, t0, 0.004, 0.2, volume * 0.45);
-  const knockGain = env(ac, t0 + 0.015, 0.002, 0.09, volume);
+  lp.frequency.value = 380;
+  const scrapeGain = env(ac, t0 + 0.008, 0.003, 0.1, volume * 0.85);
 
-  osc.connect(toneGain);
-  knock.connect(lp);
-  lp.connect(knockGain);
-  toneGain.connect(ac.destination);
+  knock.connect(knockGain);
+  scrape.connect(lp);
+  lp.connect(scrapeGain);
   knockGain.connect(ac.destination);
-  osc.start(t0);
-  knock.start(t0 + 0.015);
-  osc.stop(t0 + 0.24);
-  knock.stop(t0 + 0.12);
+  scrapeGain.connect(ac.destination);
+  knock.start(t0);
+  scrape.start(t0 + 0.008);
+  knock.stop(t0 + 0.26);
+  scrape.stop(t0 + 0.12);
 }
 
-export function playSparkleChime(volume = 0.14) {
+/** 収納後のごく短い余韻 */
+export function playSparkleChime(volume = 0.07) {
   const ac = getCtx();
   if (!ac) return;
   const t0 = ac.currentTime;
-  [880, 1175, 1480].forEach((freq, i) => {
+  [784, 988].forEach((freq, i) => {
     const osc = ac.createOscillator();
     osc.type = "sine";
     osc.frequency.value = freq;
-    const g = env(ac, t0 + i * 0.05, 0.004, 0.28, volume * (1 - i * 0.2));
+    const g = env(ac, t0 + i * 0.06, 0.005, 0.22, volume * (1 - i * 0.25));
     osc.connect(g);
     g.connect(ac.destination);
-    osc.start(t0 + i * 0.05);
-    osc.stop(t0 + 0.35);
+    osc.start(t0 + i * 0.06);
+    osc.stop(t0 + 0.28);
   });
 }

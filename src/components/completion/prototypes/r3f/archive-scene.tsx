@@ -16,6 +16,7 @@ import {
   playSparkleChime,
 } from "./completion-sounds";
 import { createWoodMaterial } from "./materials";
+import { getSlotWorldCenter } from "./shelf-layout";
 import {
   TIMELINE,
   useCinematicTimeline,
@@ -34,32 +35,32 @@ const CAMERA_KEYS: Record<
   { pos: THREE.Vector3; target: THREE.Vector3 }
 > = {
   writing: {
-    pos: new THREE.Vector3(0.15, 0.35, 2.65),
-    target: new THREE.Vector3(0, 0.05, 0),
+    pos: new THREE.Vector3(0.08, 0.22, 2.05),
+    target: new THREE.Vector3(0, 0.02, 0),
   },
   pageFlip: {
-    pos: new THREE.Vector3(0.08, 0.42, 2.35),
-    target: new THREE.Vector3(0, 0.05, 0),
+    pos: new THREE.Vector3(0.05, 0.28, 2.18),
+    target: new THREE.Vector3(0, 0.04, 0.02),
   },
   closing: {
-    pos: new THREE.Vector3(0, 0.55, 3.15),
-    target: new THREE.Vector3(0, 0, 0),
+    pos: new THREE.Vector3(0, 0.42, 2.95),
+    target: new THREE.Vector3(0, -0.02, 0),
   },
   spine: {
-    pos: new THREE.Vector3(1.75, 0.3, 1.45),
-    target: new THREE.Vector3(0, 0, 0),
+    pos: new THREE.Vector3(1.55, 0.18, 1.72),
+    target: new THREE.Vector3(-0.2, 0.02, 0.04),
   },
   shelving: {
-    pos: new THREE.Vector3(0.25, -0.42, 2.22),
-    target: new THREE.Vector3(0, -1.35, -0.06),
+    pos: new THREE.Vector3(0.12, -0.28, 2.55),
+    target: new THREE.Vector3(0, -1.38, 0.04),
   },
   afterglow: {
-    pos: new THREE.Vector3(0, -0.25, 2.86),
-    target: new THREE.Vector3(0, -1.34, -0.06),
+    pos: new THREE.Vector3(0.04, -0.2, 2.88),
+    target: new THREE.Vector3(0, -1.4, 0.06),
   },
   done: {
-    pos: new THREE.Vector3(0, -0.18, 3.14),
-    target: new THREE.Vector3(0, -1.34, -0.06),
+    pos: new THREE.Vector3(0.04, -0.16, 3.02),
+    target: new THREE.Vector3(0, -1.4, 0.06),
   },
 };
 
@@ -79,8 +80,10 @@ export function ArchiveScene({
   const camRef = useRef<THREE.PerspectiveCamera>(null);
   const lookAt = useRef(new THREE.Vector3(0, 0.05, 0));
   const keyLightRef = useRef<THREE.SpotLight>(null);
+  const shelfLightRef = useRef<THREE.PointLight>(null);
   const played = useRef(new Set<string>());
   const wood = useMemo(() => createWoodMaterial(), []);
+  const slotWorld = useMemo(() => getSlotWorldCenter(), []);
 
   const shelfT =
     phase === "shelving"
@@ -91,12 +94,19 @@ export function ArchiveScene({
 
   const shelfGlow =
     phase === "afterglow"
-      ? 1 - phaseProgress * 0.35
+      ? 1 - phaseProgress * 0.4
       : phase === "done"
-        ? 0.65
-        : phase === "shelving" && phaseProgress > 0.85
-          ? (phaseProgress - 0.85) / 0.15
+        ? 0.55
+        : phase === "shelving" && phaseProgress > 0.82
+          ? (phaseProgress - 0.82) / 0.18
           : 0;
+
+  const spineGlow =
+    phase === "afterglow"
+      ? Math.max(0, 1 - phaseProgress * 0.85)
+      : phase === "done"
+        ? 0.35
+        : 0;
 
   const filled = phase === "shelving" || phase === "afterglow" || phase === "done";
 
@@ -107,94 +117,118 @@ export function ArchiveScene({
       played.current.add(key);
       fn();
     };
-    if (phase === "writing" && phaseProgress > 0.15 && phaseProgress < 0.2) {
+    if (phase === "writing" && phaseProgress > 0.18 && phaseProgress < 0.24) {
       mark("pen1", () => playPenScratch());
     }
-    if (phase === "writing" && phaseProgress > 0.45 && phaseProgress < 0.5) {
-      mark("pen2", () => playPenScratch(0.1));
+    if (phase === "writing" && phaseProgress > 0.48 && phaseProgress < 0.54) {
+      mark("pen2", () => playPenScratch(0.06));
     }
-    if (phase === "writing" && phaseProgress > 0.72 && phaseProgress < 0.77) {
-      mark("pen3", () => playPenScratch(0.08));
+    if (phase === "writing" && phaseProgress > 0.74 && phaseProgress < 0.8) {
+      mark("pen3", () => playPenScratch(0.05));
     }
-    if (phase === "pageFlip" && phaseProgress > 0.05) {
-      mark("flip", playPageFlip);
+    if (phase === "pageFlip" && phaseProgress > 0.08 && phaseProgress < 0.14) {
+      mark("flip", () => playPageFlip());
     }
-    if (phase === "closing" && phaseProgress > 0.88) {
+    if (phase === "closing" && phaseProgress > 0.9 && phaseProgress < 0.98) {
       mark("close", playBookClose);
     }
-    if (phase === "shelving" && phaseProgress > 0.05 && phaseProgress < 0.12) {
+    if (phase === "shelving" && phaseProgress > 0.04 && phaseProgress < 0.12) {
       mark("slide", playShelfSlide);
     }
-    if (phase === "shelving" && phaseProgress > 0.84) {
+    if (phase === "shelving" && phaseProgress > 0.86 && phaseProgress < 0.94) {
       mark("settle", playShelfSettle);
     }
-    if (phase === "afterglow" && phaseProgress > 0.1) {
-      mark("chime", playSparkleChime);
+    if (phase === "afterglow" && phaseProgress > 0.42 && phaseProgress < 0.5) {
+      mark("chime", () => playSparkleChime());
     }
   }, [phase, phaseProgress, soundEnabled]);
 
   useFrame(({ clock }, delta) => {
     const cam = camRef.current;
     if (!cam) return;
+
     const key = CAMERA_KEYS[phase];
-    const lerp = Math.min(1, delta * 2.8);
-    cam.position.lerp(key.pos, lerp);
-    lookAt.current.lerp(key.target, lerp);
+    let targetPos = key.pos.clone();
+    let targetLook = key.target.clone();
+
+    if (phase === "shelving") {
+      const follow = easeInOut(Math.min(1, phaseProgress * 1.15));
+      const bookFocus = new THREE.Vector3(
+        THREE.MathUtils.lerp(0, slotWorld.x, follow),
+        THREE.MathUtils.lerp(0.02, slotWorld.y + 0.08, follow),
+        THREE.MathUtils.lerp(0, slotWorld.z, follow)
+      );
+      targetLook.lerp(bookFocus, 0.55 + follow * 0.35);
+      targetPos.y -= follow * 0.08;
+      targetPos.z -= follow * 0.12;
+    }
+
+    if (phase === "afterglow" || phase === "done") {
+      targetLook.set(slotWorld.x, slotWorld.y + 0.06, slotWorld.z + 0.02);
+    }
+
+    const lerp = Math.min(1, delta * (phase === "afterglow" ? 1.6 : 2.4));
+    cam.position.lerp(targetPos, lerp);
+    lookAt.current.lerp(targetLook, lerp);
 
     const closeImpact = phase === "closing" ? impactPulse(phaseProgress) : 0;
     if (closeImpact > 0) {
-      cam.position.y += Math.sin(clock.elapsedTime * 70) * 0.006 * closeImpact;
-      cam.position.x += Math.sin(clock.elapsedTime * 43) * 0.004 * closeImpact;
+      cam.position.y += Math.sin(clock.elapsedTime * 55) * 0.005 * closeImpact;
+      cam.position.z += 0.012 * closeImpact;
     }
 
     cam.lookAt(lookAt.current);
 
     if (keyLightRef.current) {
       keyLightRef.current.intensity =
-        2.15 +
-        (phase === "closing" ? impactPulse(phaseProgress) * 0.35 : 0) +
-        shelfGlow * 0.22;
+        2.05 +
+        (phase === "closing" ? impactPulse(phaseProgress) * 0.28 : 0) +
+        shelfGlow * 0.18;
+    }
+    if (shelfLightRef.current) {
+      shelfLightRef.current.intensity = 0.12 + shelfGlow * 0.95;
     }
   });
 
-  const bookSparkles = phase === "writing" || phase === "closing";
-  const shelfSparkles = phase === "afterglow" || phase === "shelving";
+  const bookSparkles = phase === "writing";
+  const shelfSparkles = (phase === "afterglow" || phase === "done") && spineGlow > 0.15;
 
   return (
     <>
       <color attach="background" args={["#1a1510"]} />
-      <fog attach="fog" args={["#1a1510", 4, 9]} />
+      <fog attach="fog" args={["#1a1510", 4.5, 9.5]} />
 
       <PerspectiveCamera
         ref={camRef}
         makeDefault
-        position={[0.15, 0.35, 2.65]}
-        fov={42}
+        position={[0.08, 0.22, 2.05]}
+        fov={40}
         near={0.1}
         far={20}
       />
 
-      <ambientLight intensity={0.28} color="#c9a878" />
-      <hemisphereLight args={["#c9a878", "#1a1510", 0.32]} />
+      <ambientLight intensity={0.26} color="#c9a878" />
+      <hemisphereLight args={["#c9a878", "#1a1510", 0.34]} />
       <spotLight
         ref={keyLightRef}
-        position={[1.2, 2.8, 2.2]}
-        angle={0.45}
-        penumbra={0.6}
-        intensity={2.2}
+        position={[1.15, 2.65, 2.05]}
+        angle={0.42}
+        penumbra={0.65}
+        intensity={2.05}
         color="#ffd89a"
         castShadow
         shadow-mapSize={[1024, 1024]}
       />
-      <pointLight position={[-1.5, 1.2, 1]} intensity={0.35} color="#c9a227" />
-      <pointLight position={[0, -0.5, 1.5]} intensity={0.2} color="#8b6914" />
+      <pointLight position={[-1.4, 1.15, 0.95]} intensity={0.3} color="#c9a227" />
+      <pointLight position={[0, -0.45, 1.45]} intensity={0.18} color="#8b6914" />
       <pointLight
-        position={[0, -1.38, 0.48]}
-        intensity={0.15 + shelfGlow * 1.05}
+        ref={shelfLightRef}
+        position={[slotWorld.x, slotWorld.y + 0.12, slotWorld.z + 0.35]}
+        intensity={0.12}
         color="#d4af37"
+        distance={2.2}
       />
 
-      {/* 机 */}
       <mesh position={[0, -0.55, 0]} receiveShadow>
         <boxGeometry args={[5.5, 0.12, 2.8]} />
         <primitive object={wood} attach="material" />
@@ -202,10 +236,19 @@ export function ArchiveScene({
 
       <ContactShadows
         position={[0, -0.48, 0]}
-        opacity={0.55}
+        opacity={0.52}
         scale={8}
-        blur={2.4}
+        blur={2.6}
         far={4}
+        color="#000000"
+      />
+
+      <ContactShadows
+        position={[slotWorld.x, slotWorld.y - 0.34, slotWorld.z]}
+        opacity={filled && shelfT > 0.75 ? 0.38 : 0}
+        scale={0.55}
+        blur={2.2}
+        far={0.8}
         color="#000000"
       />
 
@@ -216,31 +259,39 @@ export function ArchiveScene({
           lines={lines}
           heading={heading}
           shelfT={shelfT}
+          spineGlow={spineGlow}
         />
       </group>
 
-      <Bookshelf shelfGlow={shelfGlow} filled={filled && shelfT > 0.92} />
+      <Bookshelf
+        shelfGlow={shelfGlow}
+        filled={filled && shelfT > 0.88}
+        shelfT={shelfT}
+      />
 
       <SparkleParticles
         active={bookSparkles}
-        count={18}
-        position={[0, 0.12, 0.28]}
-        spread={[1.35, 0.95, 0.65]}
+        count={10}
+        position={[0, 0.1, 0.22]}
+        spread={[1.1, 0.7, 0.5]}
       />
       <SparkleParticles
         active={shelfSparkles}
-        count={30}
-        position={[0, -1.32, 0.2]}
-        spread={[0.75, 0.7, 0.42]}
+        count={12}
+        position={[slotWorld.x, slotWorld.y + 0.15, slotWorld.z + 0.08]}
+        spread={[0.35, 0.45, 0.22]}
       />
 
-      {/* 書庫の奥壁（外部 HDR 不要のローカル照明のみ） */}
       <mesh position={[0, 0.5, -2.2]} receiveShadow>
         <planeGeometry args={[8, 5]} />
         <meshStandardMaterial color="#14100c" roughness={0.95} />
       </mesh>
     </>
   );
+}
+
+function easeInOut(t: number) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
 
 export { TIMELINE };

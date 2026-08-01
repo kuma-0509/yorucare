@@ -11,14 +11,14 @@ export type CinematicPhase =
   | "afterglow"
   | "done";
 
-/** 演出タイムライン（約7.2秒） */
+/** 演出タイムライン（約7.4秒） */
 export const TIMELINE = {
   pageFlip: 2300,
   closing: 2900,
-  spine: 3700,
-  shelving: 4500,
-  afterglow: 5900,
-  done: 7200,
+  spine: 3800,
+  shelving: 4700,
+  afterglow: 6200,
+  done: 7400,
 } as const;
 
 export function useCinematicTimeline(onDone?: () => void) {

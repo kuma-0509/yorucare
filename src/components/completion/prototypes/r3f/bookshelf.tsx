@@ -3,7 +3,12 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { createWoodMaterial } from "./materials";
+import {
+  createGoldMaterial,
+  createShelfSpineMaterial,
+  createWoodMaterial,
+} from "./materials";
+import { SHELF_LAYOUT, getSlotRowPosition } from "./shelf-layout";
 
 const SHELF_BOOKS = [
   { color: "#3d2a20", h: 0.72, label: "記" },
@@ -15,32 +20,43 @@ const SHELF_BOOKS = [
   { color: "#2e3a4a", h: 0.68, label: "架" },
 ] as const;
 
-const EMPTY_SLOT = 3;
-
 interface BookshelfProps {
-  /** 本が収納された後の揺れ・光 */
   shelfGlow: number;
   filled: boolean;
+  shelfT?: number;
 }
 
-export function Bookshelf({ shelfGlow, filled }: BookshelfProps) {
+export function Bookshelf({ shelfGlow, filled, shelfT = 0 }: BookshelfProps) {
   const rowRef = useRef<THREE.Group>(null);
   const glowRef = useRef<THREE.Mesh>(null);
+  const slotGlowRef = useRef<THREE.Mesh>(null);
   const wood = useMemo(() => createWoodMaterial(), []);
+  const spineMat = useMemo(() => createShelfSpineMaterial(), []);
+  const gold = useMemo(() => createGoldMaterial(), []);
+  const slotPos = useMemo(() => getSlotRowPosition(), []);
 
   useFrame(() => {
     if (rowRef.current && filled) {
-      const wobble = Math.sin(shelfGlow * Math.PI * 3) * 0.012 * (1 - shelfGlow);
+      const wobble = Math.sin(shelfGlow * Math.PI * 2.2) * 0.006 * (1 - shelfGlow * 0.6);
       rowRef.current.rotation.z = wobble;
     }
     if (glowRef.current) {
       const mat = glowRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = filled ? shelfGlow * 0.55 : 0;
+      mat.opacity = filled ? shelfGlow * 0.38 : 0;
+    }
+    if (slotGlowRef.current) {
+      const mat = slotGlowRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = filled ? 0.08 + shelfGlow * 0.22 : 0;
+    }
+    if (filled && shelfT > 0.9) {
+      gold.emissiveIntensity = 0.08 + shelfGlow * 0.28;
     }
   });
 
+  const showPlacedBook = filled && shelfT > 0.88;
+
   return (
-    <group position={[0, -1.55, 0.05]}>
+    <group position={[0, SHELF_LAYOUT.groupY, SHELF_LAYOUT.groupZ]}>
       <mesh position={[-2.16, -0.03, 0]} receiveShadow castShadow>
         <boxGeometry args={[0.12, 1.02, 0.62]} />
         <primitive object={wood} attach="material" />
@@ -53,20 +69,17 @@ export function Bookshelf({ shelfGlow, filled }: BookshelfProps) {
         <boxGeometry args={[4.35, 0.12, 0.62]} />
         <primitive object={wood} attach="material" />
       </mesh>
-
-      {/* 本棚板 */}
       <mesh position={[0, -0.42, 0]} receiveShadow castShadow>
         <boxGeometry args={[4.2, 0.14, 0.55]} />
         <primitive object={wood} attach="material" />
       </mesh>
       <mesh position={[0, 0.02, -0.18]} receiveShadow>
         <boxGeometry args={[4.1, 0.85, 0.08]} />
-        <meshStandardMaterial color="#2a2018" roughness={0.9} />
+        <meshStandardMaterial color="#1a1410" roughness={0.95} />
       </mesh>
 
-      {/* 収納時の祝福の光 */}
-      <mesh ref={glowRef} position={[0, 0.05, 0.12]}>
-        <planeGeometry args={[0.55, 0.95]} />
+      <mesh ref={glowRef} position={[0, 0.05, 0.1]}>
+        <planeGeometry args={[3.8, 0.88]} />
         <meshBasicMaterial
           color="#c9a227"
           transparent
@@ -75,72 +88,129 @@ export function Bookshelf({ shelfGlow, filled }: BookshelfProps) {
         />
       </mesh>
 
-      <group ref={rowRef} position={[0, -0.08, 0.08]}>
+      <group ref={rowRef} position={[0, SHELF_LAYOUT.rowY, SHELF_LAYOUT.rowZ]}>
         {SHELF_BOOKS.map((book, i) => {
-          const x = (i - 3) * 0.28;
+          const x = (i - 3) * SHELF_LAYOUT.slotSpacing;
           if (book === null) {
             return (
               <group key={i} position={[x, 0, 0]}>
-                {/* 空きスロット — 影の落ちた溝 */}
-                <mesh position={[0, bookHeight(0.58) / 2 - 0.35, -0.02]}>
-                  <boxGeometry args={[0.22, bookHeight(0.58), 0.32]} />
-                  <meshStandardMaterial color="#1a1510" roughness={1} />
+                <mesh position={[0, slotHeight(0.58) / 2 - 0.35, -0.04]}>
+                  <boxGeometry args={[0.24, slotHeight(0.58), 0.36]} />
+                  <meshStandardMaterial color="#120e0a" roughness={1} />
                 </mesh>
-                {!filled && (
-                  <mesh position={[0, 0.02, 0.04]}>
-                    <boxGeometry args={[0.18, 0.04, 0.02]} />
-                    <meshBasicMaterial color="#c9a227" transparent opacity={0.12} />
+                <mesh position={[-0.125, -0.02, 0.02]}>
+                  <boxGeometry args={[0.012, 0.64, 0.38]} />
+                  <meshBasicMaterial
+                    color="#000000"
+                    transparent
+                    opacity={showPlacedBook ? 0.12 : 0.32}
+                    depthWrite={false}
+                  />
+                </mesh>
+                <mesh position={[0.125, -0.02, 0.02]}>
+                  <boxGeometry args={[0.012, 0.64, 0.38]} />
+                  <meshBasicMaterial
+                    color="#000000"
+                    transparent
+                    opacity={showPlacedBook ? 0.12 : 0.32}
+                    depthWrite={false}
+                  />
+                </mesh>
+                {!showPlacedBook && (
+                  <mesh position={[0, 0.02, 0.06]}>
+                    <boxGeometry args={[0.16, 0.03, 0.015]} />
+                    <meshBasicMaterial color="#c9a227" transparent opacity={0.1} />
                   </mesh>
                 )}
-                <mesh position={[-0.13, -0.03, 0.08]}>
-                  <boxGeometry args={[0.015, 0.62, 0.04]} />
+                <mesh ref={slotGlowRef} position={[0, 0.02, 0.14]}>
+                  <planeGeometry args={[0.14, 0.42]} />
                   <meshBasicMaterial
-                    color="#000000"
+                    color="#d4af37"
                     transparent
-                    opacity={filled ? 0.18 : 0.28}
+                    opacity={0}
                     depthWrite={false}
                   />
                 </mesh>
-                <mesh position={[0.13, -0.03, 0.08]}>
-                  <boxGeometry args={[0.015, 0.62, 0.04]} />
-                  <meshBasicMaterial
-                    color="#000000"
-                    transparent
-                    opacity={filled ? 0.18 : 0.28}
-                    depthWrite={false}
-                  />
-                </mesh>
+                {showPlacedBook && (
+                  <mesh
+                    rotation={[-Math.PI / 2, 0, 0]}
+                    position={[0, -0.36, 0.04]}
+                    receiveShadow
+                  >
+                    <planeGeometry args={[0.2, 0.34]} />
+                    <shadowMaterial opacity={0.45} />
+                  </mesh>
+                )}
               </group>
             );
           }
-          const h = bookHeight(book.h);
-          const nudge = filled
-            ? i === EMPTY_SLOT - 1
-              ? -0.014
-              : i === EMPTY_SLOT + 1
-                ? 0.014
+
+          const h = slotHeight(book.h);
+          const nudge = showPlacedBook
+            ? i === SHELF_LAYOUT.emptySlotIndex - 1
+              ? -0.012
+              : i === SHELF_LAYOUT.emptySlotIndex + 1
+                ? 0.012
                 : 0
             : 0;
+
           return (
-            <group key={i} position={[x + nudge, 0, 0]} rotation={[0, 0, nudge * -0.9]}>
+            <group
+              key={i}
+              position={[x + nudge, 0, 0]}
+              rotation={[0, 0, nudge * -0.6]}
+            >
               <mesh position={[0, h / 2 - 0.35, 0]} castShadow receiveShadow>
                 <boxGeometry args={[0.18, h, 0.34]} />
-                <meshStandardMaterial color={book.color} roughness={0.7} metalness={0.03} />
+                <meshStandardMaterial
+                  color={book.color}
+                  roughness={0.72}
+                  metalness={0.03}
+                />
               </mesh>
-              <mesh position={[0.1, h / 2 - 0.35, 0]}>
-                <boxGeometry args={[0.03, h * 0.92, 0.28]} />
-                <meshStandardMaterial color="#d8ccb0" roughness={0.85} />
+              <mesh position={[0.092, h / 2 - 0.35, 0]}>
+                <boxGeometry args={[0.028, h * 0.9, 0.28]} />
+                <meshStandardMaterial color="#d8ccb0" roughness={0.88} />
               </mesh>
             </group>
           );
         })}
+
+        {showPlacedBook && (
+          <group position={[slotPos.x, slotPos.y, slotPos.z]}>
+            <mesh position={[0, SHELF_LAYOUT.slotHeight / 2 - 0.35, 0]}>
+              <boxGeometry
+                args={[
+                  SHELF_LAYOUT.slotSpineWidth * 0.92,
+                  SHELF_LAYOUT.slotHeight,
+                  SHELF_LAYOUT.slotDepth,
+                ]}
+              />
+              <meshStandardMaterial
+                color="#4a3228"
+                roughness={0.68}
+                transparent
+                opacity={0.08}
+                depthWrite={false}
+              />
+            </mesh>
+            <mesh position={[0.088, SHELF_LAYOUT.slotHeight / 2 - 0.35, 0]}>
+              <boxGeometry args={[0.024, SHELF_LAYOUT.slotHeight * 0.55, 0.26]} />
+              <primitive object={spineMat} attach="material" />
+            </mesh>
+            <mesh position={[0.098, SHELF_LAYOUT.slotHeight / 2 - 0.35, 0]}>
+              <boxGeometry args={[0.008, SHELF_LAYOUT.slotHeight * 0.42, 0.22]} />
+              <primitive object={gold} attach="material" />
+            </mesh>
+          </group>
+        )}
       </group>
     </group>
   );
 }
 
-function bookHeight(ratio: number) {
+function slotHeight(ratio: number) {
   return ratio;
 }
 
-export { EMPTY_SLOT };
+export { SHELF_LAYOUT };
