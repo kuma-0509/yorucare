@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -62,7 +62,6 @@ import {
 import {
   addSelfCareItem,
   getAllRecords,
-  getAllSelfCareItems,
   getRecordByDate,
   initSelfCareIfEmpty,
   recordToFormState,
@@ -112,12 +111,27 @@ export function TodayRecordTab({
   const [showMemo, setShowMemo] = useState(false);
   const [newSelfCareTitle, setNewSelfCareTitle] = useState("");
   const [showAddSelfCare, setShowAddSelfCare] = useState(false);
+  const [formLoading, setFormLoading] = useState(true);
+  const [formLoadError, setFormLoadError] = useState<string | null>(null);
+  const [addingSelfCare, setAddingSelfCare] = useState(false);
   const [saving, setSaving] = useState(false);
   const [liveMessage, setLiveMessage] = useState<string | null>(null);
+  const loadRequestRef = useRef(0);
 
-  const loadForm = useCallback((date: string) => {
-    const record = getRecordByDate(date);
-    setForm(recordToFormState(record, date));
+  const loadForm = useCallback(async (date: string) => {
+    const requestId = ++loadRequestRef.current;
+    setFormLoading(true);
+    setFormLoadError(null);
+    const result = await getRecordByDate(date);
+    if (requestId !== loadRequestRef.current) return;
+    setFormLoading(false);
+    if (!result.ok) {
+      const message = storageErrorMessage(result.error);
+      setFormLoadError(message);
+      setLiveMessage(message);
+      return;
+    }
+    setForm(recordToFormState(result.value, date));
     setShowSaved(false);
     setSavedRecord(null);
     setCustomMoodInput("");
@@ -128,8 +142,18 @@ export function TodayRecordTab({
   }, []);
 
   useEffect(() => {
-    initSelfCareIfEmpty();
-    setSelfCareItems(getAllSelfCareItems());
+    let active = true;
+    void initSelfCareIfEmpty().then((result) => {
+      if (!active) return;
+      if (!result.ok) {
+        setLiveMessage(storageErrorMessage(result.error));
+        return;
+      }
+      setSelfCareItems(result.value);
+    });
+    return () => {
+      active = false;
+    };
   }, [refreshKey]);
 
   useEffect(() => {
@@ -139,7 +163,7 @@ export function TodayRecordTab({
   }, [initialDate]);
 
   useEffect(() => {
-    loadForm(targetDate);
+    void loadForm(targetDate);
   }, [targetDate, loadForm, refreshKey]);
 
   useEffect(() => {
@@ -253,15 +277,17 @@ export function TodayRecordTab({
     });
   };
 
-  const handleAddSelfCareInline = () => {
+  const handleAddSelfCareInline = async () => {
     const title = newSelfCareTitle.trim();
-    if (!title) return;
-    const result = addSelfCareItem(title);
+    if (!title || addingSelfCare) return;
+    setAddingSelfCare(true);
+    const result = await addSelfCareItem(title);
+    setAddingSelfCare(false);
     if (!result.ok) {
       setLiveMessage(storageErrorMessage(result.error));
       return;
     }
-    setSelfCareItems(getAllSelfCareItems());
+    setSelfCareItems((items) => [...items, result.value]);
     setForm((prev) => ({
       ...prev,
       selfCareIds: [...prev.selfCareIds, result.value.id],
@@ -270,24 +296,27 @@ export function TodayRecordTab({
     setShowAddSelfCare(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (saving) return;
     setSaving(true);
-    const hadRecordsBefore = getAllRecords().length > 0;
-    const result = saveRecord(targetDate, {
+    const recordsResult = await getAllRecords();
+    if (!recordsResult.ok) {
+      setSaving(false);
+      setLiveMessage(storageErrorMessage(recordsResult.error));
+      return;
+    }
+    const result = await saveRecord(targetDate, {
       ...form,
-      id: getRecordByDate(targetDate)?.id,
     });
     setSaving(false);
     if (!result.ok) {
       setLiveMessage(storageErrorMessage(result.error));
       return;
     }
-    trackRecordSaved(targetDate, !hadRecordsBefore);
+    trackRecordSaved(targetDate, recordsResult.value.length === 0);
     setSavedRecord(result.value);
     setShowSaved(true);
     setLiveMessage("記録できました。");
-    setSelfCareItems(getAllSelfCareItems());
   };
 
   const recordTitle =
@@ -297,6 +326,36 @@ export function TodayRecordTab({
 
   const showWarningTags =
     form.warningLevel === "small" || form.warningLevel === "yes";
+
+  if (formLoading) {
+    return (
+      <div className="space-y-4 pb-4" aria-busy="true">
+        <header>
+          <h1 className="text-xl font-bold">{recordTitle}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">読み込み中…</p>
+        </header>
+      </div>
+    );
+  }
+
+  if (formLoadError) {
+    return (
+      <div className="space-y-4 pb-4">
+        <header>
+          <h1 className="text-xl font-bold">{recordTitle}</h1>
+        </header>
+        <div
+          className="rounded-2xl border-2 border-destructive/40 bg-destructive/5 px-4 py-3"
+          role="alert"
+        >
+          <p className="text-sm leading-relaxed">{formLoadError}</p>
+        </div>
+        <Button type="button" onClick={() => void loadForm(targetDate)}>
+          もう一度読み込む
+        </Button>
+      </div>
+    );
+  }
 
   if (showSaved && savedRecord) {
     const lines = buildRecordSummaryLines(savedRecord, selfCareItems);
@@ -311,7 +370,7 @@ export function TodayRecordTab({
           variant="default"
           onClick={() => {
             setShowSaved(false);
-            loadForm(targetDate);
+            void loadForm(targetDate);
           }}
         >
           {targetDate === today
@@ -695,8 +754,13 @@ export function TodayRecordTab({
                 placeholder="新しいできることの名前"
               />
               <div className="flex gap-2">
-                <Button type="button" className="flex-1" onClick={handleAddSelfCareInline}>
-                  追加する
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={() => void handleAddSelfCareInline()}
+                  disabled={addingSelfCare}
+                >
+                  {addingSelfCare ? "追加中…" : "追加する"}
                 </Button>
                 <Button
                   type="button"
@@ -782,7 +846,11 @@ export function TodayRecordTab({
     </div>
 
     <StickyActionBar>
-      <SaveRecordButton onClick={handleSave} saving={saving} />
+      <SaveRecordButton
+        onClick={() => void handleSave()}
+        saving={saving}
+        disabled={formLoading}
+      />
     </StickyActionBar>
     <LiveRegion message={liveMessage} />
     <MoodCategoryDialog

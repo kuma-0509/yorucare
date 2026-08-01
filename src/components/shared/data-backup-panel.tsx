@@ -32,9 +32,13 @@ export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [pendingImport, setPendingImport] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const handleExport = () => {
-    const result = downloadBackup();
+  const handleExport = async () => {
+    if (busy) return;
+    setBusy(true);
+    const result = await downloadBackup();
+    setBusy(false);
     if (!result.ok) {
       setMessage(storageErrorMessage(result.error));
       return;
@@ -60,9 +64,11 @@ export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
     reader.readAsText(file);
   };
 
-  const confirmImport = () => {
-    if (!pendingImport) return;
-    const result = importBackup(pendingImport);
+  const confirmImport = async () => {
+    if (!pendingImport || busy) return;
+    setBusy(true);
+    const result = await importBackup(pendingImport);
+    setBusy(false);
     setConfirmOpen(false);
     setPendingImport(null);
     if (result.ok) {
@@ -92,9 +98,10 @@ export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
             type="button"
             variant="outline"
             className="w-full"
-            onClick={handleExport}
+            onClick={() => void handleExport()}
+            disabled={busy}
           >
-            記録をファイルで保存する
+            {busy ? "処理中…" : "記録をファイルで保存する"}
           </Button>
           <input
             ref={inputRef}
@@ -112,6 +119,7 @@ export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
             variant="secondary"
             className="w-full"
             onClick={() => inputRef.current?.click()}
+            disabled={busy}
           >
             保存したファイルから復元する
           </Button>
@@ -132,8 +140,12 @@ export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">
-            <Button type="button" onClick={confirmImport}>
-              復元する
+            <Button
+              type="button"
+              onClick={() => void confirmImport()}
+              disabled={busy}
+            >
+              {busy ? "復元中…" : "復元する"}
             </Button>
             <Button
               type="button"

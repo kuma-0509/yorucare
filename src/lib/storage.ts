@@ -16,16 +16,14 @@ export {
   repository,
 } from "./repository";
 
-function unwrap<T>(result: Result<T>, fallback: T): T {
-  return result.ok ? result.value : fallback;
+export function getAllRecords(): Promise<Result<DailyRecord[]>> {
+  return repository.getAllRecords();
 }
 
-export function getAllRecords(): DailyRecord[] {
-  return unwrap(repository.getAllRecords(), []);
-}
-
-export function getRecordByDate(date: string): DailyRecord | null {
-  return unwrap(repository.getRecordByDate(date), null);
+export function getRecordByDate(
+  date: string
+): Promise<Result<DailyRecord | null>> {
+  return repository.getRecordByDate(date);
 }
 
 export function saveRecord(
@@ -34,37 +32,39 @@ export function saveRecord(
     DailyRecord,
     "id" | "date" | "sleepMinutes" | "createdAt" | "updatedAt"
   > & { id?: string }
-): Result<DailyRecord> {
+): Promise<Result<DailyRecord>> {
   return repository.saveRecord(date, data);
 }
 
-export function deleteRecord(date: string): Result<void> {
+export function deleteRecord(date: string): Promise<Result<void>> {
   return repository.deleteRecord(date);
 }
 
-export function deleteAllRecords(): Result<void> {
+export function deleteAllRecords(): Promise<Result<void>> {
   return repository.deleteAllRecords();
 }
 
-export function getAllSelfCareItems(): SelfCareItem[] {
-  return unwrap(repository.getAllSelfCareItems(), []);
+export function getAllSelfCareItems(): Promise<Result<SelfCareItem[]>> {
+  return repository.getAllSelfCareItems();
 }
 
-export function initSelfCareIfEmpty(): SelfCareItem[] {
-  return unwrap(repository.ensureSampleSelfCare(), []);
+export function initSelfCareIfEmpty(): Promise<Result<SelfCareItem[]>> {
+  return repository.ensureSampleSelfCare();
 }
 
-export function addSelfCareItem(title: string): Result<SelfCareItem> {
+export function addSelfCareItem(
+  title: string
+): Promise<Result<SelfCareItem>> {
   return repository.addSelfCareItem(title);
 }
 
 export function updateSelfCareItem(
   id: string,
   title: string
-): Result<SelfCareItem> {
+): Promise<Result<SelfCareItem>> {
   return repository.updateSelfCareItem(id, title);
 }
 
-export function deleteSelfCareItem(id: string): Result<void> {
+export function deleteSelfCareItem(id: string): Promise<Result<void>> {
   return repository.deleteSelfCareItem(id);
 }
