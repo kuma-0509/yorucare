@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>提案スキルチューニング図解（提出用）| AI Driven School 5ヶ月目課題</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --night-950: #0b1026;
+    --night-900: #111736;
+    --night-800: #1a2148;
+    --night-700: #252d5c;
+    --night-600: #333c74;
+    --moon-300: #fde68a;
+    --moon-400: #fcd34d;
+    --care-300: #a5b4fc;
+    --care-400: #818cf8;
+    --ink: #e8eaf6;
+    --ink-dim: #aab0d0;
+    --before: #fda4af;
+    --after: #86efac;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--night-950);
+    color: var(--ink);
+    font-family: "Noto Sans JP", sans-serif;
+    line-height: 1.8;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 80px; }
+  .maru { font-family: "Zen Maru Gothic", sans-serif; }
+
+  header.hero { text-align: center; padding: 48px 12px 36px; }
+  .chip {
+    display: inline-block; font-size: 13px; font-weight: 700;
+    color: var(--night-950); background: var(--moon-400);
+    border-radius: 999px; padding: 4px 16px; letter-spacing: .06em;
+  }
+  header.hero h1 {
+    font-size: clamp(26px, 4.6vw, 44px); font-weight: 900; margin: 18px 0 10px;
+    font-family: "Zen Maru Gothic", sans-serif;
+  }
+  header.hero p.sub { color: var(--ink-dim); font-size: 15px; }
+  header.hero .accent { color: var(--moon-300); }
+
+  section { margin-top: 56px; }
+  .sec-label {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  }
+  .sec-label .num {
+    flex: none; width: 40px; height: 40px; border-radius: 12px;
+    background: var(--night-700); color: var(--moon-300);
+    display: grid; place-items: center; font-weight: 900; font-size: 18px;
+    font-family: "Zen Maru Gothic", sans-serif;
+  }
+  .sec-label h2 { font-size: clamp(20px, 3vw, 27px); font-weight: 900; font-family: "Zen Maru Gothic", sans-serif; }
+
+  .card {
+    background: var(--night-900); border: 1px solid var(--night-700);
+    border-radius: 18px; padding: 24px 26px;
+  }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .card h3 { font-size: 16px; color: var(--care-300); margin-bottom: 10px; font-weight: 700; }
+  .card p, .card li { font-size: 15px; }
+  .card ul { padding-left: 1.3em; }
+  .card li { margin: 4px 0; }
+  .note { color: var(--ink-dim); font-size: 13px; margin-top: 10px; }
+
+  /* flow */
+  .flow { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+  .flow .step {
+    flex: 1 1 190px; background: var(--night-900); border: 1px solid var(--night-700);
+    border-radius: 14px; padding: 16px 16px 14px; position: relative;
+  }
+  .flow .step .s-num { font-size: 12px; font-weight: 900; color: var(--moon-400); letter-spacing: .1em; }
+  .flow .step .s-title { font-weight: 900; margin: 4px 0 6px; font-size: 15.5px; font-family: "Zen Maru Gothic", sans-serif; }
+  .flow .step p { font-size: 13px; color: var(--ink-dim); }
+  .flow .arrow { align-self: center; color: var(--night-600); font-size: 22px; font-weight: 900; flex: none; }
+  @media (max-width: 720px) { .flow .arrow { display: none; } }
+  .loopnote {
+    margin-top: 14px; border: 1px dashed var(--care-400); border-radius: 14px;
+    padding: 14px 18px; font-size: 14px; background: rgba(129,140,248,.07);
+  }
+  .loopnote strong { color: var(--care-300); }
+
+  /* before / after */
+  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 1080px) { .ba-grid { grid-template-columns: 1fr; } }
+  .ba {
+    border-radius: 18px; border: 1px solid var(--night-700); background: var(--night-900);
+    overflow: hidden;
+  }
+  .ba .ba-head { padding: 18px 22px 14px; }
+  .ba.before .ba-head { border-top: 4px solid var(--before); }
+  .ba.after  .ba-head { border-top: 4px solid var(--after); }
+  .ba .tag { font-size: 12px; font-weight: 900; letter-spacing: .12em; }
+  .ba.before .tag { color: var(--before); }
+  .ba.after  .tag { color: var(--after); }
+  .ba .ba-title { font-weight: 900; font-size: 17px; margin-top: 2px; font-family: "Zen Maru Gothic", sans-serif; }
+  .ba .ba-meta { font-size: 12.5px; color: var(--ink-dim); margin-top: 2px; }
+  .points { padding: 0 22px 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .points span {
+    font-size: 12.5px; padding: 3px 12px; border-radius: 999px; font-weight: 700;
+  }
+  .ba.before .points span { background: rgba(253,164,175,.12); color: var(--before); border: 1px solid rgba(253,164,175,.35); }
+  .ba.after  .points span { background: rgba(134,239,172,.10); color: var(--after); border: 1px solid rgba(134,239,172,.3); }
+  .ba pre {
+    margin: 0 16px 16px; padding: 18px; border-radius: 12px;
+    background: var(--night-950); border: 1px solid var(--night-800);
+    font-family: "Noto Sans JP", sans-serif; font-size: 13px; line-height: 1.75;
+    white-space: pre-wrap; word-break: break-word;
+    max-height: 520px; overflow-y: auto;
+  }
+
+  /* skill tree */
+  .tree {
+    font-size: 14px; background: var(--night-950); border: 1px solid var(--night-800);
+    border-radius: 12px; padding: 18px 20px; white-space: pre; overflow-x: auto;
+    line-height: 2;
+  }
+  .tree b { color: var(--moon-300); font-weight: 700; }
+  .rule-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 16px; }
+  .rule-cards .card { padding: 16px 18px; }
+  .rule-cards .card h3 { font-size: 14.5px; margin-bottom: 6px; }
+  .rule-cards .card p { font-size: 13px; color: var(--ink-dim); }
+
+  /* kufu / kusen */
+  .kk .card h3 { font-size: 17px; font-family: "Zen Maru Gothic", sans-serif; font-weight: 900; }
+  .kk .card.kufu h3 { color: var(--after); }
+  .kk .card.kusen h3 { color: var(--before); }
+  .kk .item { margin-top: 14px; }
+  .kk .item b { display: block; font-size: 14.5px; }
+  .kk .item p { font-size: 13.5px; color: var(--ink-dim); }
+
+  footer { margin-top: 64px; text-align: center; color: var(--ink-dim); font-size: 12.5px; line-height: 2; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="chip">AI Driven School 第1期・5ヶ月目課題</span>
+    <h1>自分専用の<span class="accent">提案スキル</span>を作る</h1>
+    <p class="sub">配布スキルをヨルケア参加募集用にチューニングし、AIによる一発出しでBefore→Afterを比較した図解</p>
+  </header>
+
+  <!-- 1. 想定した相手と変えたいこと -->
+  <section>
+    <div class="sec-label"><span class="num">1</span><h2>想定した相手と、変えたいこと</h2></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>誰に</h3>
+        <p>メンタル不調から復職（または就労継続）したあと、<b>夜間・休日に心身の波が残っている当事者</b>。</p>
+        <ul>
+          <li>平日は緊張感で乗り切れるが、帰宅後・休日に一気に落ちる</li>
+          <li>「見られる・評価される・続けられないかも」という警戒心がある</li>
+          <li>それでも、自分の生活は自分で決めたい人</li>
+        </ul>
+        <p class="note">※ 上司の決裁を仰ぐ提案ではなく、本人が自分の参加を決める提案。ここが配布スキルの前提（せっかちな意思決定者）と最も違う点だった。</p>
+      </div>
+      <div class="card">
+        <h3>何を変えたいか</h3>
+        <p>支援が届きにくい<b>平日夜間・休日の過ごし方</b>。一人でしんどさを抱える時間から、自分の状態を知り整える時間へ。</p>
+        <ul>
+          <li>提案するもの：ヨルケア（夜間・休日のオンラインケア）の5か月間プログラムへの参加</li>
+          <li>お願い：参加申し込みフォームからの申し込み1つに絞る</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. チューニングの流れ -->
+  <section>
+    <div class="sec-label"><span class="num">2</span><h2>チューニングの流れ ── 手で直さず、渡すものを直す</h2></div>
+    <div class="flow">
+      <div class="step">
+        <div class="s-num">STEP 1</div>
+        <div class="s-title">配布スキルで一発出し</div>
+        <p>配布されたままの提案スキルで参加提案文を作成（Before）。上司向けの圧縮形式で出力された。</p>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="s-num">STEP 2</div>
+        <div class="s-title">気になった点を言語化</div>
+        <p>「アプリのお試し止まりで、プログラム参加の提案になっていない」「機能の説明が先で、得られるものが見えない」「上司向けの型のまま」を自分の言葉でメモ。</p>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="s-num">STEP 3</div>
+        <div class="s-title">スキル本体を修正</div>
+        <p>出力は直さない。SKILL.mdに読み手別の分岐を作り、募集ページ専用の仕様書と模範回答を整備。</p>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="s-num">STEP 4</div>
+        <div class="s-title">一発出しをやり直す</div>
+        <p>新しいチャットで同じ依頼を一発出し（After）。出力への手直しはゼロ。</p>
+      </div>
+    </div>
+    <div class="loopnote">
+      <strong>実際は1周では終わらなかった。</strong> Afterのあとにレビュー観点で「再構成版」を作ってみたが、それは“出力を磨き直す”行為＝一発出しルール違反に気づき、破棄。改善アイデアはスキル側に書き戻し、次の一発出しに効かせる方針に戻した。
+    </div>
+  </section>
+
+  <!-- 3. Before / After -->
+  <section>
+    <div class="sec-label"><span class="num">3</span><h2>チューニング前後の提案文（どちらもAIの一発出し・無修正）</h2></div>
+    <div class="ba-grid">
+
+      <div class="ba before">
+        <div class="ba-head">
+          <div class="tag">BEFORE</div>
+          <div class="ba-title">配布されたままのスキルの出力</div>
+          <div class="ba-meta">掲載原稿：v1（口頭プレゼン原稿・全文）／形式：社内提案向けの圧縮フォーマット（【提案】＋■◎階層）がそのまま適用された</div>
+        </div>
+        <div class="points">
+          <span>お願いが「アプリの1週間お試し」止まりで、プログラム参加に届かない</span>
+          <span>冒頭が機能・仕様の説明で、5か月後に何が得られるかが見えない</span>
+          <span>社内提案向けの圧縮形式（■◎・短い言い切りの連打）</span>
+          <span>「選択肢の網羅→推奨」など上司向けの型がそのまま</span>
+        </div>
+        <pre>【提案】ヨルケアを1週間、無料で試してほしい
+仕事の日のセルフケアを、毎日1〜2分で残せるオンラインサービスです。
+ログイン不要・端末にだけ保存・誰にも自動共有されません。
+今日からスマホで1回、記録してみてください。
+
+■ ヨルケアとは
+◎ サービスの内容（事実）
+・対象：就労中の方（手帳の有無は問いません）
+・目的：介護記録ではなく、本人の「セルフケア日記」
+・記録項目は5つ：気分／睡眠／お薬／しんどさのサイン／できたこと
+・所要時間：1日1〜2分
+・使い方：スマホのブラウザで開くだけ（アプリのインストール不要）
+・URL：https://yorucare.vercel.app
+
+■ 試すメリット（根拠）
+◎ 記録が続くと、起きやすい変化
+・「なんとなくしんどい」が、日付・項目付きの具体例になる
+・しんどくなる前のサイン（睡眠・気分・しんどさ）が、後から並べて見える
+・支援員・産業医・上司への説明が、感覚頼りから事例付きになりやすい
+・落ち込み時の選択肢として、「できること」リストを自分用に育てられる
+
+◎ エビデンス（外部研究＋サービス設計）
+・気分・体調のセルフモニタリングは、自己理解と対処のタイミング把握に有効、と複数の研究で示されている（例：気分記録のメタ分析、慢性疾患者の症状トラッキング研究）
+・短時間の書き出しは、反芻（同じことをぐるぐる考える）を減らし、感情調整に寄与しうる、と日記・エクスプレッシブライティングの研究で報告されている
+・ヨルケアは上記を「毎日1〜2分」「評価されない」「続けやすい項目」に落とし込んだ設計
+・現時点はパイロット段階。大規模な臨床試験データはない。一般的研究＋設計根拠＋利用者の声を集めるフェーズ
+
+■ よくある3つの不安と、ヨルケアの答え
+◎ 1. 誰かに見られる・評価に使われるのでは？
+・Phase 1 はログインなし。記録はこの端末のブラウザにだけ保存
+・会社・支援者・運営へ自動送信されない（共有機能は将来案。今は未実装）
+・共有端末なら「すべての記録を削除」で、この端末の記録だけ消せる
+・しんどさのサインが「あり」のとき、相談窓口リンクを常設表示（評価ではなく支援のため）
+
+◎ 2. 毎日続けられる？手間は？
+・1日1〜2分。全部埋めなくてよい（未入力のままでも保存できる項目あり）
+・毎日でなくてよい。週に数回でも「ふりかえり」タブで並べて見られる
+・記録後は「書庫にしまう／紙にして手放す／そのまま」の演出から選べる（義務感を出さない設計）
+・機種変更前は「これまで」タブから記録をファイル保存できる
+
+◎ 3. 本当に役立つ？
+・万能な治療ではない。自分のパターンを見つけるための道具
+・就労中は「説明材料」と「早めのサイン把握」に使う人が多い、という仮説で開発中
+・今回のパイロットで、実際に役立ったかを一緒に確かめたい
+
+■ お願い（CTA）
+◎ 今日から1週間、無料で試してほしい
+・手順は3つだけ
+  1. スマホで https://yorucare.vercel.app を開く
+  2. 「書く」タブで、今日の気分としんどさのサインだけ入力して保存する（1〜2分）
+  3. 1週間後、任意で感想を1つ教えてほしい（続けやすかった点／不安だった点／要らなかった点、どれか1つでOK）
+
+◎ 感想の渡し方（当日案内する方法を1つ選ぶ）
+・会場のQRコード
+・チャット・DM
+・短いGoogleフォーム
+→推奨：QR＋口頭（その場で開ける人を増やし、後からも見返せる）
+
+■ リスクと対策（先に共有）
+・端末を紛失・ブラウザデータ削除すると、ファイル保存していない記録は消える可能性がある
+  →対策：週1回「これまで」からファイル保存を推奨
+・健康情報のため、共有端末・家族共用端末では使い終わりに全削除を推奨
+・パイロット中のため、機能追加・文言変更がありうる
+  →対策：大きな変更は事前に共有する
+
+■ 締め（30秒）
+就労中は、しんどさを「我慢する／言い出せない」にしがちです。
+ヨルケアは、評価されず、短時間で、自分のペースで残せる記録です。
+1週間、無料で試して、合わなければやめて大丈夫です。
+今日、1回だけ記録してみてください。</pre>
+      </div>
+
+      <div class="ba after">
+        <div class="ba-head">
+          <div class="tag">AFTER</div>
+          <div class="ba-title">チューニング後のスキルの一発出し</div>
+          <div class="ba-meta">掲載原稿：v3（募集ページ本文・全文）／形式：当事者向け募集ページ構成（困りごと→メリット→社会課題→研究のお願い→申し込み）</div>
+        </div>
+        <div class="points">
+          <span>冒頭1行で「何が得られるか」</span>
+          <span>参加のお願いを言い切る</span>
+          <span>免責・医療境界は後半の専用セクションへ</span>
+          <span>申し込みフォーム1本にCTA集約</span>
+          <span>未確定情報は補完せず仮置きと明記</span>
+        </div>
+        <pre># 夜や休日に調子を崩しやすい、復職後の働く方へ
+
+5か月かけて、自分用のセルフケア取扱説明書をつくり、続けやすい形で習慣に近づけませんか。
+
+## ヨルケアとは
+
+ヨルケアは、働き続けるための心身の土台を、運動・記録・振り返り・仲間とのつながりによって整える、5か月間のオンラインプログラムです。
+
+メンタル不調から仕事に戻ったあと、「平日は何とか頑張れるのに、夜や休日に気力や体力が落ちる」「週末で回復しても、月曜日が怖い」という波が残ることがあります。
+ヨルケアは、医療・福祉・職場支援が届きにくい平日夜間・休日に、セルフケアを続ける仕組みを届けます。
+
+## こんな状態はありませんか
+
+- 復職後、通勤や業務は緊張感で乗り越えられるが、帰宅後に一気に落ちる
+- 夜にスマートフォンを見続け、睡眠時間が短くなりやすい
+- 休日に生活リズムが崩れ、週明けがつらい
+- セルフケアが大事だと分かっていても、一人では続きにくい
+- 崩れたことやリカバリーしたことを、あとから思い出して整理するのが大変
+- 主治医や支援者に「最近どうですか」と聞かれても、うまく説明できない
+- 同じような悩みをもつ人と話せる場所が少ない
+
+当てはまるものがある方へ、ヨルケアへの参加をお願いします。
+
+## 5か月間で目指すこと
+
+ヨルケアが目指すのは、完璧に調子を崩さなくなることではありません。
+
+「少し危ないかもしれない」と早めに気づき、「まずはこれをやってみよう」と自分で選べる状態をつくることです。
+
+参加すれば必ず症状が改善するとは言いません。
+ヨルケアには、変化が起こりやすくなる仕組みがあります。
+運動で整え、記録で気づき、振り返りで次の行動を決める。
+一人では後回しになりやすいセルフケアを、仲間と一緒に定期的に続けることで、崩れる前に気づいて整えられる自分になることを目指します。
+
+## 参加する意味・必要性
+
+### 何が得られるか
+
+5か月かけて、自分に合う「働き続けるための取扱説明書」をつくります。
+その意味は、次の4つです。
+
+1. 自分の不調のサイン
+2. 自分に合う整え方
+3. 崩れたときに戻る方法
+4. 必要なときに周囲へ状態を伝えるための記録
+
+運動・記録・振り返りで自分に合う整え方を見つけ、同じ悩みをもつ仲間と継続する仕組みによって、その整え方を維持しやすくします。
+取扱説明書をつくるだけでなく、続けやすい形で習慣に近づけることが、ヨルケアの参加メリットです。
+
+### なぜ今、必要か
+
+いまの支援の多くは、平日・日中を前提にしています。
+心身が乱れやすい平日夜間・土日祝に機能する支援は、ほとんどありません。
+
+復職後も、夜間のSNS閲覧が続きやすい、記録が1〜2か月で途切れやすい、支援面談では仕事の確認で精一杯になりやすい、という声があります。
+ヨルケアは、この「支援の空白」に、運動・記録・振り返り・仲間とのつながりを届ける取り組みです。
+
+## 5か月後に手元に残す3つ
+
+1. 自分の調子が崩れ始めるサイン
+2. 崩れそうなときに、自分を整える方法
+3. 主治医や支援者に最近の状態を伝えるための記録
+
+アプリの記録は、評価されるためのものではありません。
+自分の状態を自分で理解するための記録です。
+
+## プログラムの内容
+
+### 火曜・木曜：夜の運動（各20分）
+
+鍛えることや発汗を目的とした運動ではありません。
+座ったまま行え、カメラOFFで参加できます。
+火曜と木曜の両方への参加は必須ではありません。体調や予定に合わせて参加できます。
+
+内容の流れ：
+
+1. 脱スマホ（アラーム設定、翌日の予定確認、スマートフォンを閉じる準備）
+2. 実技（セルフマッサージ、ゆったりしたストレッチ、呼吸法）
+3. 寝る時間の確認（チャットに入力しても、自分の中で決めるだけでもよい）
+
+夜の生活に区切りをつけ、安心して夜を終えるための時間です。
+
+### 日曜：疲労回復セッション（20分）
+
+セルフマッサージ、ゆったりしたストレッチ、呼吸法で、1週間の疲れを整え、翌週に備えます。
+
+### 日曜：少人数での振り返り（25分）
+
+- 原則3名のグループ（全7グループ、募集21名）
+- 原則カメラON
+- 声で話すことが難しい場合は、チャットでアウトプットできます
+- 原則として一言はアウトプットします
+- 深い悩みを話すことは求めません
+
+1人5分で話す内容：
+
+- 今週の状態
+- 来週取り組むセルフケア
+- 今週できていたので、維持したいこと
+
+うまく話すことより、自分の状態と次の行動を整理することを大切にします。
+欠席状況により、全員の発言時間を確保するため、当日のグループが変更になる場合があります。
+
+### 毎日のアプリ記録（1日1〜2分）
+
+気分、睡眠、服薬、しんどさのサイン、できたこと、必要に応じた特記事項を残せます。
+毎日完璧に入力する必要はありません。抜けても大丈夫です。また書ける日に戻ることを重視します。
+
+記録の位置づけ：
+
+1. まずは自分の状態を理解するため
+2. 振り返りで話す材料
+3. 必要に応じて主治医・支援者へ説明する材料
+
+## 仲間と続ける仕組み
+
+仲間とのつながりは、交流そのものが目的ではありません。
+同じ悩みをもつ仲間と一緒に続けることで、一人では続きにくいセルフケアを維持しやすくします。
+「自分だけじゃない」と感じられる安心感も、その支えになります。
+
+5か月間、毎回完璧に参加することを求めるものではありません。
+体調や予定で参加できない日があっても大丈夫です。
+大切にしたいのは、休んだあとにまた戻ってこられることです。
+欠席や記録の中断だけを理由に、参加できなくなることはありません。
+
+## 参加に必要な時間
+
+| 参加のしかた | 週の目安 |
+|---|---|
+| すべてに参加する場合 | 約92〜99分 |
+| 火曜または木曜のどちらか一方に参加する場合 | 約72〜79分 |
+
+内訳：
+
+- 火曜・木曜の夜運動：各20分
+- 日曜：疲労回復20分＋振り返り25分＝45分
+- アプリ記録：1日1〜2分（週7〜14分）
+
+すべての回への参加は必須ではありません。
+
+## 募集人数
+
+21名（日曜振り返りは全7グループ・原則3名）
+
+## 無料で参加できる実践研究
+
+この5か月間は、完成したサービスを販売する期間ではありません。
+平日夜や休日に支援が届きにくい時間を、どうすれば一人で抱え込まない時間に変えられるのか。
+ヨルケアが本当に役立つのか、どこを改善すべきかを、参加する方と一緒に確かめる実践研究の期間です。
+
+参加費は無料です。
+
+## アンケートへの協力
+
+必須のアンケートは、5か月で合計3回です。総負担は45〜55分程度です。
+
+| 時期 | 所要時間の目安 |
+|---|---|
+| 参加前 | 15〜20分 |
+| 2.5か月時点 | 10〜15分 |
+| 5か月終了時 | 15〜20分 |
+
+睡眠、気分、仕事への活力、現在の困りごと、参加後の変化などを伺います。
+使用する指標の詳細は、申込み前の説明書でご確認ください。
+
+あわせて、アプリ記録、感想提出、運動・振り返りへの可能な範囲での参加をお願いします。
+終了後インタビューは希望者のみで、参加条件にはしません。
+
+感想では、よかった点だけでなく、続けにくかった点や変化も教えてください。
+
+## 記録と個人情報の取り扱い
+
+### アプリ記録
+
+- 参加者本人の端末内に保存されます
+- 運営者へ自動送信されません
+- 運営者は原則として閲覧できません
+- 勤務先や支援機関へ自動共有されません
+- 本人が必要に応じて、主治医や支援者に見せられます
+
+記録はこの端末にだけ保存されます。別のスマホや別のブラウザでは見えません。
+
+### 研究用アンケートデータ
+
+- 氏名ではなく参加者IDで管理します
+- 発表時は、個人が特定されない集計結果として利用します
+- 振り返りの録画・録音は原則行いません
+- 本人同意なく、勤務先・外部支援機関へ個人回答を共有しません
+- 保存期間、閲覧者、辞退時の扱いは、申込み前の説明書に記載します
+
+## ヨルケアは医療サービスではありません
+
+ヨルケアは、セルフケアを支えるプログラムであり、診断・治療・緊急対応を行う医療サービスではありません。
+
+行うこと：
+
+- 一般的なセルフケア情報の提供
+- ストレッチ、セルフマッサージ、呼吸法
+- 睡眠や気分などの記録
+- 1週間の振り返り
+- 次に試すセルフケアを決める支援
+- 主治医や支援者へ相談するための情報整理
+
+行わないこと：
+
+- 診断、症状の原因や悪化に関する医学的判断
+- 薬の増量・減量・中止に関する助言
+- 治療方針の決定、医師による診察の代替
+- 24時間相談、常時監視、緊急対応の保証
+
+体調、治療、服薬について判断が必要な場合は、主治医や医療機関へ相談してください。
+主治医から制限を受けている運動内容の場合は、参加しないなど、ご自身の判断で参加してください。
+事前に公式LINEでお伝えいただければ、参加できるよう運動内容を調整します。
+
+（医学的背景の参照：日本うつ病学会「うつ病診療ガイドライン2025」の生活習慣・睡眠・基礎的介入・労働者の観点。ヨルケアは診断・治療・処方を行うものではありません。）
+
+## 緊急時の相談窓口ではありません
+
+アプリやアンケートの内容は、リアルタイムには確認されません。
+緊急の相談や支援が必要な場合は、ヨルケアを使わず、医療機関や緊急サービスへ直接連絡してください。
+
+振り返りのなかでかなりしんどい状態が分かった場合も、ヨルケア内で解決しようとはしません。
+主治医・支援者への相談をおすすめします。
+
+## 途中で参加を終了できます
+
+自分には合わないと感じた場合や、続けることが負担になった場合は、途中で参加を終了できます。
+無料で参加しているからといって、無理に最後まで続ける必要はありません。
+理由の提出も強制しません。
+
+## こんな方に参加してほしい
+
+- メンタル不調を経て復職した、または働き続けている方
+- 夜や休日に調子を崩しやすく、自分に合う整え方を見つけたい方
+- 一人では続きにくいセルフケアを、仕組みと仲間の力で習慣に近づけたい方
+- 主治医や支援者に状態を伝えやすくする記録を残したい方
+
+精神障害者保健福祉手帳の有無、障害者雇用枠か一般雇用枠かは問いません。
+
+## 申込み前の最終確認
+
+次の4項目を確認してから、お申し込みください。
+
+- [ ] 火曜・木曜の夜運動、日曜45分のプログラム、毎日1〜2分のアプリ記録があること、また、すべての回への参加が必須ではないことを確認しました
+- [ ] 参加前・中間・終了時のアンケート、アプリ記録、感想提出への協力があること、また、終了後インタビューは希望者のみであることを確認しました
+- [ ] ヨルケアは、セルフケアを支えるプログラムであり、診断・治療・緊急対応を行う医療サービスではないこと、体調や治療、服薬について判断が必要な場合は、主治医や医療機関へ相談することを確認しました
+- [ ] 個人情報と研究データの取り扱いについて説明書を確認し、研究結果は個人が特定されない形で使用されることを確認しました
+
+（実装時：4項目すべてにチェックが入るまで、申込みボタンを無効にする）
+
+## ヨルケアに無料で申し込む
+
+（仮置き）申込フォームURL：[申込フォームURLをここに入れる]
+
+ボタン文言：ヨルケアに無料で申し込む
+
+フォームが開かない場合はこちら：（仮置き）同じ申込フォームURL
+
+ヨルケアは、完璧に頑張るためのプログラムではありません。
+休む日があっても、記録できない日があっても、また戻ってこられる方法をつくるためのプログラムです。
+
+夜や休日の時間を、一人でしんどさを抱える時間から、自分の状態を知り、自分を整える時間へ変えていく。
+
+働き続けるための心身の土台を一緒につくりながら、自分に合う整え方を見つけ、夜や休日の支援の空白を一緒に変えていく5か月間として、ぜひヨルケアに参加してください。</pre>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 4. スキルをどう変えたか -->
+  <section>
+    <div class="sec-label"><span class="num">4</span><h2>スキルをどう変えたか</h2></div>
+    <div class="card">
+      <h3>出力ではなく、スキルのファイル構成ごと変えた</h3>
+      <div class="tree">writing-proposals/
+├── SKILL.md                      … <b>「募集ページモード」の分岐を新設</b>（読み手が当事者なら圧縮形式を使わない）
+└── references/
+    ├── <b>yorucare-recruitment.md（新規）</b> … 募集ページ専用の仕様書・全30節（構成順・トーン・禁止事項・事実確認）
+    ├── examples.md               … 模範回答を当事者向けの寄り添う文体に整備＋申し込み導線を追加
+    ├── surprise-writing-rules.md … 社内向け文章ルール（当事者向けでは適用除外に）
+    └── output-quality.md         … 出力前チェックリスト</div>
+      <div class="rule-cards">
+        <div class="card">
+          <h3>読み手モデルの転換</h3>
+          <p>「せっかちな意思決定者」→「警戒心を持ちながら、自分の生活は自分で決めたい本人」。説得ではなく、判断材料の誠実な提示へ。</p>
+        </div>
+        <div class="card">
+          <h3>構成順の固定</h3>
+          <p>冒頭フック（得られるもの）→困りごと→参加提案→メリット→社会課題→研究のお願い→申し込み、の順番をルール化。</p>
+        </div>
+        <div class="card">
+          <h3>免責の位置</h3>
+          <p>「治療の代わりではない」は明記必須のまま、位置を後半の専用セクションに固定。冒頭に置くことを禁止事項に。</p>
+        </div>
+        <div class="card">
+          <h3>CTAの一本化</h3>
+          <p>「アプリを試す＋案内を受け取る」の2択をやめ、申し込みフォーム1つに絞ることを禁止事項として明文化。</p>
+        </div>
+        <div class="card">
+          <h3>事実の境界</h3>
+          <p>効果の断定・創作した体験談を禁止。未確定情報は補完せず「未確定」と書くルールで、出力の誠実さを担保。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 工夫と苦戦 -->
+  <section class="kk">
+    <div class="sec-label"><span class="num">5</span><h2>工夫したポイントと苦戦したポイント</h2></div>
+    <div class="grid2">
+      <div class="card kufu">
+        <h3>工夫したポイント</h3>
+        <div class="item">
+          <b>注文を増やすより、渡すものを1本作った</b>
+          <p>「もっとこうして」とプロンプトで注文を重ねるのではなく、募集ページ専用の仕様書（30節）と模範回答を作り、スキルが毎回参照する形で固定した。以降の出力すべてに効く。</p>
+        </div>
+        <div class="item">
+          <b>気になった点を「直す場所」で仕分けた</b>
+          <p>構成・ルールの問題はSKILL.md、文体の問題は模範回答、事実の不足は渡す材料、と修正先を分けてから直した。やみくもに書き足さずに済んだ。</p>
+        </div>
+        <div class="item">
+          <b>製品の実データを根拠3系統として接続した</b>
+          <p>事業資料・診療ガイドライン・プログラム確定仕様のファイルパスをスキルに書き、一般論ではなく確定値（週の負担・定員・データの扱い）で書かせた。</p>
+        </div>
+      </div>
+      <div class="card kusen">
+        <h3>苦戦したポイント</h3>
+        <div class="item">
+          <b>一発出しルールの線引き</b>
+          <p>チューニング後の出力をレビューして「再構成版」を作ってしまった。これは出力を磨き直す行為だと気づいて破棄。自分の線引きは「出力に触れた時点でアウト。改善案はスキルに書き戻して、次の一発出しで受け取る」。</p>
+        </div>
+        <div class="item">
+          <b>スキル内のルール同士が矛盾していた</b>
+          <p>「上司向け圧縮フォーマットで書け」というルールと、当事者向けの温かい模範回答が同居し、ルール側が勝って冷たい出力になっていた。読み手別の分岐を作って解消した。</p>
+        </div>
+        <div class="item">
+          <b>Beforeをどの版にするか</b>
+          <p>途中の出力はすでに部分チューニング済みスキルのものだったため、比較として誠実になるよう、配布状態に最も近い最初の出力をBeforeに採用した。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    AI Driven School 第1期・5ヶ月目課題 提出用図解<br />
+    ※ ヨルケア／本プログラムは診断・治療・処方を行うものではありません。申込フォームURL・開催時刻など未確定の情報は仮置きのまま掲載しています。
+  </footer>
+
+</div>
+</body>
+</html>

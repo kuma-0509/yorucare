@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>提案スキルチューニング図解 | AI Driven School 提出用</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['"Noto Sans JP"', 'sans-serif'],
+        maru: ['"Zen Maru Gothic"', 'sans-serif'],
+      },
+      colors: {
+        night: { 950:'#0b1026', 900:'#111736', 800:'#1a2148', 700:'#252d5c' },
+        moon: { 300:'#fde68a', 400:'#fcd34d' },
+        care: { 300:'#a5b4fc', 400:'#818cf8', 500:'#6366f1' },
+      },
+      keyframes: {
+        fadeUp: { '0%':{opacity:'0',transform:'translateY(24px)'}, '100%':{opacity:'1',transform:'translateY(0)'} },
+        twinkle: { '0%,100%':{opacity:'0.25'}, '50%':{opacity:'1'} },
+      },
+      animation: {
+        fadeUp: 'fadeUp 0.7s ease-out both',
+        twinkle: 'twinkle 3s ease-in-out infinite',
+      },
+    },
+  },
+};
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.is-visible { opacity: 1; transform: translateY(0); }
+  .proposal-box {
+    max-height: 28rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+  ::selection { background: #6366f1; color: #fff; }
+</style>
+</head>
+<body class="bg-night-950 text-slate-200 font-sans antialiased">
+
+<nav class="fixed top-0 inset-x-0 z-50 bg-night-950/85 backdrop-blur border-b border-white/10">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+    <a href="#top" class="flex items-center gap-2 shrink-0">
+      <span class="w-8 h-8 rounded-full bg-gradient-to-br from-care-500 to-night-700 grid place-items-center text-moon-300 font-maru font-black">夜</span>
+      <span class="font-maru font-bold text-white tracking-wide hidden sm:inline">提案スキルチューニング図解</span>
+    </a>
+    <div class="flex items-center gap-1 text-xs sm:text-sm overflow-x-auto">
+      <a href="#sec-who" class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">①相手と変えたいこと</a>
+      <a href="#sec-before" class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">②チューニング前</a>
+      <a href="#sec-after" class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">③チューニング後</a>
+      <a href="#sec-learn" class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">④工夫と苦戦</a>
+    </div>
+  </div>
+  <div id="progress-bar" class="h-0.5 bg-gradient-to-r from-care-400 to-moon-400 w-0 transition-[width] duration-150"></div>
+</nav>
+
+<header id="top" class="relative overflow-hidden pt-28 pb-16 px-4">
+  <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+    <span class="absolute top-16 left-[12%] w-1 h-1 rounded-full bg-white animate-twinkle"></span>
+    <span class="absolute top-32 left-[28%] w-1.5 h-1.5 rounded-full bg-moon-300 animate-twinkle" style="animation-delay:.8s"></span>
+    <span class="absolute top-20 right-[18%] w-1 h-1 rounded-full bg-white animate-twinkle" style="animation-delay:1.4s"></span>
+    <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-care-500/20 blur-3xl"></div>
+    <div class="absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-moon-400/10 blur-3xl"></div>
+  </div>
+  <div class="relative max-w-4xl mx-auto text-center animate-fadeUp">
+    <p class="inline-flex items-center gap-2 text-xs font-bold tracking-widest text-moon-300 border border-moon-300/40 rounded-full px-4 py-1.5 mb-6">
+      AI DRIVEN SCHOOL ／ 5ヶ月目 提出用図解
+    </p>
+    <h1 class="font-maru font-black text-3xl sm:text-5xl leading-tight text-white">
+      ヨルケア参加提案のための<br class="hidden sm:block" />
+      <span class="text-transparent bg-clip-text bg-gradient-to-r from-care-300 to-moon-300">提案スキルチューニング</span>
+    </h1>
+    <p class="mt-6 text-slate-300 leading-relaxed max-w-2xl mx-auto">
+      配布スキルを自分の業務向けにチューニングし、<br class="hidden sm:block" />
+      AIによる一発出しの提案文（前後）と学びをまとめた提出用図解です。
+    </p>
+    <div class="mt-8 flex flex-wrap justify-center gap-3 text-sm">
+      <span class="px-4 py-2 rounded-xl bg-night-800 border border-white/10">必須4項目を掲載</span>
+      <span class="px-4 py-2 rounded-xl bg-night-800 border border-white/10">ルール：手で直さず、渡すものを直す</span>
+      <span class="px-4 py-2 rounded-xl bg-night-800 border border-white/10">スキル：writing-proposals</span>
+    </div>
+    <p class="mt-5 text-xs text-slate-500 max-w-xl mx-auto leading-relaxed">
+      発表では全文を読み上げず、<span class="text-moon-300">「発表で指すところ」</span>の帯と結論行だけを追います。全文は提出用にそのまま残しています。
+    </p>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 pb-24 space-y-20">
+
+<section class="reveal scroll-mt-24">
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <a href="#sec-who" class="rounded-2xl bg-night-900 border border-white/10 p-5 hover:border-care-400/50 transition-colors">
+      <p class="text-xs font-bold text-care-300 tracking-widest mb-2">必須①</p>
+      <p class="font-maru font-bold text-white">相手と変えたいこと</p>
+    </a>
+    <a href="#sec-before" class="rounded-2xl bg-night-900 border border-white/10 p-5 hover:border-rose-400/50 transition-colors">
+      <p class="text-xs font-bold text-rose-300 tracking-widest mb-2">必須②</p>
+      <p class="font-maru font-bold text-white">チューニング前の提案文</p>
+    </a>
+    <a href="#sec-after" class="rounded-2xl bg-night-900 border border-white/10 p-5 hover:border-emerald-400/50 transition-colors">
+      <p class="text-xs font-bold text-emerald-300 tracking-widest mb-2">必須③</p>
+      <p class="font-maru font-bold text-white">チューニング後の提案文</p>
+    </a>
+    <a href="#sec-learn" class="rounded-2xl bg-night-900 border border-white/10 p-5 hover:border-moon-300/50 transition-colors">
+      <p class="text-xs font-bold text-moon-300 tracking-widest mb-2">必須④</p>
+      <p class="font-maru font-bold text-white">工夫と苦戦</p>
+    </a>
+  </div>
+  <div class="mt-6 rounded-2xl border border-white/10 bg-night-900/80 p-5 sm:p-6 flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
+    <div class="flex-1">
+      <p class="text-xs text-slate-500 mb-1">Before（配布スキルのまま）</p>
+      <p class="font-maru font-bold text-slate-300">アプリの1週間無料体験案内</p>
+      <p class="text-xs text-slate-500 mt-1">「ヨルケアを1週間、無料で試してほしい」</p>
+    </div>
+    <div class="text-moon-300 font-black text-2xl self-center">→</div>
+    <div class="flex-1">
+      <p class="text-xs text-care-300 mb-1">After（自分専用スキル）</p>
+      <p class="font-maru font-bold text-white">生活の変化を提案する文章</p>
+      <p class="text-xs text-slate-400 mt-1">「夜と休日の過ごし方を、5か月だけ一緒に変えてみてほしい」</p>
+    </div>
+  </div>
+</section>
+
+<section id="sec-who" class="reveal scroll-mt-24">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="w-10 h-10 rounded-xl bg-care-500/20 border border-care-400/40 grid place-items-center font-maru font-black text-care-300">①</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">想定した相手と、変えたいこと</h2>
+  </div>
+  <p class="text-slate-400 mb-8 ml-[3.25rem]">誰の、何を変える提案なのか</p>
+
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-2xl bg-night-900 border border-care-400/30 p-6">
+      <p class="text-xs font-bold tracking-widest text-care-300 mb-3">想定した相手</p>
+      <h3 class="font-maru font-bold text-xl text-white mb-4">就労中のメンタル不調経験者（本人）</h3>
+      <ul class="space-y-2 text-sm text-slate-300">
+        <li>・不調を経験したあと、現在は働いている</li>
+        <li>・平日は何とか踏ん張れるが、夜・休日に気力・体力が落ちやすい</li>
+        <li>・セルフケアが大事なのは分かるが、一人だと習慣化が難しい</li>
+        <li>・主治医・支援者に最近の状態を整理して伝えるのが大変</li>
+      </ul>
+      <p class="mt-5 text-xs leading-relaxed text-slate-400 border-t border-white/10 pt-4">
+        配布スキル標準の「忙しい・せっかちな決裁者」ではなく、<br />
+        <span class="text-moon-300">警戒心がありつつ、自分の生活は自分で決めたい意思決定者</span>として扱う。
+      </p>
+    </div>
+    <div class="rounded-2xl bg-night-900 border border-moon-300/30 p-6">
+      <p class="text-xs font-bold tracking-widest text-moon-300 mb-3">変えたいこと</p>
+      <h3 class="font-maru font-bold text-xl text-white mb-4">夜と休日の過ごし方を変え、ヨルケアに参加してもらう</h3>
+      <p class="text-sm text-slate-300 leading-relaxed mb-4">
+        企業向けの導入提案ではなく、本人に対して<br />
+        「運動・記録・振り返り・仲間とのつながりを5か月間試してみませんか」と提案する。
+      </p>
+      <div class="rounded-xl bg-night-950/70 border border-white/10 p-4 text-sm text-slate-300 leading-relaxed">
+        <p class="font-bold text-white mb-2">言い切りたいこと</p>
+        <p>ヨルケアは治療の代わりではない。<br />働き続けるための心身の土台を、夜と休日に整える5か月間のオンラインプログラムに参加してほしい。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 rounded-2xl border border-moon-300/40 bg-gradient-to-r from-moon-400/10 to-care-500/10 p-5 sm:p-6">
+    <p class="text-xs font-bold tracking-widest text-moon-300 mb-2">ヨルケアとは（1行）</p>
+    <p class="font-maru font-bold text-white text-base sm:text-lg leading-relaxed">
+      夜と休日向けの、運動・記録・振り返り・仲間の5か月オンラインプログラム。<span class="text-moon-300">治療ではない。</span>
+    </p>
+  </div>
+</section>
+
+<section id="sec-before" class="reveal scroll-mt-24">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="w-10 h-10 rounded-xl bg-rose-400/20 border border-rose-400/40 grid place-items-center font-maru font-black text-rose-300">②</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">チューニング前のスキルで作成した提案文</h2>
+  </div>
+  <p class="text-slate-400 mb-4">ステップ②：配布されたままの writing-proposals から出力した提案文（手直しなし・そのまま掲載）</p>
+  <div class="mb-4 flex flex-wrap gap-2 text-xs">
+    <span class="px-3 py-1 rounded-full bg-rose-400/10 border border-rose-400/30 text-rose-200">出典：proposal-presentation-employed-users-v1-original.md</span>
+    <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-400">結論：「1週間、無料で試してほしい」＝アプリ体験案内</span>
+  </div>
+
+  <div class="mb-4 rounded-2xl border border-rose-400/40 bg-rose-400/10 p-5">
+    <p class="text-xs font-bold tracking-widest text-rose-200 mb-3">発表で指すところ（全文は読まない）</p>
+    <div class="grid sm:grid-cols-3 gap-3 text-sm">
+      <div class="rounded-xl bg-night-950/50 border border-white/10 p-3">
+        <p class="text-xs text-slate-500 mb-1">結論</p>
+        <p class="font-bold text-white leading-snug">1週間、無料で試してほしい</p>
+      </div>
+      <div class="rounded-xl bg-night-950/50 border border-white/10 p-3">
+        <p class="text-xs text-slate-500 mb-1">中身の見え方</p>
+        <p class="font-bold text-white leading-snug">記録アプリの体験案内</p>
+      </div>
+      <div class="rounded-xl bg-night-950/50 border border-white/10 p-3">
+        <p class="text-xs text-slate-500 mb-1">お願い</p>
+        <p class="font-bold text-white leading-snug">今日1回、記録してみて</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl bg-night-900 border border-rose-400/25 overflow-hidden">
+    <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-3">
+      <p class="text-sm font-bold text-rose-200">チューニング前・一発出し全文（提出用）</p>
+      <p class="text-xs text-slate-500">必要ならスクロール</p>
+    </div>
+    <pre class="proposal-box p-4 sm:p-6 text-slate-300 font-sans">【提案】ヨルケアを1週間、無料で試してほしい
+仕事の日のセルフケアを、毎日1〜2分で残せるオンラインサービスです。
+ログイン不要・端末にだけ保存・誰にも自動共有されません。
+今日からスマホで1回、記録してみてください。
+
+■ ヨルケアとは
+◎ サービスの内容（事実）
+・対象：就労中の方（手帳の有無は問いません）
+・目的：介護記録ではなく、本人の「セルフケア日記」
+・記録項目は5つ：気分／睡眠／お薬／しんどさのサイン／できたこと
+・所要時間：1日1〜2分
+・使い方：スマホのブラウザで開くだけ（アプリのインストール不要）
+・URL：https://yorucare.vercel.app
+
+■ 試すメリット（根拠）
+◎ 記録が続くと、起きやすい変化
+・「なんとなくしんどい」が、日付・項目付きの具体例になる
+・しんどくなる前のサイン（睡眠・気分・しんどさ）が、後から並べて見える
+・支援員・産業医・上司への説明が、感覚頼りから事例付きになりやすい
+・落ち込み時の選択肢として、「できること」リストを自分用に育てられる
+
+◎ エビデンス（外部研究＋サービス設計）
+・気分・体調のセルフモニタリングは、自己理解と対処のタイミング把握に有効、と複数の研究で示されている（例：気分記録のメタ分析、慢性疾患者の症状トラッキング研究）
+・短時間の書き出しは、反芻（同じことをぐるぐる考える）を減らし、感情調整に寄与しうる、と日記・エクスプレッシブライティングの研究で報告されている
+・ヨルケアは上記を「毎日1〜2分」「評価されない」「続けやすい項目」に落とし込んだ設計
+・現時点はパイロット段階。大規模な臨床試験データはない。一般的研究＋設計根拠＋利用者の声を集めるフェーズ
+
+■ よくある3つの不安と、ヨルケアの答え
+◎ 1. 誰かに見られる・評価に使われるのでは？
+・Phase 1 はログインなし。記録はこの端末のブラウザにだけ保存
+・会社・支援者・運営へ自動送信されない（共有機能は将来案。今は未実装）
+・共有端末なら「すべての記録を削除」で、この端末の記録だけ消せる
+・しんどさのサインが「あり」のとき、相談窓口リンクを常設表示（評価ではなく支援のため）
+
+◎ 2. 毎日続けられる？手間は？
+・1日1〜2分。全部埋めなくてよい（未入力のままでも保存できる項目あり）
+・毎日でなくてよい。週に数回でも「ふりかえり」タブで並べて見られる
+・記録後は「書庫にしまう／紙にして手放す／そのまま」の演出から選べる（義務感を出さない設計）
+・機種変更前は「これまで」タブから記録をファイル保存できる
+
+◎ 3. 本当に役立つ？
+・万能な治療ではない。自分のパターンを見つけるための道具
+・就労中は「説明材料」と「早めのサイン把握」に使う人が多い、という仮説で開発中
+・今回のパイロットで、実際に役立ったかを一緒に確かめたい
+
+■ お願い（CTA）
+◎ 今日から1週間、無料で試してほしい
+・手順は3つだけ
+  1. スマホで https://yorucare.vercel.app を開く
+  2. 「書く」タブで、今日の気分としんどさのサインだけ入力して保存する（1〜2分）
+  3. 1週間後、任意で感想を1つ教えてほしい（続けやすかった点／不安だった点／要らなかった点、どれか1つでOK）
+
+◎ 感想の渡し方（当日案内する方法を1つ選ぶ）
+・会場のQRコード
+・チャット・DM
+・短いGoogleフォーム
+→推奨：QR＋口頭（その場で開ける人を増やし、後からも見返せる）
+
+■ リスクと対策（先に共有）
+・端末を紛失・ブラウザデータ削除すると、ファイル保存していない記録は消える可能性がある
+  →対策：週1回「これまで」からファイル保存を推奨
+・健康情報のため、共有端末・家族共用端末では使い終わりに全削除を推奨
+・パイロット中のため、機能追加・文言変更がありうる
+  →対策：大きな変更は事前に共有する
+
+■ 締め（30秒）
+就労中は、しんどさを「我慢する／言い出せない」にしがちです。
+ヨルケアは、評価されず、短時間で、自分のペースで残せる記録です。
+1週間、無料で試して、合わなければやめて大丈夫です。
+今日、1回だけ記録してみてください。</pre>
+  </div>
+</section>
+
+<section id="sec-after" class="reveal scroll-mt-24">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="w-10 h-10 rounded-xl bg-emerald-400/20 border border-emerald-400/40 grid place-items-center font-maru font-black text-emerald-300">③</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">チューニング後のスキルでAIによる一発出しした提案文</h2>
+  </div>
+  <p class="text-slate-400 mb-4">ステップ⑤：自分専用にチューニングしたスキルでの一発出し（手作業の文章修正なし・そのまま掲載）</p>
+  <div class="mb-4 flex flex-wrap gap-2 text-xs">
+    <span class="px-3 py-1 rounded-full bg-emerald-400/10 border border-emerald-400/30 text-emerald-200">出典：proposal-presentation-employed-users.md</span>
+    <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-400">結論：「夜と休日の過ごし方を、5か月だけ変えてほしい」</span>
+  </div>
+
+  <div class="mb-4 rounded-2xl border border-emerald-400/40 bg-emerald-400/10 p-5">
+    <p class="text-xs font-bold tracking-widest text-emerald-200 mb-3">発表で指すところ（全文は読まない）</p>
+    <div class="grid sm:grid-cols-3 gap-3 text-sm">
+      <div class="rounded-xl bg-night-950/50 border border-white/10 p-3">
+        <p class="text-xs text-slate-500 mb-1">結論</p>
+        <p class="font-bold text-white leading-snug">夜と休日を、5か月だけ変えてほしい</p>
+      </div>
+      <div class="rounded-xl bg-night-950/50 border border-white/10 p-3">
+        <p class="text-xs text-slate-500 mb-1">相手の状況</p>
+        <p class="font-bold text-white leading-snug">復職後も残る、夜・休日の空白</p>
+      </div>
+      <div class="rounded-xl bg-night-950/50 border border-white/10 p-3">
+        <p class="text-xs text-slate-500 mb-1">お願い</p>
+        <p class="font-bold text-white leading-snug">今日の記録 ＋ プログラム案内</p>
+      </div>
+    </div>
+    <p class="mt-3 text-xs text-slate-400 leading-relaxed">詳細（週の分数・ガイドライン番号など）は提出用全文に残し、発表では追わない。</p>
+  </div>
+
+  <div class="rounded-2xl bg-night-900 border border-emerald-400/25 overflow-hidden">
+    <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between gap-3">
+      <p class="text-sm font-bold text-emerald-200">チューニング後・一発出し全文（提出用）</p>
+      <p class="text-xs text-slate-500">必要ならスクロール</p>
+    </div>
+    <pre class="proposal-box p-4 sm:p-6 text-slate-200 font-sans">【提案】夜と休日の過ごし方を、5か月だけ一緒に変えてみてほしい
+ヨルケアは、復職後も残る心身の波に対して、平日夜間・土日に届けるオンラインの運動・記録・振り返りです。
+治療の代わりではありません。医療・福祉が届きにくい時間帯を埋める、働き続けるための土台づくりです。
+まずは記録アプリを試し、プログラムの案内も受け取ってほしいです。
+
+■ いま起きやすいこと（事実）
+◎ 復職後の「見えない時間帯」
+・通勤や業務は、緊張感で乗り越えられることが多い
+・帰宅後の夜間や土日祝に、気力・体力が一気に落ちやすい
+・「週末で回復しても、月曜日が怖い」が続くと、再休職のきっかけになりやすい
+・ヒアリングでは、夜間のSNS（リベンジ夜更かし）で睡眠が削れる例や、月1回の面談までのあいだをExcelで孤独に管理する例があった
+・支援員からは「復職後1〜2か月で体調記録が途切れ、不調が出る。面談は仕事の確認で精一杯」という声もある
+
+◎ なぜ一人だと続きにくいか（構造）
+・いまの支援の多くは、平日・日中を前提に設計されている
+・心身が乱れやすい平日夜間・土日祝に、相談できる場がほぼない
+・セルフケアが大事なのは分かっていても、仕事終わりに一人で運動や記録を続けるのは難しい
+
+■ ヨルケアで提案すること
+◎ サービスの中身（事実・確定仕様）
+・対象：メンタル不調を経て働いている方（手帳の有無は問いません）
+・期間：5か月／募集：21名（日曜振り返りは原則3名×7グループ）
+・時間帯：平日夜間・土日祝に特化（医療・福祉と競合せず、補完する）
+・3本柱
+  1. 夜の運動（火・木 各20分）…スマホを閉じる準備、マッサージ・ストレッチ・呼吸法。カメラOFF・座ったまま可。両方必須ではない
+  2. 疲労回復（日 20分）…1週間の疲れを整えるセルフケア
+  3. 振り返り（日 25分）…原則3名。1人5分で「今週の状態／来週のセルフケア／維持したいこと」。深い悩みは不要
+・日曜合計45分。全部参加なら週約92〜99分、火または木のみなら週約72〜79分が目安
+・アプリ（ヨルケア）：気分・睡眠・服薬・しんどさのサインなどを1〜2分で記録（毎日義務ではない）
+  URL：https://yorucare.vercel.app
+・アプリは端末内保存。運営者は原則閲覧しない。勤務先・支援機関へ自動共有しない
+・必須アンケートは参加前・中間・終了の3回（合計45〜55分程度）。効果保証はない。途中でやめられる
+
+◎ 似た手段との違い
+・YouTubeだけだと、今の自分に合う動きを選びにくく、一人だと続きにくい
+・スマホ時間が増えて睡眠が短くなると、翌日の仕事に響きやすい
+・ヨルケアは「短い決まった時間」「同じ状況の仲間」「記録で振り返れる」をセットにする
+
+■ なぜ試す価値があるか（根拠）
+◎ ヒアリングと現場の声（事業側の事実）
+・復職後の夜間・休日の乱れと、「相談できる場所がない」課題を、当事者・支援員ヒアリングで確認している
+・記録が続くと、振り返りと支援機関・主治医への相談材料になりやすい
+・同じ悩みを持つ人と話すと、「自分だけじゃない」と気づき、次の一歩につながりやすい
+
+◎ 診療ガイドラインが示す生活・睡眠の重要性（背景。治療効果の断定ではない）
+・日本うつ病学会「うつ病診療ガイドライン2025」では、生活習慣への配慮や睡眠・覚醒リズムの整えが、治療計画の基本に位置づけられている（CQ1-9、CQ1-4）
+・軽度の段階では、生活習慣の調整・休養・心理教育などの基礎的介入が根幹になりうると整理されている（CQ2-2）
+・不眠はうつ病に多くみられ、就労世代では1週間を通した規則的な睡眠・覚醒の確認が重要とされる（CQ8-1）
+・労働者のうつ病では、復職準備として生活リズムの安定や日常の自己管理が重視され、生活記録表が参考にされる例もある（トピックス5）
+・ヨルケアはこれらの「生活リズム・睡眠・自己記録」を、夜間・休日のプログラムとアプリに落とした設計
+・ただしヨルケアは診断・治療・処方ではない。ガイドラインの推奨を、製品の治癒効果として主張しない
+
+■ よくある不安への答え
+◎ 1. 治療や会社の評価に使われるのでは？
+・治療・緊急支援の代わりではない。主治医・支援の補完として使う
+・セルフケア記録の内容は端末保存のみ。運営者は原則閲覧せず、会社・支援者へ自動送信しない。匿名の利用状況は、本人が任意で同意した場合だけ送信する
+・主治医への共有は、本人が必要に応じて自分で見せる形。研究データは参加者IDで管理し氏名とは分離
+
+◎ 2. 毎日続けられる？夜に運動は重い？
+・火・木は各20分。両方必須ではない。日曜は合計45分
+・アプリは1日1〜2分。入力できない日があっても再開できる
+・欠席や記録中断だけで参加終了にはならない
+・「一人で頑張る」より、「決まった時間に短い場がある」方が続きやすい、という仮説で設計している
+
+◎ 3. 本当に役立つ？
+・万能ではない。効果や症状改善は保証しない。21名規模の実践で、睡眠や仕事の活力などの指標も含めて確かめる段階
+・いま提案したいのは「治る保証」ではなく、「夜と休日の空白を、試せる形で埋めること」
+
+■ お願い（CTA）
+◎ 次の2つから、今日できる方を始めてほしい
+1. 今すぐ：スマホで https://yorucare.vercel.app を開き、「書く」で気分と睡眠（またはしんどさのサイン）だけ残す（1〜2分）
+2. 次の案内：夜間・休日プログラム（運動・振り返り）の参加案内を受け取る
+→推奨：まずは1を今日やり、案内受け取りも一緒に申し込む（記録の習慣と、場への参加を分けずに始められる）
+
+◎ 合わなければやめてよい
+・1週間アプリだけ試して判断してもよい
+・プログラムは強制ではない。体調・仕事の波に合わせて休んでよい
+
+■ リスクと対策（先に共有）
+・アプリは端末紛失やブラウザ削除で記録が消える可能性がある → 週1回のファイル保存を推奨
+・症状が強い・危険を感じるときは、アプリやセッションではなく医療機関・相談窓口を優先する
+・パイロット中のため、日程・機能は変わることがある → 大きな変更は事前に共有する
+
+■ 締め（30秒）
+復職後いちばん崩れやすいのは、支援が薄い夜と休日です。
+ヨルケアは、その空白に、短い運動・記録・仲間との振り返りを届ける取り組みです。
+治療の代わりではなく、可能性の土台を、自分のペースで整えるための提案です。
+今日はまず1回、記録してみてください。</pre>
+  </div>
+</section>
+
+<section id="sec-learn" class="reveal scroll-mt-24">
+  <div class="flex items-center gap-3 mb-2">
+    <span class="w-10 h-10 rounded-xl bg-moon-400/20 border border-moon-300/40 grid place-items-center font-maru font-black text-moon-300">④</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">工夫したポイントと苦戦したポイント</h2>
+  </div>
+  <p class="text-slate-400 mb-6">スキルをどうチューニングしたか／線引き／やり直したこと</p>
+
+  <div class="mb-8 rounded-2xl border border-moon-300/40 bg-night-900 p-5 sm:p-6">
+    <p class="text-xs font-bold tracking-widest text-moon-300 mb-4">発表で先に伝える学び（3つ）</p>
+    <div class="grid md:grid-cols-3 gap-3">
+      <div class="rounded-xl bg-moon-400/10 border border-moon-300/30 p-4">
+        <p class="text-xs text-moon-300 font-bold mb-2">1. お手本1本</p>
+        <p class="text-sm text-white font-bold mb-2">模範回答をスキルに渡す</p>
+        <p class="text-xs text-slate-400 leading-relaxed">「もっとこうして」と注文を増やすより、5か月版のお手本1本の方が出力が寄った。</p>
+      </div>
+      <div class="rounded-xl bg-moon-400/10 border border-moon-300/30 p-4">
+        <p class="text-xs text-moon-300 font-bold mb-2">2. 事実突合</p>
+        <p class="text-sm text-white font-bold mb-2">実装と突き合わせてから断言</p>
+        <p class="text-xs text-slate-400 leading-relaxed">未実装機能の断言や、プライバシーの過剰断言を防ぐガードレールを追加した。</p>
+      </div>
+      <div class="rounded-xl bg-moon-400/10 border border-moon-300/30 p-4">
+        <p class="text-xs text-moon-300 font-bold mb-2">3. 線引き</p>
+        <p class="text-sm text-white font-bold mb-2">手で直さず、渡すものを直す</p>
+        <p class="text-xs text-slate-400 leading-relaxed">出力の手直しは禁止。気になる点はスキル／材料を直して最初から再実行した。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4 mb-8">
+    <div class="rounded-2xl bg-night-900 border border-emerald-400/30 p-6">
+      <p class="font-maru font-bold text-emerald-300 mb-4">工夫したポイント（詳細）</p>
+      <ul class="space-y-4 text-sm text-slate-300">
+        <li>
+          <p class="font-bold text-white mb-1">相手像を入れ替えた</p>
+          <p class="text-xs text-slate-400 leading-relaxed">「せっかちな決裁者」→「警戒心があるが自分で決めたい本人」。企業向け導入提案から、生活を変える提案へ軸を移した。</p>
+        </li>
+        <li>
+          <p class="font-bold text-white mb-1">模範回答をスキルに渡した</p>
+          <p class="text-xs text-slate-400 leading-relaxed">チャットで注文を増やすより、お手本1本を入れる方が再現性が高かった。</p>
+        </li>
+        <li>
+          <p class="font-bold text-white mb-1">コンテキストを固定した</p>
+          <p class="text-xs text-slate-400 leading-relaxed">サービス定義文、copy.ts、根拠3系統（事業・医学・プログラム仕様）、プライバシー3層を毎回参照する形にした。</p>
+        </li>
+        <li>
+          <p class="font-bold text-white mb-1">事実ガードレールを追加した</p>
+          <p class="text-xs text-slate-400 leading-relaxed">未実装機能の断言禁止、送信有無を「記録本文／共有／匿名計測」に分解してから書くルールを入れた。</p>
+        </li>
+      </ul>
+    </div>
+    <div class="rounded-2xl bg-night-900 border border-rose-400/30 p-6">
+      <p class="font-maru font-bold text-rose-300 mb-4">苦戦したポイント（詳細）</p>
+      <ul class="space-y-4 text-sm text-slate-300">
+        <li>
+          <p class="font-bold text-white mb-1">最初の一発出しが「アプリ案内」になった</p>
+          <p class="text-xs text-slate-400 leading-relaxed">配布スキルのままでは、提案の核が「1週間無料体験」になり、本来の「5か月の生活変化」に届かなかった。</p>
+        </li>
+        <li>
+          <p class="font-bold text-white mb-1">事実と実装のズレ</p>
+          <p class="text-xs text-slate-400 leading-relaxed">未実装の相談窓口リンクなどを実装済みのように書いてしまった。文章力より「事実突合」の工程が足りなかった。</p>
+        </li>
+        <li>
+          <p class="font-bold text-white mb-1">プライバシーの過剰断言</p>
+          <p class="text-xs text-slate-400 leading-relaxed">「運営へ送信されない」と書いたが、匿名の利用計測は送信されていた。センシティブ領域向けのガードが必要だった。</p>
+        </li>
+        <li>
+          <p class="font-bold text-white mb-1">一発出しルールの線引き</p>
+          <p class="text-xs text-slate-400 leading-relaxed">材料集め・スキル質問への回答はOK。出力された提案文の手直しは禁止。気になる箇所はスキル／材料を直して最初から再実行した。</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rounded-2xl bg-night-900 border border-white/10 p-6 mb-8">
+    <h3 class="font-maru font-bold text-lg text-white mb-4">線引きの判断（自分の基準）</h3>
+    <div class="grid sm:grid-cols-2 gap-4 text-sm">
+      <div class="rounded-xl bg-emerald-400/5 border border-emerald-400/20 p-4">
+        <p class="font-bold text-emerald-300 mb-2">やってよい</p>
+        <ul class="text-slate-300 space-y-1.5 text-xs leading-relaxed">
+          <li>・対話で①〜⑤の材料を集める</li>
+          <li>・模範回答・SKILL.md・根拠資料を直す</li>
+          <li>・気になる出力は捨てて、渡すものを直して再実行</li>
+        </ul>
+      </div>
+      <div class="rounded-xl bg-rose-400/5 border border-rose-400/20 p-4">
+        <p class="font-bold text-rose-300 mb-2">やらない</p>
+        <ul class="text-slate-300 space-y-1.5 text-xs leading-relaxed">
+          <li>・出力された提案文をタイピングで直す</li>
+          <li>・チャットで「この段落だけ直して」と磨き続ける</li>
+          <li>・提出用にだけ手直しした「使い捨て完成稿」を作る</li>
+        </ul>
+      </div>
+    </div>
+    <p class="mt-4 text-xs text-slate-400 leading-relaxed">
+      やり直した回数の感覚：チューニング前の原本（v1）を残したうえで、スキルと材料側を直し、提案文は v2（Surprise形式の5か月版）まで再出力。募集ページ向けの別用途（v3/v4）も試したが、本図解の前後比較は同じ【提案】形式の v1 ↔ 現行原稿で揃えた。
+    </p>
+  </div>
+
+  <div class="rounded-2xl bg-night-900 border border-white/10 overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-white/10">
+      <h3 class="font-maru font-bold text-lg text-white">ズレの要約（前後の差）</h3>
+    </div>
+    <div class="p-4 sm:p-6 space-y-3" id="cmp-rows"></div>
+  </div>
+
+  <div class="relative rounded-3xl overflow-hidden border border-care-400/30 bg-gradient-to-br from-night-800 via-night-900 to-night-950 p-8 sm:p-10 text-center">
+    <p class="text-xs font-bold tracking-widest text-moon-300 mb-4">一言まとめ</p>
+    <p class="font-maru font-bold text-xl sm:text-2xl text-white leading-relaxed max-w-3xl mx-auto">
+      提案文を「アプリの無料体験案内」から、<br class="hidden sm:block" />
+      「<span class="text-transparent bg-clip-text bg-gradient-to-r from-care-300 to-moon-300">生活の変化を提案する文章</span>」に変えた。
+    </p>
+    <p class="mt-6 text-sm text-slate-300 leading-loose max-w-2xl mx-auto">
+      自分専用化とは、テンプレートの言い回しを変えることではない。<br />
+      サービスの定義・相手の不安・文体の正を、スキルが毎回参照する形で固定することだった。
+    </p>
+  </div>
+</section>
+
+</main>
+
+<footer class="border-t border-white/10 py-8 text-center text-xs text-slate-500">
+  AI Driven School 5ヶ月目提出用 ── ヨルケア参加提案文のための提案スキルチューニング図解
+</footer>
+
+<script>
+const progressBar = document.getElementById('progress-bar');
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const ratio = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+  progressBar.style.width = (ratio * 100) + '%';
+}, { passive: true });
+
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((e) => {
+    if (e.isIntersecting) {
+      e.target.classList.add('is-visible');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+const cmpData = [
+  { label: '提案の中心', before: 'アプリを1週間試してほしい', after: '夜と休日の過ごし方を5か月変えてほしい' },
+  { label: '相手', before: 'アプリ利用者', after: '生活を変えるかどうかを決める当事者' },
+  { label: 'サービス定義', before: 'セルフケア日記・記録ツール', after: '運動・記録・振り返り・仲間で心身の土台を整えるプログラム' },
+  { label: '困りごと', before: '記録できない、説明しづらい', after: 'セルフケアを一人で続ける難しさ、夜・休日に支援がないこと' },
+  { label: '文体', before: '機能説明が多い', after: '共感から入り、最後は参加・試行をお願いする' },
+];
+const cmpRows = document.getElementById('cmp-rows');
+cmpData.forEach((row) => {
+  const div = document.createElement('div');
+  div.className = 'grid grid-cols-1 sm:grid-cols-[8rem_1fr_auto_1fr] gap-2 sm:gap-3 items-stretch';
+  div.innerHTML =
+    '<div class="flex items-center"><span class="text-xs font-bold text-slate-400 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 w-full sm:w-auto text-center">' + row.label + '</span></div>' +
+    '<div class="rounded-xl border border-white/10 bg-night-950/60 p-3.5 text-sm text-slate-400 leading-relaxed">' + row.before + '</div>' +
+    '<div class="hidden sm:grid place-items-center text-moon-300 font-black">→</div>' +
+    '<div class="rounded-xl border border-care-400/40 bg-care-500/10 p-3.5 text-sm text-slate-100 leading-relaxed">' + row.after + '</div>';
+  cmpRows.appendChild(div);
+});
+</script>
+</body>
+</html>
