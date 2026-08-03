@@ -1,6 +1,7 @@
 "use client";
 
 import { ReflectionTrends } from "@/components/reflection/reflection-trends";
+import { WeeklySummaryCard } from "@/components/reflection/weekly-summary-card";
 import {
   Card,
   CardContent,
@@ -23,6 +24,8 @@ export function ReflectionTab({ refreshKey = 0 }: ReflectionTabProps) {
           記録を重ねた分だけ、自分の体調の波が見えてきます。
         </p>
       </header>
+
+      <WeeklySummaryCard refreshKey={refreshKey} />
 
       <ReflectionTrends refreshKey={refreshKey} />
 

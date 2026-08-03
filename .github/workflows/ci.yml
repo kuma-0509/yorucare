@@ -18,7 +18,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 表示テストで使う jsdom が Node 20 を対象外にしているため 22 以上を使う
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies

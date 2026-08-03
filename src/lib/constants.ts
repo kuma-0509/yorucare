@@ -109,7 +109,6 @@ export const STORAGE_KEYS = {
 
 /** 利用者向けふりかえりタブに表示する予定機能（短く） */
 export const REFLECTION_USER_FEATURES = [
-  "1週間の記録から、今週のまとめを見る",
   "面談や通院前に、伝えたいことを整理する",
 ];
 
