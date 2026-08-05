@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>卒業制作 企画発表｜ヨルケア — 夜と休日の「空白」を、自分を整える時間へ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --night-950: #0b1026;
+    --night-900: #111736;
+    --night-800: #1a2148;
+    --night-700: #252d5c;
+    --moon-300: #fde68a;
+    --moon-400: #fcd34d;
+    --care-300: #a5b4fc;
+    --care-400: #818cf8;
+    --care-500: #6366f1;
+    --rose-300: #fda4af;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: var(--night-950);
+    color: var(--text);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .maru { font-family: "Zen Maru Gothic", "Noto Sans JP", sans-serif; }
+
+  /* ===== 背景 ===== */
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .star { position: absolute; border-radius: 50%; background: #fff; animation: twinkle 3s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100% { opacity: .2; } 50% { opacity: 1; } }
+  .glow { position: absolute; border-radius: 50%; filter: blur(80px); }
+
+  /* ===== スライド ===== */
+  .deck { position: relative; z-index: 1; height: 100%; }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3.5rem clamp(1.5rem, 6vw, 5.5rem) 5rem;
+    max-width: 1120px;
+    margin: 0 auto;
+    overflow-y: auto;
+  }
+  .slide.active { display: flex; animation: slideIn .45s ease-out both; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .kicker {
+    display: inline-flex; align-items: center; gap: .5rem;
+    font-size: .72rem; font-weight: 700; letter-spacing: .2em;
+    color: var(--moon-300);
+    border: 1px solid rgba(253, 230, 138, .4);
+    border-radius: 999px;
+    padding: .3rem .95rem;
+    margin-bottom: 1.1rem;
+    align-self: flex-start;
+  }
+  .kicker.sub { color: var(--care-300); border-color: rgba(165,180,252,.4); }
+  h1 {
+    font-family: "Zen Maru Gothic", "Noto Sans JP", sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.7rem, 4.4vw, 2.9rem);
+    line-height: 1.4;
+    color: #fff;
+    margin-bottom: 1.1rem;
+  }
+  h2 {
+    font-family: "Zen Maru Gothic", "Noto Sans JP", sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.35rem, 3.2vw, 2.1rem);
+    line-height: 1.45;
+    color: #fff;
+    margin-bottom: 1.2rem;
+  }
+  h1 .accent, h2 .accent { color: var(--moon-300); }
+  .lead { font-size: clamp(.98rem, 1.9vw, 1.18rem); line-height: 1.95; }
+  .dim { color: var(--text-dim); }
+  .small { font-size: clamp(.85rem, 1.55vw, .96rem); line-height: 1.8; }
+  .xs { font-size: .78rem; line-height: 1.7; }
+  strong { color: #fff; }
+
+  .card {
+    background: rgba(26, 33, 72, .7);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 1rem;
+    padding: 1rem 1.2rem;
+  }
+  .card + .card { margin-top: .7rem; }
+  .card.hi { border-color: rgba(252,211,77,.45); background: rgba(37, 45, 92, .7); }
+  .card-title { font-weight: 700; color: var(--care-300); margin-bottom: .35rem; font-size: .95rem; }
+  .card.hi .card-title { color: var(--moon-300); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+  @media (max-width: 760px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+  ul.check { list-style: none; }
+  ul.check li {
+    position: relative;
+    padding-left: 1.8em;
+    margin-bottom: .55em;
+    line-height: 1.8;
+  }
+  ul.check li::before {
+    content: "✓";
+    position: absolute; left: 0; top: .1em;
+    width: 1.3em; height: 1.3em;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, .25);
+    color: var(--care-300);
+    font-size: .8em; font-weight: 700;
+  }
+  ul.moon li::before { background: rgba(252, 211, 77, .2); color: var(--moon-300); content: "☾"; }
+  ul.cross li::before { content: "×"; background: rgba(253,164,175,.15); color: var(--rose-300); }
+
+  ol.big-num { list-style: none; counter-reset: n; }
+  ol.big-num li {
+    counter-increment: n;
+    position: relative;
+    padding-left: 3rem;
+    margin-bottom: .85rem;
+    line-height: 1.8;
+  }
+  ol.big-num li::before {
+    content: counter(n);
+    position: absolute; left: 0; top: .05em;
+    width: 2.15rem; height: 2.15rem;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--care-500), var(--night-700));
+    color: var(--moon-300);
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 900; font-size: 1.05rem;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: clamp(.85rem, 1.6vw, 1rem); }
+  th, td { padding: .55rem .8rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,.12); vertical-align: top; }
+  th { color: var(--care-300); font-weight: 700; font-size: .82em; letter-spacing: .05em; }
+  td.num { color: var(--moon-300); font-weight: 700; white-space: nowrap; }
+
+  .divider-note {
+    border-left: 3px solid var(--moon-400);
+    padding: .25rem 0 .25rem .9rem;
+    margin-top: 1rem;
+    line-height: 1.9;
+  }
+  .quote {
+    border-left: 3px solid var(--care-400);
+    background: rgba(99,102,241,.1);
+    border-radius: 0 .6rem .6rem 0;
+    padding: .9rem 1.1rem;
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.05rem, 2.4vw, 1.5rem);
+    line-height: 1.7;
+    color: #fff;
+  }
+
+  /* ===== 流れの図 ===== */
+  .flow { display: flex; align-items: stretch; gap: .55rem; margin: .4rem 0; }
+  @media (max-width: 760px) { .flow { flex-direction: column; } }
+  .flow-step {
+    flex: 1;
+    background: rgba(26, 33, 72, .75);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: .9rem;
+    padding: .85rem .9rem;
+    text-align: center;
+  }
+  .flow-step.done { border-color: rgba(165,180,252,.5); }
+  .flow-step.todo { border-color: rgba(252,211,77,.55); background: rgba(37,45,92,.8); }
+  .flow-step .st { display: block; font-size: .68rem; letter-spacing: .12em; margin-bottom: .3rem; }
+  .flow-step.done .st { color: var(--care-300); }
+  .flow-step.todo .st { color: var(--moon-300); }
+  .flow-step .tt { display: block; font-family: "Zen Maru Gothic", sans-serif; font-weight: 900; font-size: clamp(.95rem, 1.9vw, 1.15rem); color: #fff; }
+  .flow-step .dd { display: block; font-size: .76rem; color: var(--text-dim); margin-top: .3rem; line-height: 1.6; }
+  .flow-arrow { display: grid; place-items: center; color: var(--care-400); font-size: 1.2rem; }
+  @media (max-width: 760px) { .flow-arrow { transform: rotate(90deg); } }
+
+  .pill-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
+  .pill {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 999px;
+    padding: .28rem .8rem;
+    font-size: .82rem;
+  }
+  .pill.on { background: rgba(99,102,241,.22); border-color: rgba(165,180,252,.45); color: #fff; }
+
+  .url {
+    display: inline-block;
+    align-self: flex-start;
+    background: rgba(99,102,241,.18);
+    border: 1px solid rgba(165,180,252,.4);
+    border-radius: .6rem;
+    padding: .5rem 1rem;
+    color: var(--care-300);
+    text-decoration: none;
+    font-weight: 700;
+    margin-top: .7rem;
+  }
+
+  /* ===== ナビゲーション ===== */
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .6rem 1.1rem;
+    background: rgba(11, 16, 38, .88);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255,255,255,.08);
+  }
+  .nav-btn {
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    color: var(--text);
+    border-radius: 999px;
+    padding: .45rem 1.2rem;
+    font-family: inherit;
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .nav-btn:disabled { opacity: .3; cursor: default; }
+  .counter { font-size: .85rem; color: var(--text-dim); }
+  .counter .tag { color: var(--moon-300); font-weight: 700; margin-left: .5rem; }
+  .progress-track { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,.08); z-index: 11; }
+  #progress { height: 100%; width: 0; background: linear-gradient(90deg, var(--care-400), var(--moon-400)); transition: width .25s ease; }
+
+  /* ===== 発表用タイマー ===== */
+  .timer {
+    position: fixed; top: .8rem; right: 1rem; z-index: 12;
+    background: rgba(11,16,38,.85);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 999px;
+    padding: .3rem .9rem;
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 900;
+    font-size: .95rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+  }
+  .timer.running { color: var(--moon-300); border-color: rgba(252,211,77,.5); }
+  .timer.over { color: var(--rose-300); border-color: rgba(253,164,175,.6); }
+</style>
+</head>
+<body>
+
+<div class="stars" aria-hidden="true">
+  <span class="star" style="top:12%;left:8%;width:3px;height:3px;"></span>
+  <span class="star" style="top:22%;left:26%;width:2px;height:2px;animation-delay:.7s"></span>
+  <span class="star" style="top:9%;right:14%;width:3px;height:3px;animation-delay:1.3s"></span>
+  <span class="star" style="top:34%;right:28%;width:2px;height:2px;animation-delay:2s"></span>
+  <span class="star" style="bottom:22%;left:16%;width:2px;height:2px;animation-delay:1.6s"></span>
+  <div class="glow" style="top:-6rem;right:-6rem;width:24rem;height:24rem;background:rgba(99,102,241,.2);"></div>
+  <div class="glow" style="bottom:-8rem;left:-6rem;width:24rem;height:24rem;background:rgba(252,211,77,.09);"></div>
+</div>
+
+<div class="progress-track"><div id="progress"></div></div>
+<div class="timer" id="timer" title="クリックで開始／停止、ダブルクリックでリセット">4:00</div>
+
+<div class="deck">
+
+  <!-- 1. 表紙 -->
+  <section class="slide">
+    <span class="kicker">AI DRIVEN SCHOOL ／ 卒業制作 企画発表</span>
+    <h1>ヨルケア<br><span class="accent">夜と休日の「空白」</span>を、<br>自分を整える時間に変える</h1>
+    <p class="lead">メンタル不調を経て働いている人が、1日1〜2分で自分の状態を残せるセルフケア記録アプリ。</p>
+    <div class="pill-row">
+      <span class="pill on">Phase 1 MVP は稼働中</span>
+      <span class="pill">卒業制作で作るのは「まとめる」と「渡す」</span>
+    </div>
+    <a class="url" href="https://yorucare.vercel.app" target="_blank" rel="noopener">https://yorucare.vercel.app</a>
+  </section>
+
+  <!-- 2. 前提：自分の仕事 -->
+  <section class="slide">
+    <span class="kicker sub">前提 ／ わたしの仕事</span>
+    <h2>就労移行支援の現場に、<span class="accent">運動講座</span>を届けています</h2>
+    <div class="grid2">
+      <div class="card">
+        <p class="card-title">やっていること</p>
+        <p class="small">メンタル不調を経験した方が働き続けられるよう、事業所へ運動・セルフケアの講座を提供しています。実績は6法人・137事業所。</p>
+      </div>
+      <div class="card hi">
+        <p class="card-title">届かない時間がある</p>
+        <p class="small">支援も講座も、<strong>平日・日中</strong>が前提です。ところが心身が乱れるのは、<strong>平日の夜と土日祝</strong>。その時間には、誰の手も届いていません。</p>
+      </div>
+    </div>
+    <p class="divider-note small">わたしが講座で会えるのは月に数回。次に会うまでの夜と休日に何が起きていたかは、本人にもこちらにも再現できません。</p>
+  </section>
+
+  <!-- 3. 課題：ヒアリングの事実 -->
+  <section class="slide">
+    <span class="kicker">解決したい課題 1／2</span>
+    <h2>夜と休日に崩れ、<span class="accent">誰にも説明できないまま</span>次の面談が来る</h2>
+    <table>
+      <thead><tr><th style="width:7.5rem">聞いた相手</th><th>確認できた事実</th></tr></thead>
+      <tbody>
+        <tr><td class="num">当事者A</td><td>夜のSNS閲覧が常態化し、睡眠不足から不調を招く</td></tr>
+        <tr><td class="num">当事者B</td><td>会社には相談しにくい。支援面談は<strong>月1回</strong>。自作のExcelで、孤独に体調管理をしている</td></tr>
+        <tr><td class="num">支援員</td><td>復職後<strong>1〜2ヶ月で体調管理の記録が途切れ</strong>、そのあと不調が出る。面談は仕事ができているかの確認で精一杯で、生活面まで踏み込む時間がない</td></tr>
+      </tbody>
+    </table>
+    <p class="divider-note small">記録が途切れることは、本人の努力不足ではありません。続かない前提で設計されていないだけです。</p>
+  </section>
+
+  <!-- 4. 課題の1行 -->
+  <section class="slide">
+    <span class="kicker">解決したい課題 2／2</span>
+    <h2>本当の問題は「続かないこと」ではない</h2>
+    <p class="quote">支援がない夜と休日に調子が崩れるのに、<br>その時間の自分を、あとから誰にも説明できない。</p>
+    <div class="grid2" style="margin-top:1rem;">
+      <div class="card">
+        <p class="card-title">記録が続かない</p>
+        <p class="small">毎日きっちり書く前提のアプリは、1週間空けた時点で戻れなくなる。</p>
+      </div>
+      <div class="card hi">
+        <p class="card-title">だから、相談の材料にならない</p>
+        <p class="small">「最近どうですか」に答えられない。月1回の面談も、産業医も、主治医も、感覚頼りの説明で終わる。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. なぜ作りたいか -->
+  <section class="slide">
+    <span class="kicker">なぜ作りたいのか</span>
+    <h2>既存のアプリでは足りず、<br><span class="accent">記録アプリは人を責めやすい</span>から</h2>
+    <ol class="big-num">
+      <li class="small" style="font-size:1rem;"><strong>既存アプリは服薬特化が多い。</strong>体調の波・生活リズム・その日できたことを、一体で扱えるものがない。だから自作Excelに逃げる人が出る。そしてExcelは、相談の場に持ち出しにくい。</li>
+      <li class="small" style="font-size:1rem;"><strong>連続記録を褒めるアプリは、書けない日が続いた人ほど戻ってこられなくする。</strong>いちばん記録が必要なのは、書けなくなるほどしんどい時期なのに。</li>
+      <li class="small" style="font-size:1rem;"><strong>だから、自分で決めて自分で作る。</strong>書けなかった時期を失敗として表示しない設計は、既製品を選ぶだけでは手に入らない。</li>
+    </ol>
+  </section>
+
+  <!-- 6. 何を作るか：全体の線 -->
+  <section class="slide">
+    <span class="kicker">何を作るのか 1／2</span>
+    <h2>完成形は「アプリが動くこと」ではなく、<br><span class="accent">この一本の線が通ること</span></h2>
+    <div class="flow">
+      <div class="flow-step done">
+        <span class="st">稼働中</span>
+        <span class="tt">記録する</span>
+        <span class="dd">気分・睡眠・お薬・しんどさのサイン・できたこと。1日1〜2分</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step todo">
+        <span class="st">卒業制作で作る</span>
+        <span class="tt">まとめる</span>
+        <span class="dd">1週間を、責めない言葉で言語化する</span>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step todo">
+        <span class="st">卒業制作で作る</span>
+        <span class="tt">渡す</span>
+        <span class="dd">本人が選び、全文を確認してから、主治医や支援者へ</span>
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:1rem;">
+      <div class="card">
+        <p class="card-title">いま動いているもの（Phase 1 MVP）</p>
+        <ul class="check small" style="margin-top:.3rem;">
+          <li>4タブ：書く／これまで／できること／ふりかえり</li>
+          <li>期間別グラフと、直近7日の週次まとめ</li>
+          <li>記録のファイル保存・復元と、保存忘れのリマインド</li>
+          <li>全タブ共通の相談窓口導線</li>
+        </ul>
+      </div>
+      <div class="card hi">
+        <p class="card-title">土台はもう置いてある</p>
+        <p class="small">期間集計・頻度集計・連続日数・セルフケア実行日との差分は実装済み。<strong>数値を確定させる層はできている</strong>ので、残りは「文章にする層」と「渡す導線」。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. 卒業制作で作る山場 -->
+  <section class="slide">
+    <span class="kicker">何を作るのか 2／2</span>
+    <h2>卒業制作期間で作る、<span class="accent">3つの山場</span></h2>
+    <table>
+      <thead><tr><th style="width:2.5rem"></th><th>作るもの</th><th style="width:16rem">完成の判断</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td><strong>入力を削る</strong><br><span class="small dim">「よい／ふつう／しんどい」を選ぶと、追加の質問が必要な分だけに絞られる</span></td><td class="small">ダミーデータで、5人中4人以上が2分以内に保存できる</td></tr>
+        <tr><td class="num">2</td><td><strong>週次まとめの言語化</strong><br><span class="small dim">数値はアプリが埋め、文章の穴だけをAIが書く「穴埋め方式」</span></td><td class="small">AIが数値を書き換えられない構造になっている</td></tr>
+        <tr><td class="num">3</td><td><strong>相談材料として渡す</strong><br><span class="small dim">最大7日分・本人が選んだ項目だけをテキスト化</span></td><td class="small">全文を本人が確認してからでないと、端末の外に出ない</td></tr>
+      </tbody>
+    </table>
+    <p class="divider-note small">3つを同時に入れると、どれが効いたのか分からなくなります。<strong>1つ入れて、観測して、次を決める</strong>順で進めます。</p>
+  </section>
+
+  <!-- 8. 設計の芯 -->
+  <section class="slide">
+    <span class="kicker">この企画の芯</span>
+    <h2>ほかの記録アプリと、<span class="accent">決定的に違う4点</span></h2>
+    <div class="grid2">
+      <div class="card hi">
+        <p class="card-title">1. 記録は本人の端末にだけ残る</p>
+        <p class="small">自動送信しない。運営も勤務先も見られない。評価される記録になった瞬間、人は正直に書かなくなるからです。</p>
+      </div>
+      <div class="card hi">
+        <p class="card-title">2. 書けなかった日を失敗にしない</p>
+        <p class="small">連続記録を強調しない。代わりに<strong>「中断後にまた書けたか」</strong>を指標に置きます。</p>
+      </div>
+      <div class="card hi">
+        <p class="card-title">3. 数値と言葉の担当を分ける</p>
+        <p class="small">集計はアプリが確定。AIは文章の穴を埋めるだけ。対象0件のときは0ではなく「データがない」を返し、<strong>「低い」と「ない」を混同させない</strong>。</p>
+      </div>
+      <div class="card hi">
+        <p class="card-title">4. アプリで抱え込ませない</p>
+        <p class="small">しんどさが強いときはアプリ内で解決させず、相談窓口へ渡します。診断も助言もしません。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. 判断のしかた -->
+  <section class="slide">
+    <span class="kicker">作って終わりにしないために</span>
+    <h2>先に、<span class="accent">やめる基準</span>を決めてあります</h2>
+    <table>
+      <thead><tr><th style="width:12rem">見る指標</th><th>判断したいこと</th></tr></thead>
+      <tbody>
+        <tr><td class="num">初週複数日記録率</td><td>最初の1回だけで終わっていないか</td></tr>
+        <tr><td class="num">Week 2 継続率</td><td>2週目に戻ってこられるか</td></tr>
+        <tr><td class="num">Week 4 継続率</td><td>物珍しさを越えて使えるか</td></tr>
+        <tr><td class="num">中断後再開率</td><td>「中断を失敗にしない」設計が、実際に効いているか</td></tr>
+      </tbody>
+    </table>
+    <p class="divider-note small">これは<strong>アプリの使いやすさ</strong>を見る指標で、症状が良くなったかを示すものではありません。医学的な評価は、別途5か月間の実践研究で分けて扱います。</p>
+  </section>
+
+  <!-- 10. 聞きたいこと -->
+  <section class="slide">
+    <span class="kicker">みなさんに聞きたいこと</span>
+    <h2>迷っているのは、<span class="accent">この3つ</span>です</h2>
+    <ol class="big-num">
+      <li>「記録 → まとめ → 渡す」の順番で合っているか。<br><span class="small dim">先に作るべきものが、ほかにありませんか。</span></li>
+      <li>書けない日が続いた人が戻ってくる仕掛けとして、<strong>通知以外</strong>に思いつくものはありますか。</li>
+      <li>みなさんの職場に置き換えたとき、<strong>この記録を見せられる相手</strong>は誰ですか。</li>
+    </ol>
+    <p class="divider-note small">実物は <a class="url" style="margin:0;padding:.2rem .6rem;" href="https://yorucare.vercel.app" target="_blank" rel="noopener">yorucare.vercel.app</a> で触れます。スマホでそのまま開きます。</p>
+  </section>
+
+  <!-- 11. 補足：作らないもの -->
+  <section class="slide">
+    <span class="kicker sub">補足（質疑用・発表では飛ばす）</span>
+    <h2>あえて<span class="accent">作らないと決めた</span>もの</h2>
+    <table>
+      <thead><tr><th style="width:18rem">作らないもの</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td class="num">記録本文の自動クラウド保存</td><td>現在の参加説明が「本人端末内・運営は閲覧しない」。変えるには同意と研究手続きの取り直しが必要</td></tr>
+        <tr><td class="num">勤務先・支援機関への自動共有</td><td>記録が評価材料になった時点で、本人が正直に書けなくなる</td></tr>
+        <tr><td class="num">通知によるリマインド</td><td>継続率が低いことだけを理由に作らない。「忘れる」が非継続理由の30%以上を占めたときだけ着手する</td></tr>
+        <tr><td class="num">症状の判定・助言</td><td>診断・治療の代替にしない。ガイドラインの推奨を製品の効能として主張しない</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 12. 補足：AIに渡すもの -->
+  <section class="slide">
+    <span class="kicker sub">補足（質疑用・発表では飛ばす）</span>
+    <h2>AIに渡すもの、<span class="accent">渡さないもの</span></h2>
+    <div class="grid2">
+      <div class="card">
+        <p class="card-title">渡すもの</p>
+        <ul class="check small" style="margin-top:.3rem;">
+          <li>アプリが確定させた集計値（母数つき）</li>
+          <li>選択式のタグ</li>
+          <li>「できること」辞書のタイトル</li>
+        </ul>
+      </div>
+      <div class="card">
+        <p class="card-title">渡さないもの</p>
+        <ul class="check cross small" style="margin-top:.3rem;">
+          <li>本人が書いたメモの本文</li>
+          <li>服薬・面談に関する記述</li>
+          <li>個人を特定できる情報</li>
+        </ul>
+      </div>
+    </div>
+    <p class="divider-note small">これは運用ルールではなく、<strong>戻り値の型に本文のフィールドを持たせない</strong>ことで保証しています。うっかり渡すことが、そもそもできません。</p>
+  </section>
+
+  <!-- 13. 出典 -->
+  <section class="slide">
+    <span class="kicker sub">出典</span>
+    <h2>出典・参照</h2>
+    <ul class="check small">
+      <li>事業内容：株式会社mimococo「支援の空白を埋める〜復職後の夜間・休日オンラインケア〜」（Vision Hacker Association 2026 エントリーシート記載内容に基づく）</li>
+      <li>医学的背景の参照：日本うつ病学会「うつ病診療ガイドライン2025」</li>
+      <li>検証設計・投資判断ゲート：<code>docs/phase2-plan.md</code></li>
+    </ul>
+    <p class="divider-note small">※ヨルケアは診断・治療・処方を行うものではありません。</p>
+  </section>
+
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn">← 前へ</button>
+  <span class="counter"><span id="cur">1</span> / <span id="total">13</span><span class="tag" id="phase"></span></span>
+  <button class="nav-btn" id="nextBtn">次へ →</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const cur = document.getElementById('cur');
+  const total = document.getElementById('total');
+  const progress = document.getElementById('progress');
+  const phase = document.getElementById('phase');
+  const MAIN = 10; // 1〜10 が発表本編、11以降は質疑用の補足
+  total.textContent = slides.length;
+
+  let idx = Math.max(0, Math.min(slides.length - 1, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+
+  function show(i) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, j) => s.classList.toggle('active', j === idx));
+    cur.textContent = idx + 1;
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === slides.length - 1;
+    progress.style.width = (Math.min(idx + 1, MAIN) / MAIN * 100) + '%';
+    phase.textContent = idx + 1 > MAIN ? '補足' : '';
+    history.replaceState(null, '', '#' + (idx + 1));
+    slides[idx].scrollTop = 0;
+  }
+
+  prevBtn.addEventListener('click', () => show(idx - 1));
+  nextBtn.addEventListener('click', () => show(idx + 1));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); show(idx + 1); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(idx - 1); }
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(slides.length - 1);
+  });
+
+  let touchX = null;
+  document.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 60) show(idx + (dx < 0 ? 1 : -1));
+    touchX = null;
+  }, { passive: true });
+
+  // ===== 4分カウントダウン =====
+  const timerEl = document.getElementById('timer');
+  const LIMIT = 240;
+  let left = LIMIT, tid = null;
+
+  function render() {
+    const over = left < 0;
+    const v = Math.abs(left);
+    timerEl.textContent = (over ? '+' : '') + Math.floor(v / 60) + ':' + String(v % 60).padStart(2, '0');
+    timerEl.classList.toggle('over', over);
+  }
+  timerEl.addEventListener('click', () => {
+    if (tid) { clearInterval(tid); tid = null; timerEl.classList.remove('running'); return; }
+    timerEl.classList.add('running');
+    tid = setInterval(() => { left -= 1; render(); }, 1000);
+  });
+  timerEl.addEventListener('dblclick', () => {
+    clearInterval(tid); tid = null;
+    left = LIMIT;
+    timerEl.classList.remove('running');
+    render();
+  });
+  render();
+
+  show(idx);
+</script>
+
+</body>
+</html>
