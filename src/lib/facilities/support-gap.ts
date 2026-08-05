@@ -47,37 +47,66 @@ export type DemandCell = {
 };
 
 /**
+ * 需要の周辺分布。出典を必ず伴わせる。
+ *
+ * 出典を持たせるのは、異なる統計の周辺分布を掛け合わせるのを防ぐため。
+ * 「自殺の曜日分布 × 救急出場の時間分布」のような積には、対応する実体が
+ * 存在しない。独立性の仮定以前に、何も推定していない値になる。
+ */
+export type DemandMarginal = {
+  /** 統計の出典を識別する文字列。完全一致で比較する */
+  source: string;
+  /** 相対値。負の値は不可 */
+  values: readonly number[];
+};
+
+/**
  * 曜日別・時間帯別の周辺分布から需要プロファイルを組み立てる。
  *
  * 返るセルはすべて `basis: "estimated"` になる。同時分布ではないため、
  * 「日曜の23時が最も高い」のような断定には使えない。
  *
- * @param byWeekday 曜日ごとの相対値（7要素、0=日曜）。負の値は不可
+ * **同一出典の周辺分布どうしでしか積を取らない。** 出典が異なる場合は
+ * 例外を投げ、呼び出し側に並置を選ばせる。
+ *
+ * @param byWeekday 曜日ごとの相対値（7要素、0=日曜）
  * @param byTimeSlot 時間帯ごとの相対値。長さは1440を割り切れること
  */
 export function estimateDemandFromMarginals(
-  byWeekday: readonly number[],
-  byTimeSlot: readonly number[],
+  byWeekday: DemandMarginal,
+  byTimeSlot: DemandMarginal,
 ): DemandCell[] {
-  if (byWeekday.length !== 7) {
+  if (byWeekday.source !== byTimeSlot.source) {
+    throw new Error(
+      "出典の異なる周辺分布は掛け合わせられません。別々の根拠として並置してください",
+    );
+  }
+  if (byWeekday.values.length !== 7) {
     throw new Error("byWeekday は7要素（日曜〜土曜）で指定してください");
   }
-  if (byTimeSlot.length === 0 || MINUTES_PER_DAY % byTimeSlot.length !== 0) {
+  if (
+    byTimeSlot.values.length === 0 ||
+    MINUTES_PER_DAY % byTimeSlot.values.length !== 0
+  ) {
     throw new Error("byTimeSlot の長さは1440を割り切れる値にしてください");
   }
-  if ([...byWeekday, ...byTimeSlot].some((v) => !Number.isFinite(v) || v < 0)) {
+  if (
+    [...byWeekday.values, ...byTimeSlot.values].some(
+      (v) => !Number.isFinite(v) || v < 0,
+    )
+  ) {
     throw new Error("需要値は0以上の有限な数で指定してください");
   }
 
-  const stepMinutes = MINUTES_PER_DAY / byTimeSlot.length;
+  const stepMinutes = MINUTES_PER_DAY / byTimeSlot.values.length;
   const products: DemandCell[] = [];
 
   for (let weekday = 0; weekday < 7; weekday++) {
-    for (let slot = 0; slot < byTimeSlot.length; slot++) {
+    for (let slot = 0; slot < byTimeSlot.values.length; slot++) {
       products.push({
         weekday: weekday as Weekday,
         minutes: slot * stepMinutes,
-        value: byWeekday[weekday] * byTimeSlot[slot],
+        value: byWeekday.values[weekday] * byTimeSlot.values[slot],
         basis: "estimated",
       });
     }

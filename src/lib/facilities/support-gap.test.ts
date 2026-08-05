@@ -56,8 +56,12 @@ describe("normalizeDemand", () => {
 });
 
 describe("estimateDemandFromMarginals", () => {
-  const byWeekday = [1, 2, 1, 1, 1, 1, 1];
-  const byTimeSlot = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+  const SRC = "東京消防庁 救急活動の現況";
+  const byWeekday = { source: SRC, values: [1, 2, 1, 1, 1, 1, 1] };
+  const byTimeSlot = {
+    source: SRC,
+    values: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  };
 
   it("曜日×時間帯のセルをすべて返す", () => {
     const cells = estimateDemandFromMarginals(byWeekday, byTimeSlot);
@@ -78,7 +82,10 @@ describe("estimateDemandFromMarginals", () => {
   });
 
   it("周辺分布の積を正規化して返す", () => {
-    const cells = estimateDemandFromMarginals([1, 2, 0, 0, 0, 0, 0], [1, 3]);
+    const cells = estimateDemandFromMarginals(
+      { source: SRC, values: [1, 2, 0, 0, 0, 0, 0] },
+      { source: SRC, values: [1, 3] },
+    );
     const monday = cells.filter((c) => c.weekday === MONDAY);
     // 月曜(2) × 後半(3) = 6 が最大
     expect(Math.max(...cells.map((c) => c.value))).toBe(1);
@@ -86,21 +93,41 @@ describe("estimateDemandFromMarginals", () => {
     expect(monday[0].value).toBeCloseTo(2 / 6);
   });
 
+  it("出典の異なる周辺分布は掛け合わせない", () => {
+    // 曜日は自殺対策白書、時間帯は東京消防庁。積に対応する実体が存在しない
+    expect(() =>
+      estimateDemandFromMarginals(
+        { source: "自殺対策白書 第1-36図", values: [1, 2, 1, 1, 1, 1, 1] },
+        byTimeSlot,
+      ),
+    ).toThrow(/出典/);
+  });
+
   it("曜日が7要素でなければ拒否する", () => {
-    expect(() => estimateDemandFromMarginals([1, 1], byTimeSlot)).toThrow();
+    expect(() =>
+      estimateDemandFromMarginals({ source: SRC, values: [1, 1] }, byTimeSlot),
+    ).toThrow();
   });
 
   it("1440を割り切れない時間帯数を拒否する", () => {
     // 7区切りは1440を割り切れない（5区切りは割り切れるため反例にならない）
     expect(() =>
-      estimateDemandFromMarginals(byWeekday, [1, 1, 1, 1, 1, 1, 1]),
+      estimateDemandFromMarginals(byWeekday, {
+        source: SRC,
+        values: [1, 1, 1, 1, 1, 1, 1],
+      }),
     ).toThrow();
-    expect(() => estimateDemandFromMarginals(byWeekday, [])).toThrow();
+    expect(() =>
+      estimateDemandFromMarginals(byWeekday, { source: SRC, values: [] }),
+    ).toThrow();
   });
 
   it("負の需要値を拒否する", () => {
     expect(() =>
-      estimateDemandFromMarginals([1, -1, 1, 1, 1, 1, 1], byTimeSlot),
+      estimateDemandFromMarginals(
+        { source: SRC, values: [1, -1, 1, 1, 1, 1, 1] },
+        byTimeSlot,
+      ),
     ).toThrow();
   });
 });
@@ -232,9 +259,13 @@ describe("includesEstimatedDemand", () => {
 describe("支援の空白の再現（平日日中しか開かない窓口）", () => {
   it("日曜夜が最も空白の大きい時間帯になる", () => {
     // 月曜に負荷が寄り、深夜帯が高い、という周辺分布を仮に置く
-    const byWeekday = [1.2, 1.4, 1, 1, 1, 1, 1.1];
+    const source = "同一出典の仮データ";
+    const byWeekday = { source, values: [1.2, 1.4, 1, 1, 1, 1, 1.1] };
     // 3時間刻み。0-3時と21-24時を高くする
-    const byTimeSlot = [1.3, 0.6, 0.5, 0.8, 0.9, 0.9, 1.0, 1.4];
+    const byTimeSlot = {
+      source,
+      values: [1.3, 0.6, 0.5, 0.8, 0.9, 0.9, 1.0, 1.4],
+    };
     const demand = estimateDemandFromMarginals(byWeekday, byTimeSlot);
     const gap = buildSupportGap(demand, [weekdayOffice("a")]);
 
@@ -247,9 +278,10 @@ describe("支援の空白の再現（平日日中しか開かない窓口）", (
   });
 
   it("平日日中のセルは空白が0になる", () => {
+    const source = "同一出典の仮データ";
     const demand = estimateDemandFromMarginals(
-      [1, 1, 1, 1, 1, 1, 1],
-      [1, 1, 1, 1, 1, 1, 1, 1],
+      { source, values: [1, 1, 1, 1, 1, 1, 1] },
+      { source, values: [1, 1, 1, 1, 1, 1, 1, 1] },
     );
     const gap = buildSupportGap(demand, [weekdayOffice("a")]);
     const mondayNoon = gap.find(
