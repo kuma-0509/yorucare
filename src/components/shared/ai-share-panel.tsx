@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Copy, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,13 +11,18 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CollapsibleSection } from "@/components/shared/collapsible-section";
 import { LiveRegion } from "@/components/shared/live-region";
 import {
   buildAiShareText,
   type AiShareField,
   type AiShareTextResult,
 } from "@/lib/ai-share-text";
+import { detectChanges } from "@/lib/ai/detect-changes";
+import { COPY } from "@/lib/copy";
 import { getLast7Days, getTodayString } from "@/lib/dates";
+import { createDemoTokyoAdapter } from "@/lib/support/adapter";
+import type { SupportResource } from "@/lib/support/types";
 import type { DailyRecord, SelfCareItem } from "@/lib/types";
 
 interface AiSharePanelProps {
@@ -81,6 +86,12 @@ export function AiSharePanel({
   const [startDate, setStartDate] = useState(defaultDays[0]);
   const [endDate, setEndDate] = useState(defaultDays[defaultDays.length - 1]);
   const [fields, setFields] = useState<AiShareField[]>(DEFAULT_FIELDS);
+  // 追加項目は初期状態でオフ。入れるかどうかは毎回本人が選ぶ
+  const [includeFacts, setIncludeFacts] = useState(false);
+  const [supportNames, setSupportNames] = useState<string[]>([]);
+  const [supportResources, setSupportResources] = useState<SupportResource[]>(
+    []
+  );
   const [preview, setPreview] = useState<Preview | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -92,10 +103,29 @@ export function AiSharePanel({
   }, []);
 
   useEffect(() => {
+    let active = true;
+    void createDemoTokyoAdapter()
+      .loadResources()
+      .then((result) => {
+        if (!active || !result.ok) return;
+        setSupportResources(result.value);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     setPreview(null);
     setConfirmed(false);
     setMessage(null);
   }, [records, selfCareItems]);
+
+  /** 事実が1件も作れない期間かどうか。0件を「0日」として書かないための判定 */
+  const availableFactCount = useMemo(
+    () => detectChanges(records, startDate, endDate).facts.length,
+    [records, startDate, endDate]
+  );
 
   const invalidatePreview = () => {
     setPreview(null);
@@ -112,13 +142,29 @@ export function AiSharePanel({
     invalidatePreview();
   };
 
+  const toggleSupportName = (name: string) => {
+    setSupportNames((current) =>
+      current.includes(name)
+        ? current.filter((item) => item !== name)
+        : [...current, name]
+    );
+    invalidatePreview();
+  };
+
   const handlePreview = () => {
+    // 事実は選んだ期間で数える。共有する記録と数字がずれないようにする
+    const facts = includeFacts
+      ? detectChanges(records, startDate, endDate).facts
+      : [];
     const result = buildAiShareText({
       records,
       selfCareItems,
       startDate,
       endDate,
       fields,
+      changeFacts: facts.length > 0 ? facts : undefined,
+      referencedSupportNames:
+        supportNames.length > 0 ? supportNames : undefined,
     });
     if (!result.ok) {
       setPreview(null);
@@ -284,6 +330,62 @@ export function AiSharePanel({
               );
             })}
           </div>
+        </fieldset>
+
+        <fieldset className="space-y-3">
+          <legend className="text-base font-medium">あわせて入れる項目</legend>
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-white p-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-5 w-5 shrink-0 accent-primary"
+              checked={includeFacts}
+              onChange={(event) => {
+                setIncludeFacts(event.target.checked);
+                invalidatePreview();
+              }}
+            />
+            <span className="space-y-1">
+              <span className="block text-sm font-medium">
+                {COPY.shareExtras.factsOption}
+              </span>
+              <span className="block text-xs leading-relaxed text-muted-foreground">
+                {COPY.shareExtras.factsDescription}
+              </span>
+              {includeFacts && availableFactCount === 0 && (
+                <span className="block text-xs leading-relaxed text-muted-foreground">
+                  {COPY.shareExtras.noFactsAvailable}
+                </span>
+              )}
+            </span>
+          </label>
+
+          <CollapsibleSection
+            title={COPY.shareExtras.supportOption}
+            description={COPY.shareExtras.supportDescription}
+          >
+            <div
+              role="group"
+              aria-label={COPY.shareExtras.supportPickerLegend}
+              className="space-y-2"
+            >
+              {supportResources.map((resource) => (
+                <label
+                  key={resource.id}
+                  className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-border bg-white p-3"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-5 w-5 shrink-0 accent-primary"
+                    checked={supportNames.includes(resource.name)}
+                    onChange={() => toggleSupportName(resource.name)}
+                  />
+                  <span className="text-sm leading-relaxed">
+                    {resource.name}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </CollapsibleSection>
         </fieldset>
 
         <Button

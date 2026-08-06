@@ -18,15 +18,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { SupportResourceFinder } from "@/components/support/support-resource-finder";
 import {
   EMERGENCY_RESOURCES,
   IMMEDIATE_SUPPORT_RESOURCE,
   OFFICIAL_SUPPORT_LINKS,
 } from "@/lib/consultation-resources";
+import { COPY } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 
 interface ConsultationLinksDialogProps {
   compact?: boolean;
+  /**
+   * 開くボタンの見せ方。
+   * `section` は画面内に常設する導線で、ヘッダーと同じダイアログを開く。
+   * 記録の内容によってこの見せ方を切り替えてはいけない。
+   * 変化が多い日だけ強調することは、アプリによる危険度の推定にあたる。
+   */
+  placement?: "header" | "section";
+  /** 開くボタンの文言。COPY から渡す */
+  label?: string;
 }
 
 const externalLinkProps = {
@@ -36,22 +47,27 @@ const externalLinkProps = {
 
 export function ConsultationLinksDialog({
   compact = false,
+  placement = "header",
+  label = "相談先",
 }: ConsultationLinksDialogProps) {
+  const isSection = placement === "section";
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size={isSection ? "default" : "sm"}
           className={cn(
-            "shrink-0 border-primary/40 px-3 text-primary",
-            compact && "min-h-10"
+            "border-primary/40 text-primary",
+            isSection ? "w-full" : "shrink-0 px-3",
+            !isSection && compact && "min-h-10"
           )}
-          aria-label="相談先を開く"
+          aria-label={`${label}を開く`}
         >
           <LifeBuoy className="h-4 w-4" aria-hidden="true" />
-          相談先
+          {label}
         </Button>
       </DialogTrigger>
 
@@ -80,9 +96,16 @@ export function ConsultationLinksDialog({
                 <h2 id="urgent-support-heading" className="font-semibold">
                   いま、命や身体に差し迫った危険がある
                 </h2>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  安全な場所へ移り、近くの人にも助けを求めてください。救急・消防は119、事件・事故は110です。
-                </p>
+                {/* 入力内容をきっかけに出すのではなく、ここに常設する */}
+                <h3 className="sr-only">{COPY.support.safetyHeading}</h3>
+                <ul className="mt-1 space-y-1 text-sm leading-relaxed text-muted-foreground">
+                  {COPY.support.safetyItems.map((item) => (
+                    <li key={item} className="flex gap-1.5">
+                      <span aria-hidden="true">・</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
@@ -174,6 +197,9 @@ export function ConsultationLinksDialog({
               </div>
             </div>
           </section>
+
+          {/* 全国の窓口（表示順1〜2位）を保ったうえで、東京都内の支援先を続けて置く */}
+          <SupportResourceFinder />
 
           <p className="text-xs leading-relaxed text-muted-foreground">
             この画面を開いても、記録内容はどの窓口にも送られません。電話や外部サイトは、本人が選んだときだけ開きます。受付状況は各公式ページでご確認ください。

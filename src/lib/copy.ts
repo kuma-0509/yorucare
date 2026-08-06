@@ -91,4 +91,113 @@ export const COPY = {
     bookDone: "今日の記録を、書庫にしまいました",
     bookDoneSub: "必要なときに、また静かに開けます。",
   },
+  /** 記録から見える変化（事実の列挙。状態のラベル付けはしない） */
+  changeFacts: {
+    title: "記録から見えること",
+    description: "直近7日の記録を、そのまま数えたものです。",
+    empty:
+      "この期間の記録はまだありません。書けそうなときに、1日分からで大丈夫です。",
+    noFacts:
+      "数えられる項目がまだありません。気分・睡眠・お薬・しんどさのサインのどれかを記録すると、ここに出ます。",
+    /** 変化の有無にかかわらず、常に同じ場所に同じ強さで置く */
+    consultationHeading: "相談先を見る",
+    consultationBody:
+      "相談先は、記録の内容にかかわらずいつでも同じ場所から開けます。開くかどうかはご自身で選べます。",
+  },
+  /** 東京都内の支援先をさがす */
+  support: {
+    finderTitle: "東京都内の支援先をさがす",
+    finderDescription:
+      "条件を選ぶと、受付状況とあわせて表示します。ヨルケアが状態から相談先を選ぶことはありません。",
+    safetyHeading: "安全のための案内",
+    safetyItems: [
+      "ひとりにならず、近くの人にも助けを求めてください。",
+      "命や身体に差し迫った危険があるときは、救急・消防は119、事件・事故は110です。",
+      "公的な相談窓口は、下の一覧からいつでも開けます。",
+      "安全な場所へ移ってから、落ち着いて話せる相手を選んでください。",
+    ],
+    municipalityLegend: "いま、いる市区町村",
+    categoryLegend: "相談したい内容",
+    methodLegend: "相談方法",
+    urgencyLegend: "いつ相談したいか",
+    urgencyNote:
+      "この選択は表示の順番を変えるだけです。選んだ内容を、ヨルケアが緊急度として判定することはありません。",
+    anyMunicipality: "指定しない（都内すべて）",
+    anyCategory: "指定しない",
+    anyMethod: "指定しない",
+    resultsHeading: "条件に合う支援先",
+    noResults:
+      "選んだ条件に合う支援先が、いまのデータにはありません。条件を減らすと、ほかの支援先が出ます。",
+    demoBadge: "デモデータ",
+    demoNotice:
+      "現在表示している東京都内の支援先は、画面を確かめるためのデモデータです。実在の窓口ではないため、電話番号とリンクは持っていません。",
+    dataAboutHeading: "データについて",
+    dataProviderLabel: "提供者",
+    dataDatasetLabel: "データセット",
+    dataUpdatedLabel: "更新日",
+    dataKindLabel: "種別",
+    dataLicenseLabel: "ライセンス",
+    dataReferenceLabel: "参照",
+    dataKindOfficial: "出典を確認したデータ",
+    dataUpdatedUnknown: "確認できていません",
+    officialPage: "公式ページ",
+    openUntilSuffix: "まで",
+    dataVerifyBody:
+      "受付時間や連絡先は変わることがあります。利用の前に、公式サイトか電話で最新の情報をご確認ください。",
+    plannedHeading: "接続を予定しているデータ",
+    plannedNote:
+      "実際の接続先URLとデータ形式は確認できていないため、まだ接続していません。",
+    // 受付状況（色だけに頼らず、必ず語でも示す）
+    statusOpen24Hours: "24時間対応",
+    statusOpen: "受付中",
+    statusBeforeOpening: "本日この後に受付",
+    statusClosedToday: "本日は受付終了",
+    statusClosedByDay: "本日は受付日ではありません",
+    statusUnknown: "受付時間は確認が必要です",
+    nextOpeningLabel: "次回受付",
+    reservationRequired: "予約が必要です",
+    reservationNotRequired: "予約なしで相談できます",
+    methodLabelPhone: "電話",
+    methodLabelOnline: "オンライン",
+    methodLabelInPerson: "対面",
+    urgencyNow: "今すぐ",
+    urgencyToday: "今日中",
+    urgencyWithinDays: "数日以内",
+    categoryMentalHealth: "こころの健康",
+    categoryMedical: "医療機関",
+    categoryEmployment: "就労・生活",
+    categoryDevelopmentalDisability: "発達障害",
+    categoryWelfare: "福祉窓口",
+    categoryNightConsultation: "夜間・休日の相談",
+    categoryEmergency: "緊急の通報",
+    targetUsersLabel: "対象",
+    prefectureWideLabel: "都内全域",
+  },
+  /** 自分メンテ（状態に応じた運動の選択肢） */
+  movement: {
+    title: "今日の自分メンテ",
+    description:
+      "今日の記録をもとに、負担の軽い順に並べています。提案であって、指示ではありません。",
+    noRecordNote:
+      "今日の記録がまだないため、負担の軽い選択肢だけを並べています。記録がない日を、何かを逃した日としては扱いません。",
+    basisHeading: "並べ方の根拠",
+    optionsHeading: "ほかの選択肢",
+    restHeading: "休むという選択肢",
+    choiceSuffix: "という選択肢があります",
+    notCounted:
+      "選んでも選ばなくても、続いた日数や割合として数えることはありません。",
+    cautionHeading: "気をつけること",
+    addToDictionary: "「できること」に追加する",
+    addedToDictionary: "「できること」に追加しました",
+  },
+  /** 相談文テキストへの追加項目 */
+  shareExtras: {
+    factsOption: "記録から数えた事実（選んだ期間）",
+    factsDescription: "日数と母数だけを入れます。メモの本文は入りません。",
+    supportOption: "見た相談先の名称",
+    supportDescription:
+      "自分で選んだ相談先の名称だけを入れます。選ばなければ入りません。",
+    supportPickerLegend: "相談文に入れる相談先",
+    noFactsAvailable: "数えられる事実がまだないため、この項目は入りません。",
+  },
 } as const;

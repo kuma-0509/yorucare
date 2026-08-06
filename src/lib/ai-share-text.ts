@@ -5,6 +5,7 @@ import {
   getMoodLabel,
   getWarningLabel,
 } from "./format";
+import { formatChangeFactLine, type ChangeFact } from "./ai/detect-changes";
 import { formatMoodLabelsDisplay } from "./mood-labels";
 import type { DailyRecord, SelfCareItem } from "./types";
 
@@ -37,6 +38,19 @@ interface BuildAiShareTextInput {
   startDate: string;
   endDate: string;
   fields: AiShareField[];
+  /**
+   * 直近の記録から出した事実（母数付き）。
+   *
+   * 型は `ChangeFact` に固定する。`ChangeFact` はメモ本文のフィールドを
+   * 持たないため、この経路に本人が書いた本文が乗ることはない。
+   * `docs/ai-consent-decision.md` の方針を、運用ルールではなく型で保証する。
+   */
+  changeFacts?: ChangeFact[];
+  /**
+   * 本人が選んだ相談先の名称。
+   * 本人が選んだときだけ渡す。アプリが記録から相談先を選ぶことはない。
+   */
+  referencedSupportNames?: string[];
 }
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -133,6 +147,8 @@ export function buildAiShareText({
   startDate,
   endDate,
   fields,
+  changeFacts,
+  referencedSupportNames,
 }: BuildAiShareTextInput): AiShareTextResult {
   const start = parseCalendarDate(startDate);
   const end = parseCalendarDate(endDate);
@@ -174,22 +190,45 @@ export function buildAiShareText({
     buildRecordLines(record, selfCareItems, selectedFields).join("\n")
   );
 
-  const text = [
-    "ヨルケア 振り返り用テキスト",
-    `対象期間: ${formatCalendarDate(startDate)}〜${formatCalendarDate(endDate)}`,
-    `記録日数: ${selectedRecords.length}日`,
-    "",
-    "【生成AIへのお願い】",
-    "- 記録にないことを推測せず、記載内容の整理を中心にしてください。",
-    "- 診断、治療、処方、危機判定は行わないでください。",
-    "- 事実、考えられる傾向、本人に確認したい質問を分けてください。",
-    "- 書けなかった日や未入力を責めない表現にしてください。",
-    "",
-    "【本人が選んだ記録】",
-    sections.join("\n\n"),
-    "",
-    "※このテキストは本人が選んだ項目だけを端末内で整理したものです。",
-  ].join("\n");
+  const blocks: string[] = [
+    [
+      "ヨルケア 振り返り用テキスト",
+      `対象期間: ${formatCalendarDate(startDate)}〜${formatCalendarDate(endDate)}`,
+      `記録日数: ${selectedRecords.length}日`,
+    ].join("\n"),
+    [
+      "【生成AIへのお願い】",
+      "- 記録にないことを推測せず、記載内容の整理を中心にしてください。",
+      "- 診断、治療、処方、危機判定は行わないでください。",
+      "- 事実、考えられる傾向、本人に確認したい質問を分けてください。",
+      "- 書けなかった日や未入力を責めない表現にしてください。",
+    ].join("\n"),
+  ];
+
+  if (changeFacts && changeFacts.length > 0) {
+    blocks.push(
+      [
+        "【記録から数えた事実】",
+        ...changeFacts.map((fact) => `- ${formatChangeFactLine(fact)}`),
+        "※ 診断ではなく、本人の記録の集計です。",
+      ].join("\n")
+    );
+  }
+
+  if (referencedSupportNames && referencedSupportNames.length > 0) {
+    blocks.push(
+      [
+        "【本人が見た相談先】",
+        ...referencedSupportNames.map((name) => `- ${name}`),
+        "※ 本人が画面で選んだ相談先の名称です。相談の要否はここでは判断していません。",
+      ].join("\n")
+    );
+  }
+
+  blocks.push(["【本人が選んだ記録】", sections.join("\n\n")].join("\n"));
+  blocks.push("※このテキストは本人が選んだ項目だけを端末内で整理したものです。");
+
+  const text = blocks.join("\n\n");
 
   return {
     ok: true,

@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { LiveRegion } from "@/components/shared/live-region";
+import { MovementSuggestions } from "@/components/selfcare/movement-suggestions";
 import { COPY } from "@/lib/copy";
 import { storageErrorMessage } from "@/lib/result";
 import { MAX_SELF_CARE_TITLE_LENGTH } from "@/lib/schemas";
@@ -32,9 +33,10 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 
 interface SelfCareTabProps {
   onDataChange?: () => void;
+  refreshKey?: number;
 }
 
-export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
+export function SelfCareTab({ onDataChange, refreshKey = 0 }: SelfCareTabProps) {
   const [items, setItems] = useState<SelfCareItem[]>([]);
   const [newTitle, setNewTitle] = useState("");
   const [editItem, setEditItem] = useState<SelfCareItem | null>(null);
@@ -132,6 +134,9 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
           <p className="text-sm leading-relaxed">{message}</p>
         </div>
       )}
+
+      {/* 新しい並列機能ではなく、「できること」辞書の延長として置く */}
+      <MovementSuggestions refreshKey={refreshKey} onDataChange={() => void reload()} />
 
       <Card>
         <CardHeader>

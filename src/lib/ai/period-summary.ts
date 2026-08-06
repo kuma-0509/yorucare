@@ -43,7 +43,13 @@ export type SleepSummary = {
    * 対象日が1件以下なら null
    */
   deviationMinutes: number | null;
-  /** sleepMinutes が入力されていた日数。上記2つの母数 */
+  /**
+   * sleepMinutes の中央値（分・整数に丸め）。対象日が0件なら null。
+   * 極端に短い日・長い日が1日あると平均が動くため、
+   * 「だいたいどのくらい眠れた期間か」を述べる用途では中央値を使う。
+   */
+  medianMinutes: number | null;
+  /** sleepMinutes が入力されていた日数。上記3つの母数 */
   measuredDays: number;
   /**
    * 就寝時刻の中央値（HH:MM）。対象日が0件なら null。
@@ -102,6 +108,15 @@ function formatMinutesToTime(minutes: number): string {
   return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
 }
 
+/** 中央値。呼び出し側は空配列を渡さない */
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1
+    ? sorted[middle]
+    : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
 function roundTo(value: number, digits: number): number {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
@@ -146,8 +161,10 @@ function summarizeSleep(records: DailyRecord[]): SleepSummary {
 
   let averageMinutes: number | null = null;
   let deviationMinutes: number | null = null;
+  let medianMinutes: number | null = null;
 
   if (durations.length > 0) {
+    medianMinutes = Math.round(median(durations));
     const mean = durations.reduce((sum, v) => sum + v, 0) / durations.length;
     averageMinutes = Math.round(mean);
     if (durations.length > 1) {
@@ -159,18 +176,13 @@ function summarizeSleep(records: DailyRecord[]): SleepSummary {
 
   let medianBedtime: string | null = null;
   if (bedtimes.length > 0) {
-    const sorted = [...bedtimes].sort((a, b) => a - b);
-    const middle = Math.floor(sorted.length / 2);
-    const median =
-      sorted.length % 2 === 1
-        ? sorted[middle]
-        : (sorted[middle - 1] + sorted[middle]) / 2;
-    medianBedtime = formatMinutesToTime(Math.round(median));
+    medianBedtime = formatMinutesToTime(Math.round(median(bedtimes)));
   }
 
   return {
     averageMinutes,
     deviationMinutes,
+    medianMinutes,
     measuredDays: durations.length,
     medianBedtime,
     bedtimeDays: bedtimes.length,

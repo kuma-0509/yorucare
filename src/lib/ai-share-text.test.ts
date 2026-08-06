@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildAiShareText } from "./ai-share-text";
+import { detectChanges } from "./ai/detect-changes";
 import type { DailyRecord, SelfCareItem } from "./types";
 
 function makeRecord(overrides: Partial<DailyRecord> = {}): DailyRecord {
@@ -103,5 +104,81 @@ describe("buildAiShareText", () => {
       ok: false,
       message: "選んだ期間には共有できる記録がありません。",
     });
+  });
+});
+
+describe("相談文への追加項目", () => {
+  const records = [
+    makeRecord({ date: "2026-07-21", moodScore: 2, sleepMinutes: 300 }),
+    makeRecord({ id: "r2", date: "2026-07-22", moodScore: 1, sleepMinutes: 320 }),
+  ];
+
+  const facts = detectChanges(records, "2026-07-21", "2026-07-22").facts;
+
+  it("渡さなければ、これまでどおりの出力のままにする", () => {
+    const result = buildAiShareText({
+      records,
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-22",
+      fields: ["mood"],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.text).not.toContain("【記録から数えた事実】");
+    expect(result.text).not.toContain("【本人が見た相談先】");
+  });
+
+  it("事実を渡すと、母数つきで本文へ入る", () => {
+    const result = buildAiShareText({
+      records,
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-22",
+      fields: ["mood"],
+      changeFacts: facts,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.text).toContain("【記録から数えた事実】");
+    expect(result.text).toContain("日分");
+    expect(result.text).toContain("診断ではなく、本人の記録の集計です。");
+  });
+
+  it("本人が選んだ相談先の名称だけを入れる", () => {
+    const result = buildAiShareText({
+      records,
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-22",
+      fields: ["mood"],
+      referencedSupportNames: ["こころの健康相談（デモ）"],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.text).toContain("【本人が見た相談先】");
+    expect(result.text).toContain("こころの健康相談（デモ）");
+  });
+
+  it("追加項目の経路にメモ本文を通さない", () => {
+    const result = buildAiShareText({
+      records,
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-22",
+      // メモを含む項目は選ばない
+      fields: ["mood"],
+      changeFacts: facts,
+      referencedSupportNames: ["こころの健康相談（デモ）"],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.text).not.toContain("自由記述の内容");
+    expect(result.text).not.toContain("早めに休む");
+    expect(result.text).not.toContain("少し楽になった");
   });
 });

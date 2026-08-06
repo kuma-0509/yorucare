@@ -1,5 +1,6 @@
 "use client";
 
+import { ChangeFactsCard } from "@/components/reflection/change-facts-card";
 import { ReflectionTrends } from "@/components/reflection/reflection-trends";
 import { WeeklySummaryCard } from "@/components/reflection/weekly-summary-card";
 import {
@@ -26,6 +27,8 @@ export function ReflectionTab({ refreshKey = 0 }: ReflectionTabProps) {
       </header>
 
       <WeeklySummaryCard refreshKey={refreshKey} />
+
+      <ChangeFactsCard refreshKey={refreshKey} />
 
       <ReflectionTrends refreshKey={refreshKey} />
 
