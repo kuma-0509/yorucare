@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>卒業制作 企画発表｜ヨルケア — 夜と休日の「空白」を、自分を整える時間へ</title>
+<title>卒業制作 企画発表｜ヨルケア — あいまいな記憶を、渡せる事実に変える</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
@@ -190,6 +190,36 @@
   .flow-arrow { display: grid; place-items: center; color: var(--care-400); font-size: 1.2rem; }
   @media (max-width: 760px) { .flow-arrow { transform: rotate(90deg); } }
 
+  /* ===== 面談の時間配分 ===== */
+  .timebar {
+    display: flex;
+    height: 3.2rem;
+    border-radius: .7rem;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.15);
+  }
+  .timebar .seg {
+    display: grid; place-items: center;
+    text-align: center;
+    padding: 0 .6rem;
+    font-size: clamp(.78rem, 1.5vw, .95rem);
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .seg.check { background: rgba(253,164,175,.3); color: #fff; }
+  .seg.rest { background: rgba(255,255,255,.05); color: var(--text-dim); }
+  .seg.share { background: rgba(165,180,252,.35); color: #fff; }
+  .seg.care { background: rgba(252,211,77,.28); color: #fff; }
+  .ba-label {
+    display: block;
+    font-size: .74rem; letter-spacing: .16em;
+    color: var(--text-dim);
+    margin-bottom: .35rem;
+  }
+  .ba-label.now { color: var(--rose-300); }
+  .ba-label.next { color: var(--moon-300); }
+  .ba-block + .ba-block { margin-top: 1rem; }
+
   .pill-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
   .pill {
     background: rgba(255,255,255,.07);
@@ -274,184 +304,185 @@
 
 <div class="deck">
 
-  <!-- 1. 表紙 -->
+  <!-- 1. フック①：面談の問いと、返ってきた答え -->
   <section class="slide">
-    <span class="kicker">AI DRIVEN SCHOOL ／ 卒業制作 企画発表</span>
-    <h1>ヨルケア<br><span class="accent">夜と休日の「空白」</span>を、<br>自分を整える時間に変える</h1>
-    <p class="lead">メンタル不調を経て働いている人が、1日1〜2分で自分の状態を残せるセルフケア記録アプリ。</p>
+    <span class="kicker">ある月の面談で</span>
+    <h1 style="font-size:clamp(1.6rem,4vw,2.6rem);">「今月、調子はどうですか」</h1>
+    <p class="lead">障がい者採用で働いている方に、体調を伺いました。</p>
+    <p class="quote" style="margin-top:1rem;">返ってきたのは、<br>自分がいまどういう体調で、何を相談したいのかが、<br>分からない、という状態でした。</p>
+  </section>
+
+  <!-- 2. フック②：面談の時間が、確認で消える -->
+  <section class="slide">
+    <span class="kicker">その面談で起きたこと</span>
+    <h2>日誌を一つ一つ確認して、<span class="accent">20〜30分</span></h2>
+    <div class="ba-block">
+      <span class="ba-label now">1回の面談の使われ方</span>
+      <div class="timebar">
+        <div class="seg check" style="flex:7;">体調の確認（日誌を一つ一つ）<br>20〜30分</div>
+        <div class="seg rest" style="flex:3;">配慮・対策<br>ここまで届かない</div>
+      </div>
+    </div>
+    <p class="divider-note">面談の大半が、状態を聞き出すことに消えました。<br>肝心の、<strong>対策や、職場環境の配慮を考えるところまで、いけなかった</strong>んです。</p>
+  </section>
+
+  <!-- 3. 結論 -->
+  <section class="slide">
+    <span class="kicker sub">AI DRIVEN SCHOOL ／ 卒業制作 企画発表</span>
+    <p class="lead" style="margin-bottom:.6rem;">私は、精神障害と向き合う方の、<strong>復職後の職場復帰・就労継続</strong>をサポートしています。<br>卒業制作で伸ばすのは、セルフケア記録アプリ「ヨルケア」です。</p>
+    <h1 style="margin-top:.4rem;">あいまいな記憶を材料にしていたやりとりを、<br><span class="accent">渡せる事実に変える</span></h1>
     <div class="pill-row">
       <span class="pill on">Phase 1 MVP は稼働中</span>
-      <span class="pill">卒業制作で作るのは「まとめる」と「渡す」</span>
+      <span class="pill">卒業制作で作るのは、数値化・要約・渡すこと</span>
     </div>
     <a class="url" href="https://yorucare.vercel.app" target="_blank" rel="noopener">https://yorucare.vercel.app</a>
   </section>
 
-  <!-- 2. 前提：自分の仕事と、復職までの全体フロー -->
+  <!-- 4. なぜ①：職場復帰したあとには、ものさしがない -->
   <section class="slide">
-    <span class="kicker sub">前提 1／2 ／ わたしの仕事</span>
-    <h2>私は、精神障害と向き合う方の<br><span class="accent">復職後の職場復帰・就労継続</span>をサポートしています</h2>
+    <span class="kicker">なぜ、こうなるのか 1／2</span>
+    <h2>治療にもリワークにもある「ものさし」が、<br><span class="accent">職場に戻ったあとにはない</span></h2>
     <div class="flow" style="margin-top:.3rem;">
       <div class="flow-step">
         <span class="st">医療</span>
         <span class="tt">うつ症状 → 治療</span>
-        <span class="dd">主治医・医療機関</span>
+        <span class="dd">症状を見る共通のものさしがある</span>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-step">
         <span class="st">リワーク</span>
         <span class="tt">復職の準備</span>
-        <span class="dd">支援機関・プログラム</span>
+        <span class="dd">課題を見る共通のものさしがある</span>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-step todo">
         <span class="st">企業 ／ わたしの持ち場</span>
         <span class="tt">職場復帰 → 就労継続</span>
-        <span class="dd">職場内サポーター・産業医・支援者</span>
+        <span class="dd">ものさしがない</span>
       </div>
     </div>
-    <p class="divider-note small">治療とリワークには、症状や課題を見るための<strong>共通のものさし</strong>があります。ところが、いちばん右の<strong>職場復帰したあと</strong>には、それがありません。</p>
+    <p class="divider-note small">あのとき、心の中ではこう思っていました。<strong>体調が良いのか、悪いのか、分からない。本当に問題ないのか、判断ができない。だから、聞くしかない。</strong>聞くために時間がかかって、配慮の話まで届かない。</p>
   </section>
 
-  <!-- 3. 前提／課題：判断材料があいまいな記憶しかない -->
+  <!-- 5. なぜ②：判断材料は2つだけ／記録は途切れる -->
   <section class="slide">
-    <span class="kicker">前提 2／2 ／ ここが出発点</span>
-    <h2>復職後の判断材料は、<span class="accent">あいまいな記憶</span>しかない</h2>
+    <span class="kicker">なぜ、こうなるのか 2／2</span>
+    <h2>判断材料は、<span class="accent">この2つだけ</span></h2>
     <div class="grid2">
       <div class="card">
         <p class="card-title">本人の自覚</p>
-        <p class="small">「なんとなくしんどい」「たぶん先週よりはマシ」。しんどい時期ほど、いつから崩れたのかを思い出せません。</p>
+        <p class="small">「なんとなくしんどい」。しんどい時期ほど、崩れた起点を思い出せません。</p>
       </div>
       <div class="card">
         <p class="card-title">周囲が見た様子</p>
-        <p class="small">「最近つらそうに見える」「顔色が良くなった」。見えている場面はごく一部で、夜と休日は含まれません。</p>
+        <p class="small">見えるのは日中の一部だけ。<strong>夜と休日は、ほとんど含まれていません。</strong></p>
       </div>
     </div>
-    <p class="quote" style="margin-top:.9rem;">この2つの<strong>あいまいな記憶</strong>を材料に、<br>本人はサポートを求め、周囲は判断している。</p>
-    <p class="divider-note small">ここで起きているのは、努力不足でも配慮不足でもなく、<strong>コミュニケーションロス</strong>です。伝えるべき事実が、伝わる形で残っていません。</p>
+    <p class="quote" style="margin-top:.9rem;font-size:clamp(.98rem,2.1vw,1.3rem);">現場の声：復職後1〜2ヶ月で体調管理の記録が途切れ、<br>そのあと、不調が出る。</p>
+    <p class="divider-note small">記録が途切れること自体が、問題の中心ではありません。<strong>続かない記録は、相談の材料にならない。</strong>そこがいちばん痛いところです。既存アプリは服薬特化が多く、体調の波・生活リズム・できたことを一体で扱えません。連続記録を褒める設計は、書けない日が続いた人ほど戻ってこられなくします。</p>
   </section>
 
-  <!-- 4. 課題の裏づけ：ヒアリング -->
+  <!-- 6. どうやって①：3つのやり方とK6の境界 -->
   <section class="slide">
-    <span class="kicker">解決したい課題</span>
-    <h2>ロスは、<span class="accent">現場でこう現れます</span></h2>
-    <table>
-      <thead><tr><th style="width:7.5rem">聞いた相手</th><th>確認できた事実</th></tr></thead>
-      <tbody>
-        <tr><td class="num">当事者A</td><td>夜のSNS閲覧が常態化し、睡眠不足から不調を招く</td></tr>
-        <tr><td class="num">当事者B</td><td>会社には相談しにくい。支援面談は<strong>月1回</strong>。自作のExcelで、孤独に体調管理をしている</td></tr>
-        <tr><td class="num">支援員</td><td>復職後<strong>1〜2ヶ月で体調管理の記録が途切れ</strong>、そのあと不調が出る。面談は仕事ができているかの確認で精一杯で、生活面まで踏み込む時間がない</td></tr>
-      </tbody>
-    </table>
-    <p class="divider-note small">記録が途切れることが問題の中心ではありません。<strong>続かない記録は、相談の材料にならない</strong>ことが問題です。</p>
-  </section>
-
-  <!-- 5. なぜ作りたいか -->
-  <section class="slide">
-    <span class="kicker">なぜ作りたいのか</span>
-    <h2>このロスを埋める道具が、<br><span class="accent">まだ手元にない</span>から</h2>
-    <ol class="big-num">
-      <li class="small" style="font-size:1rem;"><strong>復職後だけ、共通のものさしがない。</strong>治療にもリワークにも指標があるのに、職場に戻ったあとは記憶で会話するしかない。わたしが毎回困っているのは、ここです。</li>
-      <li class="small" style="font-size:1rem;"><strong>既存アプリは服薬特化が多い。</strong>体調の波・生活リズム・その日できたことを一体で扱えず、自作Excelに逃げる人が出る。そのExcelは、相談の場に持ち出しにくい。</li>
-      <li class="small" style="font-size:1rem;"><strong>そして記録アプリは、人を責めやすい。</strong>連続記録を褒める設計は、書けない日が続いた人ほど戻ってこられなくする。いちばん記録が必要なのは、書けなくなるほどしんどい時期なのに。</li>
-    </ol>
-  </section>
-
-  <!-- 6. 何を作るか：3つの機能と、その効果 -->
-  <section class="slide">
-    <span class="kicker">何を作るのか 1／2</span>
-    <h2>あいまいな記憶を、<span class="accent">渡せる事実</span>に変える3つ</h2>
+    <span class="kicker">どうやって 1／3</span>
+    <h2>やり方は、<span class="accent">3つ</span>です</h2>
     <div class="flow">
       <div class="flow-step done">
         <span class="st">毎日 ／ 1〜2分</span>
-        <span class="tt">客観視できる記録</span>
+        <span class="tt">記録する</span>
         <span class="dd">気分・睡眠・お薬・しんどさのサイン・できたこと</span>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-step todo">
         <span class="st">週ごと</span>
-        <span class="tt">まとめて要約し、伝える</span>
-        <span class="dd">1週間分を、本人が選んで渡せる短い文章に</span>
+        <span class="tt">要約する</span>
+        <span class="dd">本人が選んで、渡せる短い文章にする</span>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-step todo">
         <span class="st">月に1回</span>
-        <span class="tt">K6で数値化</span>
-        <span class="dd">国の調査で使われる6つの質問。0〜24点で変化を見る</span>
+        <span class="tt">K6で数値化する</span>
+        <span class="dd">国の調査で使われる6つの質問。0〜24点。毎回同じ質問なので変化が見える</span>
       </div>
     </div>
     <div class="grid2" style="margin-top:1rem;">
       <div class="card hi">
         <p class="card-title">自分に対して</p>
-        <p class="small">自分の状態を<strong>俯瞰して見られる</strong>ようになり、セルフケアの判断に使える。</p>
+        <p class="small">状態を<strong>俯瞰</strong>でき、セルフケアの判断に使える。</p>
       </div>
       <div class="card hi">
         <p class="card-title">相手に対して</p>
-        <p class="small">医療従事者・支援者・職場内サポーターへ、<strong>端的に、すぐ</strong>伝えられる。結果として、<strong>受けるサポートが最適化される</strong>。</p>
+        <p class="small">医療従事者・支援者・職場内サポーターへ、<strong>端的にすぐ</strong>伝えられる。</p>
       </div>
     </div>
-    <p class="divider-note small">K6は、点数で重症度を判定したり、受診の要否を自動で判断したりはしません。<strong>本人と周囲が、同じ数字で変化を見る</strong>ためのものさしです。</p>
+    <p class="divider-note small">先に言います。K6の点数で「危ない」と判断したり、受診を勧めたりは<strong>しません</strong>。本人と周囲が、同じ数字で変化を見るためのものさしです。</p>
   </section>
 
-  <!-- 7. 卒業制作で作る山場 -->
+  <!-- 7. どうやって②：設計の芯 -->
   <section class="slide">
-    <span class="kicker">何を作るのか 2／2</span>
-    <h2>卒業制作期間で作る、<span class="accent">4つの山場</span></h2>
-    <table>
-      <thead><tr><th style="width:2.5rem"></th><th>作るもの</th><th style="width:15rem">完成の判断</th></tr></thead>
-      <tbody>
-        <tr><td class="num">1</td><td><strong>入力を削る</strong><br><span class="small dim">「よい／ふつう／しんどい」を選ぶと、追加の質問が必要な分だけに絞られる</span></td><td class="small">ダミーデータで、5人中4人以上が2分以内に保存できる</td></tr>
-        <tr><td class="num">2</td><td><strong>月1回のK6と、その推移</strong><br><span class="small dim">毎回まったく同じ6つの質問。0〜24点と、前回からの変化を並べる</span></td><td class="small">点数の判定・受診勧奨をアプリ側で行わない</td></tr>
-        <tr><td class="num">3</td><td><strong>週次まとめの言語化</strong><br><span class="small dim">数値はアプリが埋め、文章の穴だけをAIが書く「穴埋め方式」</span></td><td class="small">AIが数値を書き換えられない構造になっている</td></tr>
-        <tr><td class="num">4</td><td><strong>相談材料として渡す</strong><br><span class="small dim">最大7日分・本人が選んだ項目だけをテキスト化</span></td><td class="small">全文を本人が確認してからでないと、端末の外に出ない</td></tr>
-      </tbody>
-    </table>
-    <p class="divider-note small">集計を確定させる層（期間集計・頻度・連続日数）は<strong>実装済み</strong>です。同時に4つ入れると何が効いたか分からなくなるので、<strong>1つ入れて、観測して、次を決める</strong>順で進めます。</p>
-  </section>
-
-  <!-- 8. 設計の芯 -->
-  <section class="slide">
-    <span class="kicker">この企画の芯</span>
-    <h2>ほかの記録アプリと、<span class="accent">決定的に違う4点</span></h2>
+    <span class="kicker">どうやって 2／3</span>
+    <h2>設計でいちばん大事なのは、<span class="accent">4点</span></h2>
     <div class="grid2">
       <div class="card hi">
-        <p class="card-title">1. 記録は本人の端末にだけ残る</p>
+        <p class="card-title">1. 記録は本人の端末にだけ残す</p>
         <p class="small">自動送信しない。運営も勤務先も見られない。評価される記録になった瞬間、人は正直に書かなくなるからです。</p>
       </div>
       <div class="card hi">
-        <p class="card-title">2. 書けなかった日を失敗にしない</p>
-        <p class="small">連続記録を強調しない。代わりに<strong>「中断後にまた書けたか」</strong>を指標に置きます。</p>
+        <p class="card-title">2. 書けなかった日を、失敗として表示しない</p>
+        <p class="small">連続記録を強調せず、<strong>中断後にまた書けたか</strong>を指標にします。</p>
       </div>
       <div class="card hi">
-        <p class="card-title">3. 数値と言葉の担当を分ける</p>
-        <p class="small">集計はアプリが確定。AIは文章の穴を埋めるだけ。対象0件のときは0ではなく「データがない」を返し、<strong>「低い」と「ない」を混同させない</strong>。</p>
+        <p class="card-title">3. 数値はアプリが確定させる</p>
+        <p class="small">AIには書き換えさせない。0件のときは0ではなく<strong>「データがない」</strong>を返し、「低い」と混同させない。</p>
       </div>
       <div class="card hi">
         <p class="card-title">4. アプリで抱え込ませない</p>
-        <p class="small">しんどさが強いときはアプリ内で解決させず、相談窓口へ渡します。診断も助言もしません。</p>
+        <p class="small">しんどさが強いときは相談窓口へ渡します。診断も助言もしません。</p>
       </div>
     </div>
   </section>
 
-  <!-- 9. 判断のしかた -->
+  <!-- 8. どうやって③：山場4つ -->
   <section class="slide">
-    <span class="kicker">作って終わりにしないために</span>
-    <h2>先に、<span class="accent">やめる基準</span>を決めてあります</h2>
+    <span class="kicker">どうやって 3／3</span>
+    <h2>卒業制作期間の山場は、<span class="accent">この4つ</span></h2>
     <table>
-      <thead><tr><th style="width:12rem">見る指標</th><th>判断したいこと</th></tr></thead>
+      <thead><tr><th style="width:2.5rem"></th><th>作るもの</th><th style="width:15rem">完成の判断</th></tr></thead>
       <tbody>
-        <tr><td class="num">初週複数日記録率</td><td>最初の1回だけで終わっていないか</td></tr>
-        <tr><td class="num">Week 2 継続率</td><td>2週目に戻ってこられるか</td></tr>
-        <tr><td class="num">Week 4 継続率</td><td>物珍しさを越えて使えるか</td></tr>
-        <tr><td class="num">中断後再開率</td><td>「中断を失敗にしない」設計が、実際に効いているか</td></tr>
+        <tr><td class="num">1</td><td><strong>入力を削る</strong><br><span class="small dim">「よい／ふつう／しんどい」を選ぶと、追加の質問が必要な分だけに絞られる</span></td><td class="small">5人中4人以上が2分以内に保存できる</td></tr>
+        <tr><td class="num">2</td><td><strong>K6と、その推移</strong><br><span class="small dim">毎回まったく同じ6つの質問。0〜24点と、前回からの変化</span></td><td class="small">点数の判定・受診勧奨をアプリ側で行わない</td></tr>
+        <tr><td class="num">3</td><td><strong>まとめの言語化</strong><br><span class="small dim">数値はアプリが埋め、文章の穴だけをAIが書く「穴埋め方式」</span></td><td class="small">AIが数値を書き換えられない構造になっている</td></tr>
+        <tr><td class="num">4</td><td><strong>渡す導線</strong><br><span class="small dim">最大7日分・本人が選んだ項目だけをテキスト化</span></td><td class="small">全文を本人が確認してからでないと、端末の外に出ない</td></tr>
       </tbody>
     </table>
-    <p class="divider-note small">これは<strong>アプリの使いやすさ</strong>を見る指標で、症状が良くなったかを示すものではありません。医学的な評価は、別途5か月間の実践研究で分けて扱います。</p>
+    <p class="divider-note small">同時に入れると何が効いたか分からなくなるので、<strong>1つ入れて、観測して、次を決めます</strong>。</p>
   </section>
 
-  <!-- 10. 聞きたいこと -->
+  <!-- 9. どうなる：面談が変わる／やめる基準 -->
+  <section class="slide">
+    <span class="kicker">どうなるのか</span>
+    <h2>あの月次面談が、<span class="accent">こう変わります</span></h2>
+    <div class="ba-block">
+      <span class="ba-label now">いま</span>
+      <div class="timebar">
+        <div class="seg check" style="flex:7;">体調の確認 20〜30分</div>
+        <div class="seg rest" style="flex:3;">配慮・対策 ここまで届かない</div>
+      </div>
+    </div>
+    <div class="ba-block">
+      <span class="ba-label next">記録・要約・K6があると</span>
+      <div class="timebar">
+        <div class="seg share" style="flex:2;">状態の共有<br>冒頭3分</div>
+        <div class="seg care" style="flex:8;">配慮と対策の話に使える</div>
+      </div>
+    </div>
+    <p class="divider-note small">作って終わりにしないため、<strong>やめる基準も先に決めてあります</strong>。2週目に戻れたか、4週目まで使えたか、中断のあとにまた書けたか。これはアプリの使いやすさを見る指標で、症状が良くなったかを示すものではありません。</p>
+  </section>
+
+  <!-- 10. お願い -->
   <section class="slide">
     <span class="kicker">みなさんに聞きたいこと</span>
-    <h2>迷っているのは、<span class="accent">この3つ</span>です</h2>
+    <h2>方向性を固めたくて、<span class="accent">持ってきました</span></h2>
     <ol class="big-num">
       <li>「入力を削る → K6 → まとめ → 渡す」の順番で合っているか。<br><span class="small dim">先に作るべきものが、ほかにありませんか。</span></li>
       <li>書けない日が続いた人が戻ってくる仕掛けとして、<strong>通知以外</strong>に思いつくものはありますか。</li>
@@ -460,7 +491,22 @@
     <p class="divider-note small">実物は <a class="url" style="margin:0;padding:.2rem .6rem;" href="https://yorucare.vercel.app" target="_blank" rel="noopener">yorucare.vercel.app</a> で触れます。スマホでそのまま開きます。</p>
   </section>
 
-  <!-- 11. 補足：作らないもの -->
+  <!-- 11. 補足：ヒアリングで確認した事実 -->
+  <section class="slide">
+    <span class="kicker sub">補足（質疑用・発表では飛ばす）</span>
+    <h2>ヒアリングで<span class="accent">確認できた事実</span></h2>
+    <table>
+      <thead><tr><th style="width:7.5rem">聞いた相手</th><th>確認できた事実</th></tr></thead>
+      <tbody>
+        <tr><td class="num">当事者A</td><td>夜のSNS閲覧が常態化し、睡眠不足から不調を招く</td></tr>
+        <tr><td class="num">当事者B</td><td>会社には相談しにくい。支援面談は<strong>月1回</strong>。自作のExcelで、孤独に体調管理をしている</td></tr>
+        <tr><td class="num">支援員</td><td>復職後<strong>1〜2ヶ月で体調管理の記録が途切れ</strong>、そのあと不調が出る。面談は仕事ができているかの確認で精一杯で、生活面まで踏み込む時間がない</td></tr>
+      </tbody>
+    </table>
+    <p class="divider-note small">いま動いているもの（Phase 1 MVP）：4タブ構成、期間別グラフ、直近7日の週次まとめ、記録のファイル保存・復元、全タブ共通の相談窓口導線。集計を確定させる層は実装済みです。</p>
+  </section>
+
+  <!-- 12. 補足：作らないもの -->
   <section class="slide">
     <span class="kicker sub">補足（質疑用・発表では飛ばす）</span>
     <h2>あえて<span class="accent">作らないと決めた</span>もの</h2>
@@ -476,7 +522,7 @@
     </table>
   </section>
 
-  <!-- 12. 補足：AIに渡すもの -->
+  <!-- 13. 補足：AIに渡すもの -->
   <section class="slide">
     <span class="kicker sub">補足（質疑用・発表では飛ばす）</span>
     <h2>AIに渡すもの、<span class="accent">渡さないもの</span></h2>
@@ -501,7 +547,7 @@
     <p class="divider-note small">これは運用ルールではなく、<strong>戻り値の型に本文のフィールドを持たせない</strong>ことで保証しています。うっかり渡すことが、そもそもできません。</p>
   </section>
 
-  <!-- 13. 出典 -->
+  <!-- 14. 出典 -->
   <section class="slide">
     <span class="kicker sub">出典</span>
     <h2>出典・参照</h2>
@@ -517,7 +563,7 @@
 
 <div class="nav-bar">
   <button class="nav-btn" id="prevBtn">← 前へ</button>
-  <span class="counter"><span id="cur">1</span> / <span id="total">13</span><span class="tag" id="phase"></span></span>
+  <span class="counter"><span id="cur">1</span> / <span id="total">14</span><span class="tag" id="phase"></span></span>
   <button class="nav-btn" id="nextBtn">次へ →</button>
 </div>
 
