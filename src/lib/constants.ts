@@ -1,4 +1,12 @@
+import type { ConditionLevel } from "./entry-flow";
 import type { MedicationStatus, MoodScore, WarningLevel } from "./types";
+
+/** 記録の入口。まずこの3つだけで保存できる */
+export const CONDITION_OPTIONS: { value: ConditionLevel; label: string }[] = [
+  { value: "good", label: "よい" },
+  { value: "normal", label: "ふつう" },
+  { value: "hard", label: "しんどい" },
+];
 
 export const MOOD_OPTIONS: { score: MoodScore; label: string }[] = [
   { score: 5, label: "かなり良い" },

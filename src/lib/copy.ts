@@ -15,6 +15,23 @@ export const COPY = {
     reflection: "ふりかえり",
   },
   warningSign: "しんどさのサイン",
+  /** 記録の入口。3段階を選ぶだけで保存でき、あとの項目は選択に応じて出す */
+  entry: {
+    questionToday: "今日の調子はどうですか？",
+    questionPast: "その日の調子はどうでしたか？",
+    headerHint: "まず調子を選ぶところからで大丈夫です。ほかの項目は任意です。",
+    hint: "近いものを1つ選んでください。これだけでも保存できます。",
+    beforeSelect: "選ぶと、そのときに合う項目だけが表示されます。",
+    conditionLegend: "調子",
+    scaleOpen: "5段階でくわしく選ぶ",
+    scaleClose: "3段階だけにする",
+    scaleLegend: "総合気分（5段階）",
+    warningDescriptionOpen:
+      "いま気になっているものがあれば選んでください。なければ選ばなくて構いません。",
+    otherTitle: "ほかの項目も書く（任意）",
+    otherDescription: "気持ち・睡眠・お薬・しんどさのサイン・メモ",
+    otherDescriptionWithoutWarning: "気持ち・睡眠・お薬・メモ",
+  },
   memo: "メモ",
   memoOptional: "メモ（任意）",
   /** セルフケアの登録簿（マスタ）。常にこの語で呼ぶ */

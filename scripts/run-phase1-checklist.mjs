@@ -1,6 +1,7 @@
 /**
  * Phase 1 スマホチェックリスト自動検証（Playwright + モバイル viewport）
  * Usage: node scripts/run-phase1-checklist.mjs [baseUrl]
+ * Playwright 同梱以外の Chromium を使う場合は PW_CHROMIUM_PATH で実行ファイルを指定する。
  */
 import { chromium, webkit } from "playwright";
 
@@ -24,8 +25,18 @@ function skip(id, note = "") {
   results.push({ id, status: "SKIP", note });
 }
 
+/** レビュー同意ダイアログは画面全体を覆うため、先に閉じる */
+async function dismissReviewConsent(page) {
+  const agree = page.getByRole("button", { name: "同意してレビューを始める" });
+  if (await agree.isVisible().catch(() => false)) {
+    await agree.click();
+    await page.waitForTimeout(300);
+  }
+}
+
 async function gotoReady(page) {
   await page.goto(BASE_URL, { waitUntil: "domcontentloaded" });
+  await dismissReviewConsent(page);
   await page.getByRole("heading", { name: "今日の記録" }).waitFor({
     timeout: 15000,
   });
@@ -39,9 +50,20 @@ async function clearStorage(page) {
     localStorage.setItem("yorucare_storage_notice_dismissed", "1");
   });
   await page.reload({ waitUntil: "domcontentloaded" });
+  await dismissReviewConsent(page);
   await page.getByRole("heading", { name: "今日の記録" }).waitFor({
     timeout: 15000,
   });
+}
+
+/** 「ほかの項目も書く（任意）」は入力済みだと最初から開くため、状態を見て開く */
+async function openOtherSection(page) {
+  const toggle = page.getByRole("button", { name: /ほかの項目も書く/ }).first();
+  await toggle.scrollIntoViewIfNeeded();
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+    await toggle.click();
+    await page.waitForTimeout(300);
+  }
 }
 
 async function clickSave(page) {
@@ -49,6 +71,12 @@ async function clickSave(page) {
   await save.scrollIntoViewIfNeeded();
   await save.click();
   await page.waitForTimeout(400);
+  // 保存後の締めくくり演出を選ぶまで、戻る導線は出ない
+  const skip = page.getByRole("button", { name: /今日はそのまま|このまま終える/ });
+  if (await skip.isVisible().catch(() => false)) {
+    await skip.click();
+    await page.waitForTimeout(400);
+  }
 }
 
 async function tab(page, name) {
@@ -69,7 +97,10 @@ async function main() {
 
   let browser;
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({
+      headless: true,
+      executablePath: process.env.PW_CHROMIUM_PATH || undefined,
+    });
   } catch (e) {
     console.error("Playwright chromium not installed. Run: npx playwright install chromium");
     process.exit(1);
@@ -111,15 +142,18 @@ async function main() {
     if (await saveBtn.isVisible()) pass("A-5");
     else fail("A-5", "保存ボタンまでスクロール不可");
 
-    const gentle = await page.getByText(/気分だけ/).first().isVisible();
+    const gentle = await page
+      .getByText(/これだけでも保存できます|気分だけ/)
+      .first()
+      .isVisible();
     if (gentle) pass("A-6");
     else fail("A-6");
 
     // --- B ---
     await tab(page, "書く");
-    await page.getByRole("button", { name: "ふつう" }).click();
+    await page.getByRole("radio", { name: "ふつう" }).click();
     await clickSave(page);
-    if (await page.getByText("記録できました。").isVisible()) pass("B-3");
+    if (await page.getByText("記録できました。").first().isVisible()) pass("B-3");
     else fail("B-3");
 
     await page.getByRole("button", { name: "これまでの記録を見る" }).click();
@@ -131,30 +165,29 @@ async function main() {
 
     // --- C ---
     await tab(page, "書く");
-    if (await page.getByText("記録できました。").isVisible()) {
+    if (await page.getByText("記録できました。").first().isVisible()) {
       await page.getByRole("button", { name: "今日の記録を編集する" }).click();
     }
     await page.getByRole("button", { name: "今日", exact: true }).click();
     await page.getByRole("button", { name: "昨日", exact: true }).click();
-    if (await page.getByText("昨日 ·").isVisible()) pass("C-1a");
+    if (await page.getByText("昨日 ·").first().isVisible()) pass("C-1a");
     else fail("C-1a");
 
     await page.getByRole("button", { name: "今日", exact: true }).click();
-    if (await page.getByRole("button", { name: "ふつう" }).isVisible()) pass("C-1b");
+    if (await page.getByRole("radio", { name: "ふつう" }).isVisible()) pass("C-1b");
     else fail("C-1b");
 
-    await page.getByRole("button", { name: /くわしく書く/ }).click();
+    await openOtherSection(page);
     await page.locator("#sleep-start").fill("23:30");
     await page.locator("#sleep-end").fill("07:00");
     const sleepText = await page.getByText(/睡眠時間/).locator("..").textContent();
     if (sleepText?.includes("7時間30分")) pass("C-3a", sleepText);
     else fail("C-3a", sleepText ?? "");
 
-    await page.getByRole("button", { name: "できた", exact: true }).click();
+    await page.getByRole("radio", { name: "できた", exact: true }).click();
     pass("C-4a");
 
-    await page.getByRole("button", { name: /しんどさのサイン/ }).click();
-    await page.getByRole("button", { name: "少しあり" }).click();
+    await page.getByRole("radio", { name: "少しあり" }).click();
     if (await page.getByText("睡眠・生活リズム").isVisible()) pass("C-5b");
     else fail("C-5b");
 
@@ -166,20 +199,20 @@ async function main() {
     else fail("C-6b");
 
     await page
-      .getByPlaceholder(/仕事後に疲れて/)
+      .getByPlaceholder(/気になったこと/)
       .fill("行1\n行2");
     await clickSave(page);
-    if (await page.getByText("記録できました。").isVisible()) pass("C-7b");
+    if (await page.getByText("記録できました。").first().isVisible()) pass("C-7b");
     else fail("C-7b");
 
     // mood labels max 3
     await page.getByRole("button", { name: "今日の記録を編集する" }).click();
-    await page.getByRole("button", { name: /くわしく書く/ }).click();
+    await openOtherSection(page);
     await page.getByRole("button", { name: "満足" }).click();
     await page.getByRole("button", { name: "感謝" }).click();
     await page.getByRole("button", { name: "嬉しい" }).click();
-    await page.getByRole("button", { name: "普通" }).click();
-    if (await page.getByText("最大3つまで選べます").isVisible()) pass("C-2c");
+    await page.getByRole("button", { name: "ふつう" }).click();
+    if (await page.getByText("気持ちは3つまで選べます").isVisible()) pass("C-2c");
     else fail("C-2c");
 
     // --- D ---
@@ -337,7 +370,7 @@ async function main() {
     if (!blame) pass("H-3", "責め文言の自動スキャン: 問題なし");
     else fail("H-3", "責め系キーワード検出");
 
-    pass("H-4", "「気分だけでも」等のガイドあり");
+    pass("H-4", "「これだけでも保存できます」等のガイドあり");
     pass("B-2", "空欄保存は B/C で検証済み");
   } catch (err) {
     fail("RUN", String(err?.message ?? err));

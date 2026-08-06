@@ -32,6 +32,15 @@ import {
   MAX_MOOD_LABEL_LENGTH,
 } from "@/lib/schemas";
 import {
+  applyCondition,
+  conditionFromMoodScore,
+  getFollowUpSections,
+  hasOptionalDetailInput,
+  hasWarningInput,
+  shouldRevealFollowUps,
+} from "@/lib/entry-flow";
+import {
+  CONDITION_OPTIONS,
   MEDICATION_OPTIONS,
   MOOD_LABEL_NEGATIVE,
   MOOD_LABEL_NEUTRAL,
@@ -109,6 +118,7 @@ export function TodayRecordTab({
   const [showSaved, setShowSaved] = useState(false);
   const [savedRecord, setSavedRecord] = useState<DailyRecord | null>(null);
   const [showMemo, setShowMemo] = useState(false);
+  const [showMoodScale, setShowMoodScale] = useState(false);
   const [newSelfCareTitle, setNewSelfCareTitle] = useState("");
   const [showAddSelfCare, setShowAddSelfCare] = useState(false);
   const [formLoading, setFormLoading] = useState(true);
@@ -132,6 +142,7 @@ export function TodayRecordTab({
       return;
     }
     setForm(recordToFormState(result.value, date));
+    setShowMoodScale(false);
     setShowSaved(false);
     setSavedRecord(null);
     setCustomMoodInput("");
@@ -433,13 +444,95 @@ export function TodayRecordTab({
     );
   }
 
+  /** 入口の3段階。5段階の総合気分から導くので、保存する値は増やさない */
+  const condition = conditionFromMoodScore(form.moodScore);
+  const followUpSections = getFollowUpSections(condition);
+  /** 「しんどい」を選んだときだけ、サインを最初から開いて見せる */
+  const showWarningFirst = followUpSections.includes("warningSign");
+  /** 入口が未選択でも、すでに書いてある記録は隠さない */
+  const revealFollowUps = shouldRevealFollowUps(form);
+  const otherSectionDefaultOpen =
+    hasOptionalDetailInput(form) || (!showWarningFirst && hasWarningInput(form));
+
+  const warningFields = (
+    <>
+      <SelectionGroup legend={COPY.warningSign} mode="radio">
+        {WARNING_LEVEL_OPTIONS.map(({ value, label }) => (
+          <SelectionControl
+            key={value}
+            selected={form.warningLevel === value}
+            mode="radio"
+            layout="row"
+            onClick={() =>
+              setForm((prev) => ({
+                ...prev,
+                warningLevel: prev.warningLevel === value ? null : value,
+                warningTags: value === "none" ? [] : prev.warningTags,
+                warningNote: value === "none" ? "" : prev.warningNote,
+              }))
+            }
+          >
+            {label}
+          </SelectionControl>
+        ))}
+      </SelectionGroup>
+
+      {showWarningTags && (
+        <div className="space-y-4 border-t border-border pt-4">
+          <WarningTagGroup
+            title="睡眠・生活リズム"
+            tags={WARNING_TAGS_SLEEP}
+            selected={form.warningTags}
+            onToggle={toggleWarningTag}
+          />
+          <WarningTagGroup
+            title="気分・感情"
+            tags={WARNING_TAGS_MOOD}
+            selected={form.warningTags}
+            onToggle={toggleWarningTag}
+          />
+          <WarningTagGroup
+            title="仕事・外出"
+            tags={WARNING_TAGS_WORK}
+            selected={form.warningTags}
+            onToggle={toggleWarningTag}
+          />
+          <WarningTagGroup
+            title="その他"
+            tags={WARNING_TAGS_OTHER}
+            selected={form.warningTags}
+            onToggle={toggleWarningTag}
+          />
+          {form.warningTags.includes("その他") && (
+            <div>
+              <Label htmlFor="warning-note">その他の内容</Label>
+              <Textarea
+                id="warning-note"
+                className="mt-2"
+                maxLength={MAX_NOTE_LENGTH}
+                value={form.warningNote}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    warningNote: e.target.value,
+                  }))
+                }
+                placeholder="気になることを自由に書いてください"
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+
   return (
     <>
     <div className="space-y-4">
       <header>
         <h1 className="text-xl font-bold">{recordTitle}</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          気分だけ選んで保存してもOKです。
+          {COPY.entry.headerHint}
         </p>
       </header>
 
@@ -460,389 +553,394 @@ export function TodayRecordTab({
         {formatDisplayDate(targetDate)}
       </p>
 
-      {/* 気分＝この画面の主役。視覚的な重みで序列を表す */}
+      {/* 入口＝この画面の主役。まず3段階だけで保存できる */}
       <Card className="border-primary/30 shadow-md ring-1 ring-primary/10">
         <CardHeader>
           <CardTitle className="text-xl">
-            {targetDate === today ? "今日の気分はどうですか？" : "気分はどうでしたか？"}
+            {targetDate === today
+              ? COPY.entry.questionToday
+              : COPY.entry.questionPast}
           </CardTitle>
-          <CardDescription>
-            近いものを1つ選んでください。これだけでも保存できます。
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SelectionGroup legend="総合気分" mode="radio">
-            {MOOD_OPTIONS.map(({ score, label }) => (
-              <SelectionControl
-                key={score}
-                selected={form.moodScore === score}
-                mode="radio"
-                layout="row"
-                onClick={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    moodScore: prev.moodScore === score ? null : score,
-                  }))
-                }
-              >
-                {label}
-              </SelectionControl>
-            ))}
-          </SelectionGroup>
-        </CardContent>
-      </Card>
-
-      <CollapsibleSection
-        title="くわしく書く（任意）"
-        description="気持ち、睡眠、お薬の記録"
-      >
-        <div>
-          <Label className="mb-2 block text-sm text-muted-foreground">
-            気持ち（最大3つ）
-          </Label>
-          {moodLimitMessage && (
-            <p className="mb-2 rounded-lg bg-caution px-3 py-2 text-sm text-caution-foreground">
-              {moodLimitMessage}
-            </p>
-          )}
-          <MoodLabelGroup
-            title="よかった気持ち"
-            labels={MOOD_LABEL_POSITIVE}
-            selected={form.moodLabels}
-            onToggle={toggleMoodLabel}
-          />
-          <MoodLabelGroup
-            title="どちらでもない・ゆらぎ"
-            labels={MOOD_LABEL_NEUTRAL}
-            selected={form.moodLabels}
-            onToggle={toggleMoodLabel}
-          />
-          <MoodLabelGroup
-            title="しんどい気持ち"
-            labels={MOOD_LABEL_NEGATIVE}
-            selected={form.moodLabels}
-            onToggle={toggleMoodLabel}
-          />
-
-          {customMoodEntries.length > 0 && (
-            <CustomMoodLabelGroup
-              entries={customMoodEntries}
-              selected={form.moodLabels}
-              onToggle={toggleCustomMoodLabel}
-            />
-          )}
-
-          <div className="mt-4 space-y-2 border-t border-border pt-4">
-            <p className="text-xs text-muted-foreground">
-              選択肢にない気持ちは、自分の言葉で追加できます
-            </p>
-            <div className="flex gap-2">
-              <Input
-                value={customMoodInput}
-                onChange={(e) => {
-                  setCustomMoodInput(e.target.value);
-                  setCustomMoodError("");
-                }}
-                maxLength={MAX_MOOD_LABEL_LENGTH}
-                placeholder="気持ちを追加"
-                aria-label="気持ちを追加"
-                className="min-h-11 flex-1"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleCustomMoodAddClick();
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                className="min-h-11 shrink-0 px-4"
-                onClick={handleCustomMoodAddClick}
-              >
-                {COPY.add}
-              </Button>
-            </div>
-            {customMoodError && (
-              <p className="rounded-lg bg-caution px-3 py-2 text-sm text-caution-foreground">
-                {customMoodError}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-4 border-t border-border pt-4">
-          <div>
-            <p className="text-base font-semibold">睡眠</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              おおよその時間で構いません。書ける範囲で入力してください。
-            </p>
-          </div>
-          <div>
-            <Label htmlFor="sleep-start">寝た時間</Label>
-            <Input
-              id="sleep-start"
-              type="time"
-              className="mt-2"
-              value={form.sleepStart ?? ""}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  sleepStart: e.target.value || null,
-                }))
-              }
-            />
-          </div>
-          <div>
-            <Label htmlFor="sleep-end">起きた時間</Label>
-            <Input
-              id="sleep-end"
-              type="time"
-              className="mt-2"
-              value={form.sleepEnd ?? ""}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  sleepEnd: e.target.value || null,
-                }))
-              }
-            />
-          </div>
-          <p className="rounded-xl bg-muted px-4 py-3 text-sm">
-            睡眠時間：
-            <span className="font-medium">
-              {form.sleepStart && form.sleepEnd
-                ? formatSleepDuration(sleepMinutes)
-                : COPY.sleepNotEntered}
-            </span>
-          </p>
-        </div>
-
-        <div className="space-y-2 border-t border-border pt-4">
-          <div>
-            <p className="text-base font-semibold">お薬</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              処方など、お薬の記録です。該当がなければ「{COPY.medicationNone}」を選んでください。
-            </p>
-          </div>
-          <SelectionGroup legend="お薬" mode="radio">
-            {MEDICATION_OPTIONS.map(({ value, label }) => (
-              <SelectionControl
-                key={value}
-                selected={form.medication === value}
-                mode="radio"
-                layout="row"
-                onClick={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    medication: prev.medication === value ? null : value,
-                  }))
-                }
-              >
-                {label}
-              </SelectionControl>
-            ))}
-          </SelectionGroup>
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        title={`${COPY.warningSign}（任意）`}
-        description="いつもと違うしんどさがあれば選んでください。気になることがなければ、選ばなくても構いません。"
-        variant="caution"
-      >
-        <SelectionGroup legend={COPY.warningSign} mode="radio">
-          {WARNING_LEVEL_OPTIONS.map(({ value, label }) => (
-            <SelectionControl
-              key={value}
-              selected={form.warningLevel === value}
-              mode="radio"
-              layout="row"
-              onClick={() =>
-                setForm((prev) => ({
-                  ...prev,
-                  warningLevel: prev.warningLevel === value ? null : value,
-                  warningTags: value === "none" ? [] : prev.warningTags,
-                  warningNote: value === "none" ? "" : prev.warningNote,
-                }))
-              }
-            >
-              {label}
-            </SelectionControl>
-          ))}
-        </SelectionGroup>
-
-        {showWarningTags && (
-          <div className="space-y-4 border-t border-border pt-4">
-            <WarningTagGroup
-              title="睡眠・生活リズム"
-              tags={WARNING_TAGS_SLEEP}
-              selected={form.warningTags}
-              onToggle={toggleWarningTag}
-            />
-            <WarningTagGroup
-              title="気分・感情"
-              tags={WARNING_TAGS_MOOD}
-              selected={form.warningTags}
-              onToggle={toggleWarningTag}
-            />
-            <WarningTagGroup
-              title="仕事・外出"
-              tags={WARNING_TAGS_WORK}
-              selected={form.warningTags}
-              onToggle={toggleWarningTag}
-            />
-            <WarningTagGroup
-              title="その他"
-              tags={WARNING_TAGS_OTHER}
-              selected={form.warningTags}
-              onToggle={toggleWarningTag}
-            />
-            {form.warningTags.includes("その他") && (
-              <div>
-                <Label htmlFor="warning-note">その他の内容</Label>
-                <Textarea
-                  id="warning-note"
-                  className="mt-2"
-                  maxLength={MAX_NOTE_LENGTH}
-                  value={form.warningNote}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      warningNote: e.target.value,
-                    }))
-                  }
-                  placeholder="気になることを自由に書いてください"
-                />
-              </div>
-            )}
-          </div>
-        )}
-      </CollapsibleSection>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {targetDate === today ? COPY.doneTodayToday : COPY.doneToday}
-          </CardTitle>
+          <CardDescription>{COPY.entry.hint}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {selfCareItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              「{COPY.tab.selfCare}」タブで登録すると、ここから選べます。
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {selfCareItems.map((item) => (
-                <ChipButton
-                  key={item.id}
-                  selected={form.selfCareIds.includes(item.id)}
-                  onClick={() => toggleSelfCare(item.id)}
-                >
-                  {item.title}
-                </ChipButton>
-              ))}
-            </div>
-          )}
-
-          {showAddSelfCare ? (
-            <div className="space-y-2 rounded-xl border-2 border-dashed p-4">
-              <Input
-                value={newSelfCareTitle}
-                onChange={(e) => setNewSelfCareTitle(e.target.value)}
-                maxLength={MAX_SELF_CARE_TITLE_LENGTH}
-                placeholder="新しいできることの名前"
-              />
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  className="flex-1"
-                  onClick={() => void handleAddSelfCareInline()}
-                  disabled={addingSelfCare}
-                >
-                  {addingSelfCare ? "追加中…" : "追加する"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowAddSelfCare(false)}
-                >
-                  キャンセル
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="soft"
-              className="w-full"
-              onClick={() => setShowAddSelfCare(true)}
-            >
-              <Plus className="h-4 w-4" />
-              {targetDate === today
-                ? `${COPY.doneTodayToday}を追加`
-                : `${COPY.doneToday}を追加`}
-            </Button>
-          )}
+          <SelectionGroup legend={COPY.entry.conditionLegend} mode="radio">
+            {CONDITION_OPTIONS.map(({ value, label }) => (
+              <SelectionControl
+                key={value}
+                selected={condition === value}
+                mode="radio"
+                layout="row"
+                // 二度押しで選択が消えると、下の項目ごと画面から消えてしまう。
+                // 入口では選択を取り消さず、取り消しは5段階の選択に任せる
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    moodScore: applyCondition(prev.moodScore, value),
+                  }))
+                }
+              >
+                {label}
+              </SelectionControl>
+            ))}
+          </SelectionGroup>
 
           <button
             type="button"
             className="flex min-h-11 w-full items-center justify-between rounded-xl px-2 py-2 text-sm text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            onClick={() => setShowMemo(!showMemo)}
+            onClick={() => setShowMoodScale((v) => !v)}
+            aria-expanded={showMoodScale}
           >
-            <span>＋ {COPY.selfCareAction}のメモを書く</span>
-            {showMemo ? (
+            <span>
+              {showMoodScale ? COPY.entry.scaleClose : COPY.entry.scaleOpen}
+            </span>
+            {showMoodScale ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
               <ChevronDown className="h-4 w-4" />
             )}
           </button>
-          {showMemo && (
-            <div>
-              <Label htmlFor="selfcare-memo">
-                {targetDate === today
-                  ? `今日の${COPY.selfCareAction}について、少し残したいこと`
-                  : `${COPY.selfCareAction}について、少し残したいこと`}
-              </Label>
-              <Textarea
-                id="selfcare-memo"
-                className="mt-2"
-                maxLength={MAX_NOTE_LENGTH}
-                value={form.selfCareMemo}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    selfCareMemo: e.target.value,
-                  }))
-                }
-              />
+
+          {showMoodScale && (
+            <div className="border-t border-border pt-3">
+              <SelectionGroup legend={COPY.entry.scaleLegend} mode="radio">
+                {MOOD_OPTIONS.map(({ score, label }) => (
+                  <SelectionControl
+                    key={score}
+                    selected={form.moodScore === score}
+                    mode="radio"
+                    layout="row"
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        moodScore: prev.moodScore === score ? null : score,
+                      }))
+                    }
+                  >
+                    {label}
+                  </SelectionControl>
+                ))}
+              </SelectionGroup>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{COPY.memoOptional}</CardTitle>
-          <CardDescription>
-            思いついたこと、体調の変化など、自由に残せます。
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Label htmlFor="record-note" className="sr-only">
-            {COPY.memoOptional}
-          </Label>
-          <Textarea
-            id="record-note"
-            maxLength={MAX_NOTE_LENGTH}
-            value={form.note}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, note: e.target.value }))
+      {!revealFollowUps && (
+        <p className="rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">
+          {COPY.entry.beforeSelect}
+        </p>
+      )}
+
+      {revealFollowUps && (
+        <>
+          {showWarningFirst && (
+            <CollapsibleSection
+              key={`warning-open-${targetDate}`}
+              title={COPY.warningSign}
+              description={COPY.entry.warningDescriptionOpen}
+              variant="caution"
+              defaultOpen
+            >
+              {warningFields}
+            </CollapsibleSection>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {targetDate === today ? COPY.doneTodayToday : COPY.doneToday}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {selfCareItems.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  「{COPY.tab.selfCare}」タブで登録すると、ここから選べます。
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {selfCareItems.map((item) => (
+                    <ChipButton
+                      key={item.id}
+                      selected={form.selfCareIds.includes(item.id)}
+                      onClick={() => toggleSelfCare(item.id)}
+                    >
+                      {item.title}
+                    </ChipButton>
+                  ))}
+                </div>
+              )}
+
+              {showAddSelfCare ? (
+                <div className="space-y-2 rounded-xl border-2 border-dashed p-4">
+                  <Input
+                    value={newSelfCareTitle}
+                    onChange={(e) => setNewSelfCareTitle(e.target.value)}
+                    maxLength={MAX_SELF_CARE_TITLE_LENGTH}
+                    placeholder="新しいできることの名前"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      className="flex-1"
+                      onClick={() => void handleAddSelfCareInline()}
+                      disabled={addingSelfCare}
+                    >
+                      {addingSelfCare ? "追加中…" : "追加する"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowAddSelfCare(false)}
+                    >
+                      キャンセル
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="soft"
+                  className="w-full"
+                  onClick={() => setShowAddSelfCare(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  {targetDate === today
+                    ? `${COPY.doneTodayToday}を追加`
+                    : `${COPY.doneToday}を追加`}
+                </Button>
+              )}
+
+              <button
+                type="button"
+                className="flex min-h-11 w-full items-center justify-between rounded-xl px-2 py-2 text-sm text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                onClick={() => setShowMemo(!showMemo)}
+              >
+                <span>＋ {COPY.selfCareAction}のメモを書く</span>
+                {showMemo ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </button>
+              {showMemo && (
+                <div>
+                  <Label htmlFor="selfcare-memo">
+                    {targetDate === today
+                      ? `今日の${COPY.selfCareAction}について、少し残したいこと`
+                      : `${COPY.selfCareAction}について、少し残したいこと`}
+                  </Label>
+                  <Textarea
+                    id="selfcare-memo"
+                    className="mt-2"
+                    maxLength={MAX_NOTE_LENGTH}
+                    value={form.selfCareMemo}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        selfCareMemo: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <CollapsibleSection
+            key={`other-${targetDate}-${showWarningFirst}`}
+            title={COPY.entry.otherTitle}
+            description={
+              showWarningFirst
+                ? COPY.entry.otherDescriptionWithoutWarning
+                : COPY.entry.otherDescription
             }
-            placeholder="気になったこと、体調の変化、明日気をつけたいことなどがあれば入力してください"
-          />
-        </CardContent>
-      </Card>
+            defaultOpen={otherSectionDefaultOpen}
+          >
+            <div>
+              <Label className="mb-2 block text-sm text-muted-foreground">
+                気持ち（最大3つ）
+              </Label>
+              {moodLimitMessage && (
+                <p className="mb-2 rounded-lg bg-caution px-3 py-2 text-sm text-caution-foreground">
+                  {moodLimitMessage}
+                </p>
+              )}
+              <MoodLabelGroup
+                title="よかった気持ち"
+                labels={MOOD_LABEL_POSITIVE}
+                selected={form.moodLabels}
+                onToggle={toggleMoodLabel}
+              />
+              <MoodLabelGroup
+                title="どちらでもない・ゆらぎ"
+                labels={MOOD_LABEL_NEUTRAL}
+                selected={form.moodLabels}
+                onToggle={toggleMoodLabel}
+              />
+              <MoodLabelGroup
+                title="しんどい気持ち"
+                labels={MOOD_LABEL_NEGATIVE}
+                selected={form.moodLabels}
+                onToggle={toggleMoodLabel}
+              />
+
+              {customMoodEntries.length > 0 && (
+                <CustomMoodLabelGroup
+                  entries={customMoodEntries}
+                  selected={form.moodLabels}
+                  onToggle={toggleCustomMoodLabel}
+                />
+              )}
+
+              <div className="mt-4 space-y-2 border-t border-border pt-4">
+                <p className="text-xs text-muted-foreground">
+                  選択肢にない気持ちは、自分の言葉で追加できます
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    value={customMoodInput}
+                    onChange={(e) => {
+                      setCustomMoodInput(e.target.value);
+                      setCustomMoodError("");
+                    }}
+                    maxLength={MAX_MOOD_LABEL_LENGTH}
+                    placeholder="気持ちを追加"
+                    aria-label="気持ちを追加"
+                    className="min-h-11 flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleCustomMoodAddClick();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="min-h-11 shrink-0 px-4"
+                    onClick={handleCustomMoodAddClick}
+                  >
+                    {COPY.add}
+                  </Button>
+                </div>
+                {customMoodError && (
+                  <p className="rounded-lg bg-caution px-3 py-2 text-sm text-caution-foreground">
+                    {customMoodError}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4 border-t border-border pt-4">
+              <div>
+                <p className="text-base font-semibold">睡眠</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  おおよその時間で構いません。書ける範囲で入力してください。
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="sleep-start">寝た時間</Label>
+                <Input
+                  id="sleep-start"
+                  type="time"
+                  className="mt-2"
+                  value={form.sleepStart ?? ""}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      sleepStart: e.target.value || null,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="sleep-end">起きた時間</Label>
+                <Input
+                  id="sleep-end"
+                  type="time"
+                  className="mt-2"
+                  value={form.sleepEnd ?? ""}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      sleepEnd: e.target.value || null,
+                    }))
+                  }
+                />
+              </div>
+              <p className="rounded-xl bg-muted px-4 py-3 text-sm">
+                睡眠時間：
+                <span className="font-medium">
+                  {form.sleepStart && form.sleepEnd
+                    ? formatSleepDuration(sleepMinutes)
+                    : COPY.sleepNotEntered}
+                </span>
+              </p>
+            </div>
+
+            <div className="space-y-2 border-t border-border pt-4">
+              <div>
+                <p className="text-base font-semibold">お薬</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  処方など、お薬の記録です。該当がなければ「{COPY.medicationNone}」を選んでください。
+                </p>
+              </div>
+              <SelectionGroup legend="お薬" mode="radio">
+                {MEDICATION_OPTIONS.map(({ value, label }) => (
+                  <SelectionControl
+                    key={value}
+                    selected={form.medication === value}
+                    mode="radio"
+                    layout="row"
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        medication: prev.medication === value ? null : value,
+                      }))
+                    }
+                  >
+                    {label}
+                  </SelectionControl>
+                ))}
+              </SelectionGroup>
+            </div>
+
+            {!showWarningFirst && (
+              <div className="space-y-4 border-t border-border pt-4">
+                <div>
+                  <p className="text-base font-semibold">{COPY.warningSign}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    いつもと違うしんどさがあれば選んでください。気になることがなければ、選ばなくても構いません。
+                  </p>
+                </div>
+                {warningFields}
+              </div>
+            )}
+
+            <div className="space-y-2 border-t border-border pt-4">
+              <div>
+                <p className="text-base font-semibold">{COPY.memoOptional}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  思いついたこと、体調の変化など、自由に残せます。
+                </p>
+              </div>
+              <Label htmlFor="record-note" className="sr-only">
+                {COPY.memoOptional}
+              </Label>
+              <Textarea
+                id="record-note"
+                maxLength={MAX_NOTE_LENGTH}
+                value={form.note}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, note: e.target.value }))
+                }
+                placeholder="気になったこと、体調の変化、明日気をつけたいことなどがあれば入力してください"
+              />
+            </div>
+          </CollapsibleSection>
+        </>
+      )}
     </div>
 
     <StickyActionBar>
