@@ -4,6 +4,7 @@ import {
   getDateRangeForPeriod,
   getLast7Days,
   getMonthRangeForPeriod,
+  getPreviousDateString,
   isMonthlyChartPeriod,
   toDateString,
   toMonthKey,
@@ -59,5 +60,20 @@ describe("toMonthKey / formatChartMonthLabel", () => {
   it("月キーと表示ラベル", () => {
     expect(toMonthKey(new Date(2026, 2, 1))).toBe("2026-03");
     expect(formatChartMonthLabel("2026-03")).toBe("3月");
+  });
+});
+
+describe("getPreviousDateString", () => {
+  it("前日の日付を返す", () => {
+    expect(getPreviousDateString("2026-08-06")).toBe("2026-08-05");
+  });
+
+  it("月またぎを正しく戻す", () => {
+    expect(getPreviousDateString("2026-08-01")).toBe("2026-07-31");
+    expect(getPreviousDateString("2026-03-01")).toBe("2026-02-28");
+  });
+
+  it("年またぎを正しく戻す", () => {
+    expect(getPreviousDateString("2026-01-01")).toBe("2025-12-31");
   });
 });

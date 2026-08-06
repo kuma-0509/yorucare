@@ -286,8 +286,8 @@ async function main() {
       .filter({ hasText: dateLabel })
       .first();
     const editInOld = oldCard.getByRole("button", { name: "編集する" });
-    if ((await editInOld.count()) === 0) pass("D-7", threeDaysAgo);
-    else fail("D-7", "3日前に編集ボタンあり");
+    if ((await editInOld.count()) > 0) pass("D-7", `${threeDaysAgo} を編集できる`);
+    else fail("D-7", "直近7日なのに編集ボタンが出ない");
 
     // --- E ---
     await tab(page, "できること");

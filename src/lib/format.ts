@@ -4,6 +4,7 @@ import {
   WARNING_LEVEL_OPTIONS,
 } from "./constants";
 import { COPY } from "./copy";
+import { getGoalResultLabel } from "./goals";
 import { formatMoodLabelsDisplay } from "./mood-labels";
 import { formatSleepDuration } from "./sleep";
 import type { DailyRecord, SelfCareItem } from "./types";
@@ -83,6 +84,20 @@ export function buildRecordSummaryLines(
   const selfCare = formatSelfCareSummary(record, selfCareItems);
   if (isMeaningfulSummaryValue(selfCare)) {
     candidates.push({ label: COPY.doneToday, value: selfCare });
+  }
+
+  // 目標は決めた日と結果をつけた日で別の行にする
+  if (record.goalResult !== null && record.goalReviewedText !== "") {
+    candidates.push({
+      label: COPY.goal.summaryReviewLabel,
+      value: `「${record.goalReviewedText}」${getGoalResultLabel(
+        record.goalResult
+      )}`,
+    });
+  }
+
+  if (record.goal !== "") {
+    candidates.push({ label: COPY.goal.summarySetLabel, value: record.goal });
   }
 
   return candidates.filter((line) => isMeaningfulSummaryValue(line.value));

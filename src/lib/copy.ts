@@ -32,6 +32,24 @@ export const COPY = {
     otherDescription: "気持ち・睡眠・お薬・しんどさのサイン・メモ",
     otherDescriptionWithoutWarning: "気持ち・睡眠・お薬・メモ",
   },
+  /** 次の日にためす小さな行動と、そのふりかえり */
+  goal: {
+    setTitleToday: "明日ためすこと（任意）",
+    setTitleOtherDay: "次の日にためすこと（任意）",
+    setDescription:
+      "小さく決めておくと、次の日にとりかかりやすくなります。書かなくても構いません。",
+    setPlaceholder: "例：帰宅したら5分だけ横になる",
+    setLabel: "ためすこと",
+    reviewTitle: "前の日に決めたこと",
+    reviewLegend: "決めたことの結果",
+    reviewHint: "答えなくても、そのまま記録を続けられます。",
+    smallerQuestion: "どこまでならできそうでしたか？",
+    smallerHint:
+      "小さくしておくと、次にとりかかりやすくなることがあります。そのまま使うことも、書き直すこともできます。",
+    smallerApplied: "明日ためすことに入れました。",
+    summaryReviewLabel: "前の日に決めたこと",
+    summarySetLabel: "次の日にためすこと",
+  },
   memo: "メモ",
   memoOptional: "メモ（任意）",
   /** セルフケアの登録簿（マスタ）。常にこの語で呼ぶ */

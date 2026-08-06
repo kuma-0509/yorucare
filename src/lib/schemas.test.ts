@@ -35,6 +35,25 @@ describe("parseRecordsJson", () => {
     }
   });
 
+  it("目標の追加より前の記録を既定値付きで読める", () => {
+    const result = parseRecordsJson([validRecord]);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data[0].goal).toBe("");
+      expect(result.data[0].goalResult).toBeNull();
+      expect(result.data[0].goalReviewedText).toBe("");
+    }
+  });
+
+  it("目標の結果は決められた3つだけを受け付ける", () => {
+    expect(
+      parseRecordsJson([{ ...validRecord, goalResult: "missed" }]).success
+    ).toBe(true);
+    expect(
+      parseRecordsJson([{ ...validRecord, goalResult: "できなかった" }]).success
+    ).toBe(false);
+  });
+
   it("不正な日付形式を拒否する", () => {
     const result = parseRecordsJson([{ ...validRecord, date: "2026/01/05" }]);
     expect(result.success).toBe(false);

@@ -196,6 +196,9 @@ const localStorageRepository: LocalStorageRepository = {
       selfCareIds: data.selfCareIds,
       selfCareMemo: data.selfCareMemo,
       note: data.note,
+      goal: data.goal,
+      goalResult: data.goalResult,
+      goalReviewedText: data.goalReviewedText,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
@@ -484,6 +487,9 @@ export function createEmptyRecordForm(date: string): Omit<
     selfCareIds: [],
     selfCareMemo: "",
     note: "",
+    goal: "",
+    goalResult: null,
+    goalReviewedText: "",
   };
 }
 
@@ -505,6 +511,9 @@ export function recordToFormState(
     selfCareIds: [...record.selfCareIds],
     selfCareMemo: record.selfCareMemo,
     note: record.note,
+    goal: record.goal,
+    goalResult: record.goalResult,
+    goalReviewedText: record.goalReviewedText,
   };
 }
 
@@ -522,7 +531,9 @@ export function isRecordEmpty(
     !form.warningNote &&
     form.selfCareIds.length === 0 &&
     !form.selfCareMemo &&
-    !form.note
+    !form.note &&
+    !form.goal &&
+    form.goalResult === null
   );
 }
 
@@ -546,6 +557,9 @@ export function isDailyRecordEmpty(record: DailyRecord): boolean {
     selfCareIds: record.selfCareIds,
     selfCareMemo: record.selfCareMemo,
     note: record.note,
+    goal: record.goal,
+    goalResult: record.goalResult,
+    goalReviewedText: record.goalReviewedText,
   });
 }
 

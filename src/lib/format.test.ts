@@ -23,6 +23,9 @@ function makeRecord(overrides: Partial<DailyRecord> = {}): DailyRecord {
     selfCareIds: [],
     selfCareMemo: "",
     note: "",
+    goal: "",
+    goalResult: null,
+    goalReviewedText: "",
     createdAt: "2026-01-05T00:00:00.000Z",
     updatedAt: "2026-01-05T00:00:00.000Z",
     ...overrides,
@@ -79,5 +82,30 @@ describe("buildRecordSummaryLines", () => {
     const record = makeRecord({ moodScore: 4 });
     const lines = buildRecordSummaryLines(record, []);
     expect(lines).toContainEqual({ label: "気分", value: "まあまあ良い" });
+  });
+
+  it("目標は、決めた行と結果をつけた行を分けて返す", () => {
+    const record = makeRecord({
+      goal: "散歩する（5分だけ）",
+      goalResult: "partial",
+      goalReviewedText: "散歩する",
+    });
+    const lines = buildRecordSummaryLines(record, []);
+    expect(lines).toContainEqual({
+      label: "前の日に決めたこと",
+      value: "「散歩する」一部できた",
+    });
+    expect(lines).toContainEqual({
+      label: "次の日にためすこと",
+      value: "散歩する（5分だけ）",
+    });
+  });
+
+  it("結果を選んでいなければ、ふりかえりの行は出さない", () => {
+    const lines = buildRecordSummaryLines(
+      makeRecord({ goalReviewedText: "散歩する" }),
+      []
+    );
+    expect(lines).toHaveLength(0);
   });
 });

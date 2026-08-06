@@ -4,6 +4,9 @@ export type MedicationStatus = "done" | "partial" | "forgot" | "none";
 
 export type WarningLevel = "none" | "small" | "yes";
 
+/** 前日に決めた小さな行動のふりかえり結果 */
+export type GoalResult = "done" | "partial" | "missed";
+
 export type MoodLabelCategory =
   | "ポジティブ"
   | "ややポジティブ"
@@ -32,6 +35,12 @@ export interface DailyRecord {
   selfCareIds: string[];
   selfCareMemo: string;
   note: string;
+  /** 次の日にためすと決めた小さな行動（""＝未設定） */
+  goal: string;
+  /** 前日に決めた行動のふりかえり結果 */
+  goalResult: GoalResult | null;
+  /** ふりかえった行動の文（前日の goal の写し。前日の記録が変わってもずれない） */
+  goalReviewedText: string;
   createdAt: string;
   updatedAt: string;
 }

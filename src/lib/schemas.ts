@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { normalizeMoodLabels } from "./mood-labels";
 
-export const STORAGE_SCHEMA_VERSION = 1;
+// 2: 目標（goal / goalResult / goalReviewedText）を追加
+export const STORAGE_SCHEMA_VERSION = 2;
 export const EXPORT_VERSION = 1;
 export const MAX_NOTE_LENGTH = 2000;
 export const MAX_SELF_CARE_TITLE_LENGTH = 100;
 export const MAX_MOOD_LABEL_LENGTH = 10;
+export const MAX_GOAL_LENGTH = 100;
 export const MAX_IMPORT_RECORDS = 5000;
 export const MAX_IMPORT_SELF_CARE = 1000;
 
@@ -28,6 +30,10 @@ const moodScoreSchema = z.union([
 
 const medicationStatusSchema = z.enum(["done", "partial", "forgot", "none"]);
 const warningLevelSchema = z.enum(["none", "small", "yes"]);
+const goalResultSchema = z.enum(["done", "partial", "missed"]);
+
+// 目標の追加より前に保存された記録にも既定値を入れて読めるようにする
+const goalTextSchema = z.string().trim().max(MAX_GOAL_LENGTH).default("");
 
 const moodLabelCategorySchema = z.enum([
   "ポジティブ",
@@ -68,6 +74,9 @@ export const dailyRecordSchema = z.object({
   selfCareIds: z.array(idSchema).max(100),
   selfCareMemo: memoSchema,
   note: memoSchema,
+  goal: goalTextSchema,
+  goalResult: goalResultSchema.nullable().default(null),
+  goalReviewedText: goalTextSchema,
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 });

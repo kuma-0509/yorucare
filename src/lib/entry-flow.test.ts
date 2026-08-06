@@ -29,6 +29,9 @@ function makeForm(overrides: Partial<FormState> = {}): FormState {
     selfCareIds: [],
     selfCareMemo: "",
     note: "",
+    goal: "",
+    goalResult: null,
+    goalReviewedText: "",
     ...overrides,
   };
 }
@@ -145,6 +148,9 @@ describe("shouldRevealFollowUps", () => {
     expect(shouldRevealFollowUps(makeForm({ selfCareIds: ["s1"] }))).toBe(true);
     expect(shouldRevealFollowUps(makeForm({ selfCareMemo: "散歩" }))).toBe(true);
     expect(shouldRevealFollowUps(makeForm({ warningTags: ["涙が出る"] }))).toBe(
+      true
+    );
+    expect(shouldRevealFollowUps(makeForm({ goal: "5分だけ横になる" }))).toBe(
       true
     );
   });

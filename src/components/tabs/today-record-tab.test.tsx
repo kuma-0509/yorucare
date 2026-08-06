@@ -3,6 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { TodayRecordTab } from "./today-record-tab";
 import { ok } from "@/lib/result";
+import {
+  getPreviousDateString as previousDateString,
+  getTodayString as todayString,
+} from "@/lib/dates";
 import type { DailyRecord, SelfCareItem } from "@/lib/types";
 
 const getRecordByDate = vi.fn();
@@ -55,14 +59,27 @@ function makeRecord(overrides: Partial<DailyRecord> = {}): DailyRecord {
     selfCareIds: [],
     selfCareMemo: "",
     note: "",
+    goal: "",
+    goalResult: null,
+    goalReviewedText: "",
     createdAt: "2026-08-06T00:00:00.000Z",
     updatedAt: "2026-08-06T00:00:00.000Z",
     ...overrides,
   };
 }
 
-async function renderTab(record: DailyRecord | null = null) {
-  getRecordByDate.mockResolvedValue(ok(record));
+/** 日付ごとの記録。指定がない日は「記録なし」 */
+async function renderTab(
+  record: DailyRecord | null = null,
+  previousDayRecord: DailyRecord | null = null
+) {
+  const target = todayString();
+  const previous = previousDateString(target);
+  getRecordByDate.mockImplementation((date: string) => {
+    if (date === target) return Promise.resolve(ok(record));
+    if (date === previous) return Promise.resolve(ok(previousDayRecord));
+    return Promise.resolve(ok(null));
+  });
   getAllRecords.mockResolvedValue(ok([]));
   initSelfCareIfEmpty.mockResolvedValue(ok(selfCareItems));
   render(<TodayRecordTab onNavigateTab={() => {}} />);
@@ -185,5 +202,73 @@ describe("TodayRecordTab の入口", () => {
       screen.getByRole("radio", { name: "ふつう" }).getAttribute("aria-checked")
     ).toBe("false");
     expect(screen.getByLabelText("寝た時間")).toBeDefined();
+  });
+});
+
+describe("TodayRecordTab の目標のふりかえり", () => {
+  it("前日に決めた行動がなければ問いかけない", async () => {
+    await renderTab(null, makeRecord({ goal: "" }));
+
+    expect(screen.queryByText("前の日に決めたこと")).toBeNull();
+  });
+
+  it("前日に決めた行動を、記録を始める前に自動で出す", async () => {
+    await renderTab(null, makeRecord({ goal: "5分だけ横になる" }));
+
+    expect(screen.getByText("前の日に決めたこと")).toBeDefined();
+    expect(screen.getByText("「5分だけ横になる」")).toBeDefined();
+    expect(screen.getByRole("radio", { name: "できた" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "一部できた" })).toBeDefined();
+    expect(screen.getByRole("radio", { name: "できなかった" })).toBeDefined();
+  });
+
+  it("「できた」では行動を小さくする案を出さない", async () => {
+    await renderTab(null, makeRecord({ goal: "5分だけ横になる" }));
+
+    fireEvent.click(screen.getByRole("radio", { name: "できた" }));
+
+    expect(screen.queryByText("どこまでならできそうでしたか？")).toBeNull();
+  });
+
+  it("「できなかった」では、小さくした案を選んで次の日の行動にできる", async () => {
+    await renderTab(null, makeRecord({ goal: "散歩する" }));
+
+    fireEvent.click(screen.getByRole("radio", { name: "できなかった" }));
+
+    expect(screen.getByText("どこまでならできそうでしたか？")).toBeDefined();
+    const suggestion = screen.getByRole("button", {
+      name: "散歩する（5分だけ）",
+    });
+    fireEvent.click(suggestion);
+
+    const goalInput = screen.getByLabelText("ためすこと") as HTMLInputElement;
+    expect(goalInput.value).toBe("散歩する（5分だけ）");
+  });
+
+  it("結果を選び直すと、案の表示も切り替わる", async () => {
+    await renderTab(null, makeRecord({ goal: "散歩する" }));
+
+    fireEvent.click(screen.getByRole("radio", { name: "一部できた" }));
+    expect(screen.getByText("どこまでならできそうでしたか？")).toBeDefined();
+
+    // もう一度押すと未選択へ戻す
+    fireEvent.click(screen.getByRole("radio", { name: "一部できた" }));
+    expect(screen.queryByText("どこまでならできそうでしたか？")).toBeNull();
+    expect(screen.getByText("「散歩する」")).toBeDefined();
+  });
+
+  it("結果を選んだあとは、前日の記録を書き換えても対象がずれない", async () => {
+    await renderTab(
+      makeRecord({
+        goalResult: "done",
+        goalReviewedText: "前に決めた行動",
+      }),
+      makeRecord({ goal: "あとから書き換えた行動" })
+    );
+
+    expect(screen.getByText("「前に決めた行動」")).toBeDefined();
+    expect(
+      screen.getByRole("radio", { name: "できた" }).getAttribute("aria-checked")
+    ).toBe("true");
   });
 });

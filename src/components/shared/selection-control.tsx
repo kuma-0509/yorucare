@@ -91,6 +91,8 @@ export function SelectionControl({
 interface SelectionGroupProps {
   legend: string;
   mode: "radio" | "checkbox";
+  /** stack: 縦並び（既定） / wrap: 横に折り返す（chip 用） */
+  layout?: "stack" | "wrap";
   className?: string;
   children: React.ReactNode;
 }
@@ -98,6 +100,7 @@ interface SelectionGroupProps {
 export function SelectionGroup({
   legend,
   mode,
+  layout = "stack",
   className,
   children,
 }: SelectionGroupProps) {
@@ -109,7 +112,7 @@ export function SelectionGroup({
       <div
         role={mode === "radio" ? "radiogroup" : "group"}
         aria-label={legend}
-        className="space-y-2"
+        className={layout === "wrap" ? "flex flex-wrap gap-2" : "space-y-2"}
       >
         {children}
       </div>

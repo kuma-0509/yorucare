@@ -28,10 +28,13 @@ type WarningFields = Pick<
 
 type SelfCareFields = Pick<DailyRecord, "selfCareIds" | "selfCareMemo">;
 
+type GoalFields = Pick<DailyRecord, "goal">;
+
 type EntryFormFields = Pick<DailyRecord, "moodScore"> &
   OptionalDetailFields &
   WarningFields &
-  SelfCareFields;
+  SelfCareFields &
+  GoalFields;
 
 /** 3段階から入ったときに入る総合気分 */
 const CONDITION_MOOD_SCORE: Record<ConditionLevel, MoodScore> = {
@@ -107,6 +110,7 @@ export function shouldRevealFollowUps(form: EntryFormFields): boolean {
     hasOptionalDetailInput(form) ||
     hasWarningInput(form) ||
     form.selfCareIds.length > 0 ||
-    form.selfCareMemo.trim() !== ""
+    form.selfCareMemo.trim() !== "" ||
+    form.goal.trim() !== ""
   );
 }

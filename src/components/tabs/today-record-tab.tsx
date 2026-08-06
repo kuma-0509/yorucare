@@ -27,10 +27,18 @@ import { trackRecordSaved } from "@/lib/analytics";
 import { COPY } from "@/lib/copy";
 import { storageErrorMessage } from "@/lib/result";
 import {
+  MAX_GOAL_LENGTH,
   MAX_NOTE_LENGTH,
   MAX_SELF_CARE_TITLE_LENGTH,
   MAX_MOOD_LABEL_LENGTH,
 } from "@/lib/schemas";
+import {
+  GOAL_RESULT_OPTIONS,
+  buildSmallerStepSuggestions,
+  getGoalToReview,
+  getPreviousDayGoal,
+  needsSmallerStep,
+} from "@/lib/goals";
 import {
   applyCondition,
   conditionFromMoodScore,
@@ -56,6 +64,7 @@ import {
   formatDatePickerLabel,
   formatDisplayDate,
   getLast7Days,
+  getPreviousDateString,
   getTodayString,
   isWithinLast7Days,
 } from "@/lib/dates";
@@ -77,7 +86,13 @@ import {
   saveRecord,
 } from "@/lib/storage";
 import type { AppTab } from "@/lib/types";
-import type { DailyRecord, MoodLabelCategory, MoodLabelEntry, SelfCareItem } from "@/lib/types";
+import type {
+  DailyRecord,
+  GoalResult,
+  MoodLabelCategory,
+  MoodLabelEntry,
+  SelfCareItem,
+} from "@/lib/types";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 const MAX_MOOD_LABELS = 3;
@@ -119,6 +134,8 @@ export function TodayRecordTab({
   const [savedRecord, setSavedRecord] = useState<DailyRecord | null>(null);
   const [showMemo, setShowMemo] = useState(false);
   const [showMoodScale, setShowMoodScale] = useState(false);
+  /** 前日の記録で決めた「次の日にためすこと」。ふりかえりの問いかけに使う */
+  const [previousDayGoal, setPreviousDayGoal] = useState("");
   const [newSelfCareTitle, setNewSelfCareTitle] = useState("");
   const [showAddSelfCare, setShowAddSelfCare] = useState(false);
   const [formLoading, setFormLoading] = useState(true);
@@ -132,7 +149,10 @@ export function TodayRecordTab({
     const requestId = ++loadRequestRef.current;
     setFormLoading(true);
     setFormLoadError(null);
-    const result = await getRecordByDate(date);
+    const [result, previousResult] = await Promise.all([
+      getRecordByDate(date),
+      getRecordByDate(getPreviousDateString(date)),
+    ]);
     if (requestId !== loadRequestRef.current) return;
     setFormLoading(false);
     if (!result.ok) {
@@ -142,6 +162,9 @@ export function TodayRecordTab({
       return;
     }
     setForm(recordToFormState(result.value, date));
+    setPreviousDayGoal(
+      previousResult.ok ? getPreviousDayGoal(previousResult.value) : ""
+    );
     setShowMoodScale(false);
     setShowSaved(false);
     setSavedRecord(null);
@@ -183,6 +206,25 @@ export function TodayRecordTab({
   }, [showSaved, onSavedViewChange]);
 
   const sleepMinutes = calculateSleepMinutes(form.sleepStart, form.sleepEnd);
+
+  /** 前日に決めた行動。結果を選んだあとは、そのとき写した文を使う */
+  const goalToReview = getGoalToReview(form, previousDayGoal);
+  const smallerStepSuggestions = needsSmallerStep(form.goalResult)
+    ? buildSmallerStepSuggestions(goalToReview)
+    : [];
+
+  const selectGoalResult = (value: GoalResult) => {
+    setForm((prev) =>
+      prev.goalResult === value
+        ? { ...prev, goalResult: null, goalReviewedText: "" }
+        : { ...prev, goalResult: value, goalReviewedText: goalToReview }
+    );
+  };
+
+  const applySmallerStep = (text: string) => {
+    setForm((prev) => ({ ...prev, goal: text }));
+    setLiveMessage(COPY.goal.smallerApplied);
+  };
 
   const toggleMoodLabel = (label: string) => {
     setMoodLimitMessage("");
@@ -553,6 +595,62 @@ export function TodayRecordTab({
         {formatDisplayDate(targetDate)}
       </p>
 
+      {/* 前日に決めた行動があるときだけ、記録を始める前に置く */}
+      {goalToReview !== "" && (
+        <Card className="border-secondary bg-secondary/40">
+          <CardHeader>
+            <CardTitle className="text-base">{COPY.goal.reviewTitle}</CardTitle>
+            <CardDescription className="text-base text-foreground">
+              「{goalToReview}」
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <SelectionGroup
+              legend={COPY.goal.reviewLegend}
+              mode="radio"
+              layout="wrap"
+            >
+              {GOAL_RESULT_OPTIONS.map(({ value, label }) => (
+                <SelectionControl
+                  key={value}
+                  selected={form.goalResult === value}
+                  mode="radio"
+                  layout="chip"
+                  onClick={() => selectGoalResult(value)}
+                >
+                  {label}
+                </SelectionControl>
+              ))}
+            </SelectionGroup>
+            <p className="text-xs text-muted-foreground">
+              {COPY.goal.reviewHint}
+            </p>
+
+            {smallerStepSuggestions.length > 0 && (
+              <div className="space-y-2 border-t border-border pt-3">
+                <p className="text-sm font-medium">
+                  {COPY.goal.smallerQuestion}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {COPY.goal.smallerHint}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {smallerStepSuggestions.map((suggestion) => (
+                    <ChipButton
+                      key={suggestion}
+                      selected={form.goal === suggestion}
+                      onClick={() => applySmallerStep(suggestion)}
+                    >
+                      {suggestion}
+                    </ChipButton>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* 入口＝この画面の主役。まず3段階だけで保存できる */}
       <Card className="border-primary/30 shadow-md ring-1 ring-primary/10">
         <CardHeader>
@@ -744,6 +842,31 @@ export function TodayRecordTab({
                   />
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {targetDate === today
+                  ? COPY.goal.setTitleToday
+                  : COPY.goal.setTitleOtherDay}
+              </CardTitle>
+              <CardDescription>{COPY.goal.setDescription}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Label htmlFor="record-goal" className="sr-only">
+                {COPY.goal.setLabel}
+              </Label>
+              <Input
+                id="record-goal"
+                value={form.goal}
+                maxLength={MAX_GOAL_LENGTH}
+                placeholder={COPY.goal.setPlaceholder}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, goal: e.target.value }))
+                }
+              />
             </CardContent>
           </Card>
 
