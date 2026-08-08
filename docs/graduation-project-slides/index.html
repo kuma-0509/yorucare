@@ -92,15 +92,22 @@
   strong { color: #fff; }
 
   .card {
-    background: rgba(26, 33, 72, .7);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 1rem;
-    padding: 1rem 1.2rem;
+    background: #0e1533;
+    border: 1px solid #2a3160;
+    border-radius: .7rem;
+    padding: 1.05rem 1.2rem;
   }
   .card + .card { margin-top: .7rem; }
-  .card.hi { border-color: rgba(252,211,77,.45); background: rgba(37, 45, 92, .7); }
-  .card-title { font-weight: 700; color: var(--care-300); margin-bottom: .35rem; font-size: .95rem; }
-  .card.hi .card-title { color: var(--moon-300); }
+  .grid2 > .card + .card, .grid3 > .card + .card { margin-top: 0; }
+  .card.hi { background: #151b3d; border-color: var(--moon-300); }
+  .card-title {
+    font-weight: 700;
+    color: var(--moon-300);
+    margin-bottom: .45rem;
+    font-size: clamp(.9rem, 1.7vw, 1.02rem);
+  }
+  .card .small { color: #c3c9e6; }
+  .card .small strong { color: #eef1fb; }
 
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
@@ -152,42 +159,67 @@
   td.num { color: var(--moon-300); font-weight: 700; white-space: nowrap; }
 
   .divider-note {
-    border-left: 3px solid var(--moon-400);
-    padding: .25rem 0 .25rem .9rem;
-    margin-top: 1rem;
-    line-height: 1.9;
+    margin-top: 1.15rem;
+    line-height: 1.85;
+    color: #9aa4cc;
   }
+  .divider-note strong { color: #e9edfb; }
   .quote {
-    border-left: 3px solid var(--care-400);
-    background: rgba(99,102,241,.1);
-    border-radius: 0 .6rem .6rem 0;
-    padding: .9rem 1.1rem;
+    border-left: 3px solid var(--moon-300);
+    padding: .1rem 0 .1rem 1rem;
     font-family: "Zen Maru Gothic", sans-serif;
     font-weight: 700;
-    font-size: clamp(1.05rem, 2.4vw, 1.5rem);
+    font-size: clamp(1.05rem, 2.3vw, 1.45rem);
     line-height: 1.7;
-    color: #fff;
+    color: var(--moon-300);
   }
+  .quote strong { color: var(--moon-300); }
 
   /* ===== 流れの図 ===== */
-  .flow { display: flex; align-items: stretch; gap: .55rem; margin: .4rem 0; }
+  .flow { display: flex; align-items: stretch; gap: .6rem; margin: .5rem 0; }
   @media (max-width: 760px) { .flow { flex-direction: column; } }
   .flow-step {
     flex: 1;
-    background: rgba(26, 33, 72, .75);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: .9rem;
-    padding: .85rem .9rem;
-    text-align: center;
+    background: #0e1533;
+    border: 1px solid #2a3160;
+    border-radius: .7rem;
+    padding: 1.05rem 1.15rem;
+    text-align: left;
   }
-  .flow-step.done { border-color: rgba(165,180,252,.5); }
-  .flow-step.todo { border-color: rgba(252,211,77,.55); background: rgba(37,45,92,.8); }
-  .flow-step .st { display: block; font-size: .68rem; letter-spacing: .12em; margin-bottom: .3rem; }
-  .flow-step.done .st { color: var(--care-300); }
-  .flow-step.todo .st { color: var(--moon-300); }
-  .flow-step .tt { display: block; font-family: "Zen Maru Gothic", sans-serif; font-weight: 900; font-size: clamp(.95rem, 1.9vw, 1.15rem); color: #fff; }
-  .flow-step .dd { display: block; font-size: .76rem; color: var(--text-dim); margin-top: .3rem; line-height: 1.6; }
-  .flow-arrow { display: grid; place-items: center; color: var(--care-400); font-size: 1.2rem; }
+  .flow-step.now { background: #151b3d; border-color: var(--moon-300); }
+  .flow-step .st {
+    display: block;
+    font-size: clamp(.72rem, 1.4vw, .82rem);
+    letter-spacing: .14em;
+    color: var(--care-400);
+    margin-bottom: .55rem;
+  }
+  .flow-step.now .st { color: var(--moon-300); }
+  .flow-step .tt {
+    display: block;
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.02rem, 2.1vw, 1.32rem);
+    color: #fff;
+    margin-bottom: .5rem;
+  }
+  .flow-step.now .tt { color: var(--moon-300); }
+  .flow-step .dd {
+    display: block;
+    font-size: clamp(.84rem, 1.6vw, .98rem);
+    color: #c3c9e6;
+    line-height: 1.65;
+  }
+  .flow-step.now .dd { color: #eef1fb; }
+  .flow-step .who {
+    display: block;
+    font-size: clamp(.84rem, 1.6vw, .98rem);
+    color: #8f99c4;
+    line-height: 1.65;
+    margin-top: .35rem;
+  }
+  .flow-step.now .who { color: #b9c0e0; }
+  .flow-arrow { display: grid; place-items: center; color: #4b5590; font-size: 1.45rem; }
   @media (max-width: 760px) { .flow-arrow { transform: rotate(90deg); } }
 
   /* ===== 面談の時間配分 ===== */
@@ -222,13 +254,13 @@
 
   .pill-row { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
   .pill {
-    background: rgba(255,255,255,.07);
-    border: 1px solid rgba(255,255,255,.14);
-    border-radius: 999px;
-    padding: .28rem .8rem;
-    font-size: .82rem;
+    background: #2a3160;
+    border-radius: .45rem;
+    padding: .32rem .85rem;
+    font-size: clamp(.78rem, 1.5vw, .87rem);
+    color: #c3c9e6;
   }
-  .pill.on { background: rgba(99,102,241,.22); border-color: rgba(165,180,252,.45); color: #fff; }
+  .pill.on { color: var(--moon-300); }
 
   .url {
     display: inline-block;
@@ -330,7 +362,7 @@
   <section class="slide">
     <span class="kicker sub">AI DRIVEN SCHOOL ／ 卒業制作 企画発表</span>
     <p class="lead" style="margin-bottom:.6rem;">私は、精神障害と向き合う方の、<strong>復職後の職場復帰・就労継続</strong>をサポートしています。<br>卒業制作で伸ばすのは、セルフケア記録アプリ「ヨルケア」です。</p>
-    <h1 style="margin-top:.4rem;">あいまいな記憶を材料にしていたやりとりを、<br><span class="accent">渡せる事実に変える</span></h1>
+    <h1 style="margin-top:.4rem;">あいまいな記憶を材料にしていた<br>やりとりを、<span class="accent">渡せる事実に変える</span></h1>
     <div class="pill-row">
       <span class="pill on">Phase 1 MVP は稼働中</span>
       <span class="pill">卒業制作で作るのは、数値化・要約・渡すこと</span>
@@ -344,21 +376,24 @@
     <h2>治療にもリワークにもある「ものさし」が、<br><span class="accent">職場に戻ったあとにはない</span></h2>
     <div class="flow" style="margin-top:.3rem;">
       <div class="flow-step">
-        <span class="st">医療</span>
-        <span class="tt">うつ症状 → 治療</span>
-        <span class="dd">症状を見る共通のものさしがある</span>
+        <span class="st">01</span>
+        <span class="tt">医療</span>
+        <span class="dd">うつ症状 → 治療</span>
+        <span class="who">主治医・医療機関</span>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-step">
-        <span class="st">リワーク</span>
-        <span class="tt">復職の準備</span>
-        <span class="dd">課題を見る共通のものさしがある</span>
+        <span class="st">02</span>
+        <span class="tt">リワーク</span>
+        <span class="dd">復職の準備</span>
+        <span class="who">支援機関・プログラム</span>
       </div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step todo">
-        <span class="st">企業 ／ わたしの持ち場</span>
-        <span class="tt">職場復帰 → 就労継続</span>
-        <span class="dd">ものさしがない</span>
+      <div class="flow-step now">
+        <span class="st">03 わたしの持ち場</span>
+        <span class="tt">企業</span>
+        <span class="dd">職場復帰 → 就労継続</span>
+        <span class="who">職場内サポーター・産業医・支援者</span>
       </div>
     </div>
     <p class="divider-note small">あのとき、心の中ではこう思っていました。<strong>体調が良いのか、悪いのか、分からない。本当に問題ないのか、判断ができない。だから、聞くしかない。</strong>聞くために時間がかかって、配慮の話まで届かない。</p>
@@ -387,22 +422,25 @@
     <span class="kicker">どうやって 1／3</span>
     <h2>やり方は、<span class="accent">3つ</span>です</h2>
     <div class="flow">
-      <div class="flow-step done">
-        <span class="st">毎日 ／ 1〜2分</span>
+      <div class="flow-step">
+        <span class="st">01 毎日 ／ 1〜2分</span>
         <span class="tt">記録する</span>
         <span class="dd">気分・睡眠・お薬・しんどさのサイン・できたこと</span>
+        <span class="who">稼働中</span>
       </div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step todo">
-        <span class="st">週ごと</span>
+      <div class="flow-step now">
+        <span class="st">02 週ごと</span>
         <span class="tt">要約する</span>
         <span class="dd">本人が選んで、渡せる短い文章にする</span>
+        <span class="who">卒業制作で作る</span>
       </div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step todo">
-        <span class="st">月に1回</span>
+      <div class="flow-step now">
+        <span class="st">03 月に1回</span>
         <span class="tt">K6で数値化する</span>
-        <span class="dd">国の調査で使われる6つの質問。0〜24点。毎回同じ質問なので変化が見える</span>
+        <span class="dd">国の調査で使われる6つの質問。0〜24点</span>
+        <span class="who">卒業制作で作る</span>
       </div>
     </div>
     <div class="grid2" style="margin-top:1rem;">
