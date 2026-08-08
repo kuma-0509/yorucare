@@ -1,4 +1,9 @@
-import type { MedicationStatus, MoodScore, WarningLevel } from "./types";
+import type {
+  MedicationStatus,
+  MoodScore,
+  StateLevel,
+  WarningLevel,
+} from "./types";
 
 export const MOOD_OPTIONS: { score: MoodScore; label: string }[] = [
   { score: 5, label: "かなり良い" },
@@ -6,6 +11,16 @@ export const MOOD_OPTIONS: { score: MoodScore; label: string }[] = [
   { score: 3, label: "ふつう" },
   { score: 2, label: "少ししんどい" },
   { score: 1, label: "かなりしんどい" },
+];
+
+export const STATE_LEVEL_OPTIONS: {
+  value: StateLevel;
+  label: string;
+  description: string;
+}[] = [
+  { value: "good", label: "よい", description: "気分は落ち着いています" },
+  { value: "normal", label: "ふつう", description: "いつもどおりです" },
+  { value: "hard", label: "しんどい", description: "いつもと違うしんどさがあります" },
 ];
 
 export const MOOD_LABEL_POSITIVE = [

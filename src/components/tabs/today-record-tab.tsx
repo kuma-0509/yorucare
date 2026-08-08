@@ -37,6 +37,7 @@ import {
   MOOD_LABEL_NEUTRAL,
   MOOD_LABEL_POSITIVE,
   MOOD_OPTIONS,
+  STATE_LEVEL_OPTIONS,
   WARNING_LEVEL_OPTIONS,
   WARNING_TAGS_MOOD,
   WARNING_TAGS_OTHER,
@@ -50,6 +51,10 @@ import {
   getTodayString,
   isWithinLast7Days,
 } from "@/lib/dates";
+import {
+  getDefaultScoreForStateLevel,
+  getStateLevelFromScore,
+} from "@/lib/state-level";
 import { buildRecordSummaryLines } from "@/lib/format";
 import { calculateSleepMinutes, formatSleepDuration } from "@/lib/sleep";
 import {
@@ -172,6 +177,7 @@ export function TodayRecordTab({
   }, [showSaved, onSavedViewChange]);
 
   const sleepMinutes = calculateSleepMinutes(form.sleepStart, form.sleepEnd);
+  const stateLevel = getStateLevelFromScore(form.moodScore);
 
   const toggleMoodLabel = (label: string) => {
     setMoodLimitMessage("");
@@ -327,6 +333,11 @@ export function TodayRecordTab({
   const showWarningTags =
     form.warningLevel === "small" || form.warningLevel === "yes";
 
+  const warningHasContent =
+    (form.warningLevel !== null && form.warningLevel !== "none") ||
+    form.warningTags.length > 0 ||
+    form.warningNote.trim().length > 0;
+
   if (formLoading) {
     return (
       <div className="space-y-4 pb-4" aria-busy="true">
@@ -460,7 +471,7 @@ export function TodayRecordTab({
         {formatDisplayDate(targetDate)}
       </p>
 
-      {/* 気分＝この画面の主役。視覚的な重みで序列を表す */}
+      {/* 状態＝この画面の主役。3段階だけでまず保存できるようにする */}
       <Card className="border-primary/30 shadow-md ring-1 ring-primary/10">
         <CardHeader>
           <CardTitle className="text-xl">
@@ -471,6 +482,46 @@ export function TodayRecordTab({
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <SelectionGroup legend="状態" mode="radio">
+            {STATE_LEVEL_OPTIONS.map(({ value, label, description }) => (
+              <SelectionControl
+                key={value}
+                selected={stateLevel === value}
+                mode="radio"
+                layout="row"
+                onClick={() =>
+                  setForm((prev) => {
+                    const currentLevel = getStateLevelFromScore(prev.moodScore);
+                    return {
+                      ...prev,
+                      moodScore:
+                        currentLevel === value
+                          ? null
+                          : getDefaultScoreForStateLevel(value),
+                    };
+                  })
+                }
+              >
+                <span className="flex flex-col">
+                  <span>{label}</span>
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {description}
+                  </span>
+                </span>
+              </SelectionControl>
+            ))}
+          </SelectionGroup>
+        </CardContent>
+      </Card>
+
+      <CollapsibleSection
+        title="くわしく書く（任意）"
+        description="気分の詳しさ、気持ち、睡眠、お薬の記録"
+      >
+        <div>
+          <Label className="mb-2 block text-sm text-muted-foreground">
+            気分をもっと詳しく（5段階）
+          </Label>
           <SelectionGroup legend="総合気分" mode="radio">
             {MOOD_OPTIONS.map(({ score, label }) => (
               <SelectionControl
@@ -489,14 +540,9 @@ export function TodayRecordTab({
               </SelectionControl>
             ))}
           </SelectionGroup>
-        </CardContent>
-      </Card>
+        </div>
 
-      <CollapsibleSection
-        title="くわしく書く（任意）"
-        description="気持ち、睡眠、お薬の記録"
-      >
-        <div>
+        <div className="border-t border-border pt-4">
           <Label className="mb-2 block text-sm text-muted-foreground">
             気持ち（最大3つ）
           </Label>
@@ -647,8 +693,10 @@ export function TodayRecordTab({
       </CollapsibleSection>
 
       <CollapsibleSection
+        key={`warning-${targetDate}-${stateLevel === "hard" || warningHasContent ? "open" : "closed"}`}
         title={`${COPY.warningSign}（任意）`}
         description="いつもと違うしんどさがあれば選んでください。気になることがなければ、選ばなくても構いません。"
+        defaultOpen={stateLevel === "hard" || warningHasContent}
         variant="caution"
       >
         <SelectionGroup legend={COPY.warningSign} mode="radio">

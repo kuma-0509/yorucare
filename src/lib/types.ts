@@ -4,6 +4,8 @@ export type MedicationStatus = "done" | "partial" | "forgot" | "none";
 
 export type WarningLevel = "none" | "small" | "yes";
 
+export type StateLevel = "good" | "normal" | "hard";
+
 export type MoodLabelCategory =
   | "ポジティブ"
   | "ややポジティブ"
