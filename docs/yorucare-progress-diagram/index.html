@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ヨルケア 進捗図解</title>
+<meta name="description" content="卒業制作「ヨルケア」の進捗を、課題28件・投資判断ゲート・AIのデータ境界の3つの図で示した進捗シェア用の図解。" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['"Noto Sans JP"', '"Hiragino Sans"', '"Yu Gothic"', 'sans-serif'],
+        maru: ['"Zen Maru Gothic"', '"Hiragino Sans"', '"Yu Gothic"', 'sans-serif'],
+      },
+      colors: {
+        night: { 950:'#0b1026', 900:'#111736', 850:'#151c3f', 800:'#1a2148', 700:'#252d5c', 600:'#333c74' },
+        moon:  { 300:'#fde68a', 400:'#fcd34d' },
+        care:  { 300:'#a5b4fc', 400:'#818cf8', 500:'#6366f1' },
+        ink:   { DEFAULT:'#e8eaf6', dim:'#aab0d0', faint:'#7b82a8' },
+      },
+      keyframes: {
+        fadeUp:  { '0%':{opacity:'0',transform:'translateY(20px)'}, '100%':{opacity:'1',transform:'translateY(0)'} },
+        twinkle: { '0%,100%':{opacity:'0.2'}, '50%':{opacity:'0.9'} },
+      },
+      animation: {
+        fadeUp:  'fadeUp .8s ease-out both',
+        twinkle: 'twinkle 4s ease-in-out infinite',
+      },
+    },
+  },
+};
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { background:#0b1026; color:#e8eaf6; }
+  .reveal { opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease; }
+  .reveal.is-visible { opacity:1; transform:translateY(0); }
+  .num { font-variant-numeric: tabular-nums; }
+  .ring-track, .ring-seg { fill:none; stroke-linecap:butt; }
+  .ring-seg { transition:stroke-dashoffset 1.2s cubic-bezier(.22,.7,.24,1); }
+  .scroll-x { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  :focus-visible { outline:2px solid #fcd34d; outline-offset:3px; border-radius:6px; }
+  ::selection { background:#6366f1; color:#fff; }
+  .gate-step { border-left:2px solid #252d5c; }
+  .gate-step[data-open="true"] { border-left-color:#fcd34d; }
+  .blank-app  { background:rgba(252,211,77,.16); border-bottom:2px solid #fcd34d; }
+  .blank-llm  { background:rgba(129,140,248,.18); border-bottom:2px dashed #818cf8; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior:auto; }
+    .reveal { opacity:1; transform:none; transition:none; }
+    .ring-seg { transition:none; }
+    .animate-fadeUp, .animate-twinkle { animation:none !important; }
+  }
+</style>
+</head>
+<body class="font-sans antialiased bg-night-950 text-ink leading-relaxed">
+
+<!-- ============ nav ============ -->
+<nav class="fixed top-0 inset-x-0 z-50 bg-night-950/90 backdrop-blur border-b border-white/10">
+  <div class="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
+    <a href="#top" class="flex items-center gap-2 shrink-0">
+      <span class="w-8 h-8 rounded-full bg-gradient-to-br from-care-500 to-night-700 grid place-items-center text-moon-300 font-maru font-black">夜</span>
+      <span class="font-maru font-bold text-white tracking-wide hidden sm:inline">ヨルケア 進捗図解</span>
+    </a>
+    <div class="flex items-center gap-1 text-xs sm:text-sm scroll-x ml-auto">
+      <a href="#what"  class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">何を作っているか</a>
+      <a href="#now"   class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">現在地</a>
+      <a href="#board" class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">課題28件</a>
+      <a href="#gate"  class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">ゲート</a>
+      <a href="#ai"    class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">AIの境界</a>
+      <a href="#next"  class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">次の一手</a>
+      <a href="#talk"  class="px-3 py-1.5 rounded-full hover:bg-white/10 whitespace-nowrap">1分原稿</a>
+    </div>
+  </div>
+  <div id="progress-bar" class="h-0.5 bg-gradient-to-r from-care-400 to-moon-400 w-0 transition-[width] duration-150"></div>
+</nav>
+
+<!-- ============ hero ============ -->
+<header id="top" class="relative overflow-hidden pt-28 pb-14 px-4">
+  <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+    <span class="absolute top-20 left-[14%] w-1 h-1 rounded-full bg-white animate-twinkle"></span>
+    <span class="absolute top-36 left-[30%] w-1.5 h-1.5 rounded-full bg-moon-300 animate-twinkle" style="animation-delay:.9s"></span>
+    <span class="absolute top-24 right-[20%] w-1 h-1 rounded-full bg-white animate-twinkle" style="animation-delay:1.6s"></span>
+    <span class="absolute top-48 right-[34%] w-1 h-1 rounded-full bg-care-300 animate-twinkle" style="animation-delay:2.3s"></span>
+    <div class="absolute -top-28 -right-28 w-[26rem] h-[26rem] rounded-full bg-care-500/20 blur-3xl"></div>
+    <div class="absolute -bottom-36 -left-28 w-[26rem] h-[26rem] rounded-full bg-moon-400/10 blur-3xl"></div>
+  </div>
+
+  <div class="relative max-w-4xl mx-auto text-center animate-fadeUp">
+    <p class="inline-flex items-center gap-2 text-[11px] sm:text-xs font-bold tracking-[0.2em] text-moon-300 border border-moon-300/40 rounded-full px-4 py-1.5 mb-7">
+      卒業制作 進捗シェア ／ 2026-08-15
+    </p>
+    <h1 class="font-maru font-black text-3xl sm:text-5xl leading-[1.25] text-white text-balance">
+      夜と休日に崩れやすい時間を、<br class="hidden sm:block" />
+      <span class="text-transparent bg-clip-text bg-gradient-to-r from-care-300 to-moon-300">1日1〜2分の記録</span>で支える
+    </h1>
+    <p class="mt-6 text-ink-dim text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+      働きながらメンタル不調と付き合う人のためのセルフケア記録アプリ「ヨルケア」。<br class="hidden sm:block" />
+      機能を増やす前に、何を検証するかを先に決める作り方をしています。
+    </p>
+
+    <div class="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+      <div class="rounded-2xl bg-night-900/80 border border-white/10 p-4">
+        <p class="text-[11px] text-ink-faint tracking-wider mb-1">アプリ</p>
+        <p class="font-maru font-black text-white text-lg">公開中</p>
+        <p class="text-[11px] text-ink-dim mt-1">Phase 1 MVP</p>
+      </div>
+      <div class="rounded-2xl bg-night-900/80 border border-white/10 p-4">
+        <p class="text-[11px] text-ink-faint tracking-wider mb-1">課題の進捗</p>
+        <p class="font-maru font-black text-lg text-white num"><span data-count="12">0</span> <span class="text-ink-faint text-sm font-bold">/ 28 完了</span></p>
+        <p class="text-[11px] text-ink-dim mt-1">開発管理表より</p>
+      </div>
+      <div class="rounded-2xl bg-night-900/80 border border-white/10 p-4">
+        <p class="text-[11px] text-ink-faint tracking-wider mb-1">自動テスト</p>
+        <p class="font-maru font-black text-lg text-white num"><span data-count="155">0</span> <span class="text-ink-faint text-sm font-bold">件</span></p>
+        <p class="text-[11px] text-ink-dim mt-1">22ファイル・CIで実行</p>
+      </div>
+      <div class="rounded-2xl bg-night-900/80 border border-white/10 p-4">
+        <p class="text-[11px] text-ink-faint tracking-wider mb-1">いまの関門</p>
+        <p class="font-maru font-black text-lg text-moon-300">Gate 1</p>
+        <p class="text-[11px] text-ink-dim mt-1">4週間の継続率を観測</p>
+      </div>
+    </div>
+
+    <p class="mt-8 text-xs text-ink-faint max-w-xl mx-auto leading-relaxed">
+      この図解には、利用者が入力した記録の内容や個人を特定できる情報は含めていません。
+    </p>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 pb-24 space-y-24">
+
+<!-- ============ 1. 何を作っているか ============ -->
+<section id="what" class="reveal scroll-mt-20">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-6">
+    <span class="shrink-0 whitespace-nowrap text-[11px] font-bold tracking-[0.2em] text-care-300">WHAT</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">何を作っているか</h2>
+  </div>
+
+  <div class="rounded-3xl bg-gradient-to-br from-night-900 to-night-850 border border-white/10 p-6 sm:p-8">
+    <p class="text-lg sm:text-xl font-maru font-bold text-white leading-relaxed text-balance">
+      メンタル不調を経験して<span class="text-moon-300">今も働いている人</span>が、気分・睡眠・お薬・しんどさのサインを
+      <span class="text-moon-300">1日1〜2分</span>で残せるセルフケア記録アプリ。
+    </p>
+    <p class="mt-4 text-sm text-ink-dim leading-relaxed max-w-3xl">
+      介護や夜勤の業務記録ではなく、本人のための日記です。記録は端末の中だけに保存し、運営者・勤務先・支援機関へ自動送信しません。
+      毎日の入力は義務にせず、書けない日があっても再開できることを設計の芯にしています。
+    </p>
+  </div>
+
+  <!-- 5か月プログラムの中の位置 -->
+  <h3 class="font-maru font-bold text-white text-lg mt-10 mb-1">アプリ単体ではなく、5か月プログラムの一部</h3>
+  <p class="text-sm text-ink-dim mb-5">週の流れの中で、アプリは「日曜の振り返りの会で話す材料」を作る役割を持ちます。</p>
+
+  <div class="scroll-x -mx-4 px-4">
+    <div class="min-w-[720px] grid grid-cols-4 gap-3">
+      <div class="rounded-2xl bg-night-900 border border-white/10 p-4">
+        <p class="text-[11px] text-care-300 font-bold tracking-wider">火・木の夜</p>
+        <p class="font-maru font-bold text-white mt-1">夜の運動 <span class="num text-ink-dim text-sm">各20分</span></p>
+        <p class="text-xs text-ink-dim mt-2 leading-relaxed">ストレッチ・呼吸法。カメラOFF可、座ったまま可。両方必須ではない。</p>
+      </div>
+      <div class="rounded-2xl bg-night-900 border border-white/10 p-4">
+        <p class="text-[11px] text-care-300 font-bold tracking-wider">日曜</p>
+        <p class="font-maru font-bold text-white mt-1">疲労回復 <span class="num text-ink-dim text-sm">20分</span></p>
+        <p class="text-xs text-ink-dim mt-2 leading-relaxed">セルフマッサージで1週間の疲れを整える。</p>
+      </div>
+      <div class="rounded-2xl bg-night-900 border border-white/10 p-4">
+        <p class="text-[11px] text-care-300 font-bold tracking-wider">日曜</p>
+        <p class="font-maru font-bold text-white mt-1">振り返りの会 <span class="num text-ink-dim text-sm">25分</span></p>
+        <p class="text-xs text-ink-dim mt-2 leading-relaxed">原則3名、1人5分。今週の状態と来週試すことを整理する。</p>
+      </div>
+      <div class="rounded-2xl bg-night-800 border-2 border-moon-400/60 p-4 relative">
+        <span class="absolute -top-2.5 right-3 text-[10px] font-bold bg-moon-400 text-night-950 rounded-full px-2 py-0.5">卒業制作の範囲</span>
+        <p class="text-[11px] text-moon-300 font-bold tracking-wider">毎日</p>
+        <p class="font-maru font-bold text-white mt-1">アプリ記録 <span class="num text-ink-dim text-sm">1〜2分</span></p>
+        <p class="text-xs text-ink-dim mt-2 leading-relaxed">記録が、日曜に自分の状態を話すときの材料になる。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4タブ -->
+  <h3 class="font-maru font-bold text-white text-lg mt-10 mb-5">アプリは4つのタブでできている</h3>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="rounded-2xl bg-night-900 border border-white/10 p-5">
+      <p class="font-maru font-black text-white text-base">書く</p>
+      <p class="text-xs text-ink-dim mt-2 leading-relaxed">直近7日ぶんを入力・編集。気分／睡眠／お薬／しんどさのサイン／できたこと／メモ。</p>
+      <p class="text-[11px] text-moon-300 mt-3 font-bold">完了 · 公開中</p>
+    </div>
+    <div class="rounded-2xl bg-night-900 border border-white/10 p-5">
+      <p class="font-maru font-black text-white text-base">これまで</p>
+      <p class="text-xs text-ink-dim mt-2 leading-relaxed">記録の一覧、JSONバックアップ、匿名の利用計測の停止と削除。</p>
+      <p class="text-[11px] text-moon-300 mt-3 font-bold">完了 · 公開中</p>
+    </div>
+    <div class="rounded-2xl bg-night-900 border border-white/10 p-5">
+      <p class="font-maru font-black text-white text-base">できること</p>
+      <p class="text-xs text-ink-dim mt-2 leading-relaxed">自分にできるセルフケアを辞書として登録・編集する。</p>
+      <p class="text-[11px] text-moon-300 mt-3 font-bold">完了 · 公開中</p>
+    </div>
+    <div class="rounded-2xl bg-night-900 border border-care-400/40 p-5">
+      <p class="font-maru font-black text-white text-base">ふりかえり</p>
+      <p class="text-xs text-ink-dim mt-2 leading-relaxed">期間別グラフと、直近7日の週次まとめ。この1か月で一番育てた場所。</p>
+      <p class="text-[11px] text-care-300 mt-3 font-bold">週次まとめを追加（8/03）</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. 現在地 ============ -->
+<section id="now" class="reveal scroll-mt-20">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-6">
+    <span class="shrink-0 whitespace-nowrap text-[11px] font-bold tracking-[0.2em] text-care-300">STATUS</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">数字で見る現在地</h2>
+  </div>
+  <p class="text-sm text-ink-dim mb-6 max-w-3xl">
+    開発管理表の課題は28件。ただし「未着手」の中には、<span class="text-white">条件を満たすまで意図して止めているもの</span>が混ざっています。
+    そこを分けないと、進み方を正しく話せません。
+  </p>
+
+  <div class="grid lg:grid-cols-[auto,1fr] gap-8 items-center rounded-3xl bg-night-900 border border-white/10 p-6 sm:p-8">
+    <!-- donut -->
+    <figure class="mx-auto relative w-56 h-56 shrink-0">
+      <svg viewBox="0 0 200 200" class="w-56 h-56 -rotate-90" role="img" aria-label="課題28件の内訳。進めた12件、いま動いている3件、意図して止めている4件、これから9件。">
+        <circle class="ring-track" cx="100" cy="100" r="80" stroke="#1a2148" stroke-width="26"></circle>
+        <circle class="ring-seg" data-seg="12" cx="100" cy="100" r="80" stroke="#6ee7b7" stroke-width="26"></circle>
+        <circle class="ring-seg" data-seg="3"  cx="100" cy="100" r="80" stroke="#fcd34d" stroke-width="26"></circle>
+        <circle class="ring-seg" data-seg="4"  cx="100" cy="100" r="80" stroke="#64748b" stroke-width="26"></circle>
+        <circle class="ring-seg" data-seg="9"  cx="100" cy="100" r="80" stroke="#333c74" stroke-width="26"></circle>
+      </svg>
+      <figcaption class="absolute inset-0 grid place-content-center text-center pointer-events-none">
+        <span class="block font-maru font-black text-4xl text-white num" data-count="28">0</span>
+        <span class="block text-[11px] text-ink-faint tracking-widest">課題</span>
+      </figcaption>
+    </figure>
+
+    <!-- legend -->
+    <div class="space-y-3">
+      <div class="flex items-start gap-4 rounded-2xl bg-night-850 border border-emerald-300/25 p-4">
+        <span class="mt-1.5 w-3 h-3 rounded-sm bg-emerald-300 shrink-0"></span>
+        <div class="flex-1">
+          <p class="font-maru font-bold text-white">進めた <span class="num text-emerald-300">12</span></p>
+          <p class="text-xs text-ink-dim mt-1 leading-relaxed">計画の確定、匿名計測の永続化、相談窓口、週次まとめ、選択共有、AIのデータ境界と集計ツール。</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4 rounded-2xl bg-night-850 border border-moon-400/25 p-4">
+        <span class="mt-1.5 w-3 h-3 rounded-sm bg-moon-400 shrink-0"></span>
+        <div class="flex-1">
+          <p class="font-maru font-bold text-white">いま動いている <span class="num text-moon-300">3</span></p>
+          <p class="text-xs text-ink-dim mt-1 leading-relaxed">記録完了時の「本棚にしまう」演出。改善中1件、利用者と実機での確認待ち2件。</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4 rounded-2xl bg-night-850 border border-slate-400/25 p-4">
+        <span class="mt-1.5 w-3 h-3 rounded-sm bg-slate-500 shrink-0"></span>
+        <div class="flex-1">
+          <p class="font-maru font-bold text-white">意図して止めている <span class="num text-slate-300">4</span></p>
+          <p class="text-xs text-ink-dim mt-1 leading-relaxed">リマインド、共有リンク、演出の比較検証、着手しないと決めた範囲。ゲートの条件を満たすまで作りません。</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4 rounded-2xl bg-night-850 border border-white/10 p-4">
+        <span class="mt-1.5 w-3 h-3 rounded-sm bg-night-600 shrink-0"></span>
+        <div class="flex-1">
+          <p class="font-maru font-bold text-white">これから <span class="num text-ink-dim">9</span></p>
+          <p class="text-xs text-ink-dim mt-1 leading-relaxed">LLM呼び出し、目標・行動実験、3段階の入口、自分メンテ、積み重ね表示、実機テストの文書化。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- timeline -->
+  <h3 class="font-maru font-bold text-white text-lg mt-12 mb-2">この1か月で完了させたこと</h3>
+  <p class="text-sm text-ink-dim mb-6">上から下へ、実際の完了日の順。<span class="text-white">計画を先に確定させてから、実装が続いています。</span></p>
+
+  <ol class="relative border-l-2 border-night-700 ml-3 space-y-5">
+    <li class="relative pl-6">
+      <span class="absolute -left-[7px] top-2 w-3 h-3 rounded-full bg-care-400 ring-4 ring-night-950"></span>
+      <p class="text-xs text-care-300 font-bold num tracking-wider">07-25</p>
+      <p class="font-maru font-bold text-white">Phase 2 実行計画を確定</p>
+      <p class="text-xs text-ink-dim mt-1">検証目的、指標定義、投資判断ゲート、実装優先順位。<span class="text-ink-faint">ここが以降すべての判断基準になった。</span></p>
+    </li>
+    <li class="relative pl-6">
+      <span class="absolute -left-[7px] top-2 w-3 h-3 rounded-full bg-care-400 ring-4 ring-night-950"></span>
+      <p class="text-xs text-care-300 font-bold num tracking-wider">07-26</p>
+      <p class="font-maru font-bold text-white">匿名計測の永続化・非同期境界・クラウド構成の判断</p>
+      <p class="text-xs text-ink-dim mt-1">Neon Postgres へ許可済みイベントを保存し、IDを不可逆化。Week 2 / Week 4 継続率を集計できる形にした。データ操作層は <span class="font-mono text-[11px] text-care-300">Promise&lt;Result&lt;T&gt;&gt;</span> へ移行。</p>
+    </li>
+    <li class="relative pl-6">
+      <span class="absolute -left-[7px] top-2 w-3 h-3 rounded-full bg-care-400 ring-4 ring-night-950"></span>
+      <p class="text-xs text-care-300 font-bold num tracking-wider">07-27</p>
+      <p class="font-maru font-bold text-white">リマインドの導入判断</p>
+      <p class="text-xs text-ink-dim mt-1">「継続率が低いから通知を出す」をやめ、需要が確認できるまで実装しないと決めた。</p>
+    </li>
+    <li class="relative pl-6">
+      <span class="absolute -left-[7px] top-2 w-3 h-3 rounded-full bg-care-400 ring-4 ring-night-950"></span>
+      <p class="text-xs text-care-300 font-bold num tracking-wider">07-31</p>
+      <p class="font-maru font-bold text-white">本人の選択に基づく共有</p>
+      <p class="text-xs text-ink-dim mt-1">最大7日・選択した項目だけを端末内でテキスト化。全文を確認したあとだけ、共有シート／コピー／.txt保存。</p>
+    </li>
+    <li class="relative pl-6">
+      <span class="absolute -left-[7px] top-2 w-3 h-3 rounded-full bg-moon-400 ring-4 ring-night-950"></span>
+      <p class="text-xs text-moon-300 font-bold num tracking-wider">08-01</p>
+      <p class="font-maru font-bold text-white">AIのデータ境界を確定し、集計ツールを実装</p>
+      <p class="text-xs text-ink-dim mt-1">期間集計、タグ・辞書の頻度、連続日数、セルフケア実行日との差分。すべて読み取り専用。</p>
+    </li>
+    <li class="relative pl-6">
+      <span class="absolute -left-[7px] top-2 w-3 h-3 rounded-full bg-moon-400 ring-4 ring-night-950"></span>
+      <p class="text-xs text-moon-300 font-bold num tracking-wider">08-02</p>
+      <p class="font-maru font-bold text-white">相談窓口への導線を常設</p>
+      <p class="text-xs text-ink-dim mt-1">全タブ共通のヘッダーから、記録を送信せずに本人の操作だけで電話・公式サイトを開く。</p>
+    </li>
+    <li class="relative pl-6">
+      <span class="absolute -left-[7px] top-2 w-3 h-3 rounded-full bg-moon-400 ring-4 ring-night-950"></span>
+      <p class="text-xs text-moon-300 font-bold num tracking-wider">08-03</p>
+      <p class="font-maru font-bold text-white">ふりかえりに週次まとめを追加</p>
+      <p class="text-xs text-ink-dim mt-1">定型ルールだけで組み立て、LLMは呼ばない。評価語と助言を出さず、数値には母数を添える。</p>
+    </li>
+  </ol>
+</section>
+
+<!-- ============ 3. 課題28件 ============ -->
+<section id="board" class="reveal scroll-mt-20">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-6">
+    <span class="shrink-0 whitespace-nowrap text-[11px] font-bold tracking-[0.2em] text-care-300">BOARD</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">課題28件を、絞り込んで見る</h2>
+  </div>
+  <p class="text-sm text-ink-dim mb-5">ボタンで進捗を絞り込めます。<span class="text-white">「未着手」と「保留」を分けているのがこの表の要点です。</span></p>
+
+  <div class="flex flex-wrap gap-2 mb-5" role="group" aria-label="進捗で絞り込む">
+    <button type="button" data-filter="all"    class="filter-btn px-4 py-2 rounded-full text-sm font-bold border border-moon-400 bg-moon-400 text-night-950">すべて <span class="num">28</span></button>
+    <button type="button" data-filter="完了"    class="filter-btn px-4 py-2 rounded-full text-sm font-bold border border-emerald-300/40 text-emerald-300 hover:bg-emerald-300/10">完了 <span class="num">12</span></button>
+    <button type="button" data-filter="改善中"  class="filter-btn px-4 py-2 rounded-full text-sm font-bold border border-moon-400/40 text-moon-300 hover:bg-moon-400/10">改善中 <span class="num">1</span></button>
+    <button type="button" data-filter="確認待ち" class="filter-btn px-4 py-2 rounded-full text-sm font-bold border border-sky-300/40 text-sky-300 hover:bg-sky-300/10">確認待ち <span class="num">2</span></button>
+    <button type="button" data-filter="保留"    class="filter-btn px-4 py-2 rounded-full text-sm font-bold border border-slate-400/40 text-slate-300 hover:bg-slate-400/10">保留 <span class="num">2</span></button>
+    <button type="button" data-filter="後回し"  class="filter-btn px-4 py-2 rounded-full text-sm font-bold border border-slate-400/40 text-slate-300 hover:bg-slate-400/10">後回し <span class="num">1</span></button>
+    <button type="button" data-filter="判断済み" class="filter-btn px-4 py-2 rounded-full text-sm font-bold border border-violet-300/40 text-violet-300 hover:bg-violet-300/10">判断済み <span class="num">1</span></button>
+    <button type="button" data-filter="未着手"  class="filter-btn px-4 py-2 rounded-full text-sm font-bold border border-white/20 text-ink-dim hover:bg-white/5">未着手 <span class="num">9</span></button>
+  </div>
+
+  <p id="filter-status" class="text-xs text-ink-faint mb-4 num" aria-live="polite">28件を表示中</p>
+
+  <div id="board-list" class="grid md:grid-cols-2 gap-3">
+    <!-- 完了 -->
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-07-25</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">Phase 2 の目的と実装優先順位</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">検証目的・指標定義・投資判断ゲート・優先順位を計画として確定した。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-07-26</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">匿名利用イベントの永続化と継続指標の集計</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">Neon Postgres へ保存。IDの不可逆化、重複防止、日次・Week 2・Week 4 集計、停止時削除、365日で自動削除。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-07-26</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">データ操作層の非同期境界</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">将来のAPI化に備え、呼び出し側を段階的に <span class="font-mono text-[11px]">Promise&lt;Result&lt;T&gt;&gt;</span> へ移行した。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-07-26</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">アカウントとクラウド保存の構成</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">要件と採用構成を文書として確定し、Gate 3 を満たすまで本番実装は保留と決めた。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-07-27</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">リマインドの導入判断と最小構成</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">導入条件、通知手段、ON/OFF、時刻、文面、停止、データ境界、受入条件を確定した。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-07-31</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">本人の選択に基づく共有</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">最大7日・選択項目のテキストを端末内で生成し、全文確認後だけ共有シート／コピー／.txt保存。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-08-01</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">AI機能で外部へ渡してよいデータ範囲</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">集計値・選択式タグ・辞書のタイトルだけ。方針を運用ルールではなく戻り値の型で保証する。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-08-01</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">期間集計をアプリ側で確定させる仕組み</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">暦日数と記録日数を別に返し、0件は 0 ではなく null。就寝時刻は正午基準の窓で中央値を取る。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-08-01</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">集計値を言語化するためのツール群</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">頻度、連続日数、セルフケア実行日との差分。効果ではなく事実だけを述べるキー名にした。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-08-01</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">完了した実装を版管理へ反映</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">端末内に残っていた成果物を課題単位のコミットへ分割し、一時ディレクトリと原本は追跡対象から除外した。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-08-02</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">相談窓口へつながる導線</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">緊急通報・公的窓口・仕事の相談・医療相談の境界を整理し、全タブ共通ヘッダーに常設した。</p>
+    </article>
+    <article data-status="完了" class="board-item rounded-2xl bg-night-900 border border-emerald-300/20 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-300/15 text-emerald-300">完了</span>
+        <span class="text-[10px] text-ink-faint num">2026-08-03</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">ふりかえりの週次まとめ</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">記録がなかった日を失敗として書かず、評価語と助言を出さず、割合ではなく日数で示す。表示テスト付き。</p>
+    </article>
+
+    <!-- 改善中・確認待ち -->
+    <article data-status="改善中" class="board-item rounded-2xl bg-night-900 border border-moon-400/30 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-moon-400/15 text-moon-300">改善中</span>
+        <span class="text-[10px] text-ink-faint">—</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">「本棚にしまう」演出の質感とカメラワーク</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">筆記 → 本を閉じる → 背表紙 → 棚へ収納 → 余韻、を約7.4秒のタイムラインに整える。</p>
+    </article>
+    <article data-status="確認待ち" class="board-item rounded-2xl bg-night-900 border border-sky-300/25 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-300/15 text-sky-300">確認待ち</span>
+        <span class="text-[10px] text-ink-faint">—</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">演出改善版の利用者確認</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">収納位置、影、カメラ、音、余韻について利用者視点のフィードバックを集める。</p>
+    </article>
+    <article data-status="確認待ち" class="board-item rounded-2xl bg-night-900 border border-sky-300/25 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-300/15 text-sky-300">確認待ち</span>
+        <span class="text-[10px] text-ink-faint">—</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">演出の実機品質とパフォーマンス</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">PCとスマホでWebGL表示を確認。問題があれば軽量版・フォールバックを強化する。</p>
+    </article>
+
+    <!-- 保留・後回し・判断済み -->
+    <article data-status="保留" class="board-item rounded-2xl bg-night-900 border border-slate-400/25 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-400/15 text-slate-300">保留</span>
+        <span class="text-[10px] text-ink-faint">Gate 2 待ち</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">リマインド機能</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">非継続理由の30%以上が「忘れる」「きっかけがない」に該当した場合に限り実装する。</p>
+    </article>
+    <article data-status="保留" class="board-item rounded-2xl bg-night-900 border border-slate-400/25 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-400/15 text-slate-300">保留</span>
+        <span class="text-[10px] text-ink-faint">Gate 3 + 4 待ち</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">対人共有用の期限付きリンク</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">需要と安全要件を確認後、明示操作・項目選択・短い有効期限・失効・閲覧制御を備えて実装する。</p>
+    </article>
+    <article data-status="後回し" class="board-item rounded-2xl bg-night-900 border border-slate-400/25 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-400/15 text-slate-300">後回し</span>
+        <span class="text-[10px] text-ink-faint">—</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">「手放す」「浄化する」演出の比較検証</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">本棚のトーンが固まったあとで、捨てる演出・燃える演出のプロトタイプと比較する。</p>
+    </article>
+    <article data-status="判断済み" class="board-item rounded-2xl bg-night-900 border border-violet-300/25 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-300/15 text-violet-300">判断済み</span>
+        <span class="text-[10px] text-ink-faint">—</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">方向性確定前には着手しない範囲</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">外部HDRを使わない。本番データ構造は変更しない。粒が集まる演出は再開しない。</p>
+    </article>
+
+    <!-- 未着手 -->
+    <article data-status="未着手" class="board-item rounded-2xl bg-night-900 border border-white/10 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-ink-dim">未着手</span>
+        <span class="text-[10px] text-moon-300 font-bold">次の一手</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">スマートフォン実機テストの実施と文書化</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">iPhone と Android でチェックリストを実施し、入力内容を含めず結果と不具合だけを記録する。</p>
+    </article>
+    <article data-status="未着手" class="board-item rounded-2xl bg-night-900 border border-white/10 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-ink-dim">未着手</span>
+        <span class="text-[10px] text-moon-300 font-bold">設計は完了</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">LLM呼び出しと報告書出力</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">数値はアプリが埋め、文章の穴だけLLMが書く穴埋め方式。書き込み系の操作は渡さない。</p>
+    </article>
+    <article data-status="未着手" class="board-item rounded-2xl bg-night-900 border border-white/10 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-ink-dim">未着手</span>
+        <span class="text-[10px] text-ink-faint">P1</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">3段階の入口で入力を削る</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">「よい／ふつう／しんどい」を選ぶと、追加質問が必要最小限に絞られる設計。</p>
+    </article>
+    <article data-status="未着手" class="board-item rounded-2xl bg-night-900 border border-white/10 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-ink-dim">未着手</span>
+        <span class="text-[10px] text-ink-faint">P1</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">翌日に小さな行動を振り返る導線</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">明日の目標を設定し、翌日「できた／できなかった／一部できた」を選べるようにする。</p>
+    </article>
+    <article data-status="未着手" class="board-item rounded-2xl bg-night-900 border border-white/10 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-ink-dim">未着手</span>
+        <span class="text-[10px] text-ink-faint">P1</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">自分メンテ</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">記録した状態に応じて実行しやすいセルフケア案を出す。診断・治療提案はしない。</p>
+    </article>
+    <article data-status="未着手" class="board-item rounded-2xl bg-night-900 border border-white/10 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-ink-dim">未着手</span>
+        <span class="text-[10px] text-ink-faint">P1</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">積み重ねの可視化</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">本人が選んだ起点からの継続日数・活動日数・記録日数と、節目をねぎらう表示。</p>
+    </article>
+    <article data-status="未着手" class="board-item rounded-2xl bg-night-900 border border-white/10 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-ink-dim">未着手</span>
+        <span class="text-[10px] text-ink-faint">目標機能が前提</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">週次まとめに目標の達成状況を含める</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">記録のデータ構造に目標のフィールドがないため、目標機能の実装が前提になる。</p>
+    </article>
+    <article data-status="未着手" class="board-item rounded-2xl bg-night-900 border border-white/10 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-ink-dim">未着手</span>
+        <span class="text-[10px] text-ink-faint">演出</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">記録完了演出を本番フローへ統合</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">CSS版・R3F版・reduced-motion時の表示ルールを設計し、既存の簡易演出との置き換えを判断する。</p>
+    </article>
+    <article data-status="未着手" class="board-item rounded-2xl bg-night-900 border border-white/10 p-4">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 text-ink-dim">未着手</span>
+        <span class="text-[10px] text-ink-faint">演出</span>
+      </div>
+      <p class="text-sm text-white font-bold leading-snug">本棚の質感と没入感をさらに高める</p>
+      <p class="text-xs text-ink-dim mt-1.5 leading-relaxed">テクスチャによる質感向上、軽量なBloom・DOF・Vignette、効果音の調整を検討する。</p>
+    </article>
+  </div>
+</section>
+
+<!-- ============ 4. ゲート ============ -->
+<section id="gate" class="reveal scroll-mt-20">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-6">
+    <span class="shrink-0 whitespace-nowrap text-[11px] font-bold tracking-[0.2em] text-care-300">GATES</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">作る順番は、投資判断ゲートで決めている</h2>
+  </div>
+  <div class="rounded-3xl bg-night-900 border border-moon-400/20 p-5 sm:p-6 mb-6">
+    <p class="text-sm sm:text-base text-white leading-relaxed">
+      この制作で一番時間をかけたのは、コードではなく<span class="text-moon-300 font-bold">「作らない条件」を先に決めること</span>でした。
+      健康に関わる記録を扱うので、思いついた順に機能を足すと、後から引き返せなくなります。
+    </p>
+    <p class="text-xs text-ink-dim mt-3 leading-relaxed">
+      各ゲートの数値は医学的な効果の基準ではなく、21名規模の初期検証で「次の開発費を投じるか」を揃えて判断するための内部基準です。
+    </p>
+  </div>
+
+  <p class="text-sm text-ink-dim mb-4">見出しを押すと条件が開きます。<span class="text-white">いま立っているのは Gate 1 の手前です。</span></p>
+
+  <div class="space-y-3">
+    <!-- P0 -->
+    <div class="gate-step rounded-r-2xl bg-night-900 border-y border-r border-white/10" data-open="false">
+      <button type="button" class="gate-toggle w-full text-left px-5 py-4 flex items-center gap-4" aria-expanded="false">
+        <span class="shrink-0 w-12 h-12 rounded-xl bg-emerald-300/15 text-emerald-300 grid place-items-center font-maru font-black">P0</span>
+        <span class="flex-1">
+          <span class="block font-maru font-bold text-white">データ境界・計測・相談窓口・実機確認</span>
+          <span class="block text-xs text-ink-dim mt-0.5">Gate 0 を満たして、4週間の観測を開始する</span>
+        </span>
+        <span class="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-300/15 text-emerald-300">実機確認を残して完了</span>
+        <span class="gate-caret shrink-0 text-ink-faint transition-transform" aria-hidden="true">▾</span>
+      </button>
+      <div class="gate-body hidden px-5 pb-5 pl-[4.75rem]">
+        <p class="text-xs font-bold text-moon-300 mb-2 tracking-wider">Gate 0 の条件</p>
+        <ul class="text-xs text-ink-dim space-y-1.5 leading-relaxed list-disc pl-4">
+          <li>許可イベントと各フィールドが一覧化され、自由記述や入力内容を受け付けない</li>
+          <li>不正形式の拒否、重複対策、保存失敗時の扱いをテストできる</li>
+          <li>利用者向け説明、オプトアウト方法、保存期間、削除手順、閲覧可能者が決まっている</li>
+          <li>匿名の利用イベントを、本人の記録・研究データと結合しない</li>
+          <li>集計結果が少人数の個人を推測できる粒度で公開されない</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- P1 -->
+    <div class="gate-step rounded-r-2xl bg-night-900 border-y border-r border-white/10 ml-0 sm:ml-6" data-open="false">
+      <button type="button" class="gate-toggle w-full text-left px-5 py-4 flex items-center gap-4" aria-expanded="false">
+        <span class="shrink-0 w-12 h-12 rounded-xl bg-moon-400/15 text-moon-300 grid place-items-center font-maru font-black">P1</span>
+        <span class="flex-1">
+          <span class="block font-maru font-bold text-white">入力を削る・振り返る・積み重ねを見せる</span>
+          <span class="block text-xs text-ink-dim mt-0.5">週次まとめは実装済み。残りは Gate 1 の判定を待つ</span>
+        </span>
+        <span class="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-moon-400/15 text-moon-300">いまここ</span>
+        <span class="gate-caret shrink-0 text-ink-faint transition-transform" aria-hidden="true">▾</span>
+      </button>
+      <div class="gate-body hidden px-5 pb-5 pl-[4.75rem]">
+        <p class="text-xs font-bold text-moon-300 mb-2 tracking-wider">Gate 1 の条件（4週間観測できた install が15以上のときだけ判定する）</p>
+        <div class="scroll-x">
+          <table class="w-full min-w-[460px] text-xs border-collapse">
+            <thead>
+              <tr class="text-left text-ink-faint">
+                <th class="py-2 pr-3 font-bold">指標</th>
+                <th class="py-2 pr-3 font-bold">継続投資の基準</th>
+              </tr>
+            </thead>
+            <tbody class="text-ink-dim">
+              <tr class="border-t border-white/10"><td class="py-2 pr-3">初週複数日記録率</td><td class="py-2 pr-3 num text-white">60% 以上</td></tr>
+              <tr class="border-t border-white/10"><td class="py-2 pr-3">Week 2 継続率</td><td class="py-2 pr-3 num text-white">50% 以上</td></tr>
+              <tr class="border-t border-white/10"><td class="py-2 pr-3">Week 4 継続率</td><td class="py-2 pr-3 num text-white">35% 以上</td></tr>
+              <tr class="border-t border-white/10"><td class="py-2 pr-3">基本記録の2分以内完了</td><td class="py-2 pr-3 num text-white">5人中4人以上</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-ink-faint mt-3 leading-relaxed">未達でも重大不具合がなければ「改善して再検証」。原因に対応する変更を1つだけ行い、同じ定義で測り直す。</p>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="gate-step rounded-r-2xl bg-night-900 border-y border-r border-white/10 ml-0 sm:ml-12" data-open="false">
+      <button type="button" class="gate-toggle w-full text-left px-5 py-4 flex items-center gap-4" aria-expanded="false">
+        <span class="shrink-0 w-12 h-12 rounded-xl bg-night-700 text-ink-dim grid place-items-center font-maru font-black">P2</span>
+        <span class="flex-1">
+          <span class="block font-maru font-bold text-white">リマインドの最小検証</span>
+          <span class="block text-xs text-ink-dim mt-0.5">ON/OFF と時刻だけ。初期状態はOFF</span>
+        </span>
+        <span class="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-400/15 text-slate-300">保留</span>
+        <span class="gate-caret shrink-0 text-ink-faint transition-transform" aria-hidden="true">▾</span>
+      </button>
+      <div class="gate-body hidden px-5 pb-5 pl-[4.75rem]">
+        <p class="text-xs font-bold text-moon-300 mb-2 tracking-wider">Gate 2 の条件</p>
+        <p class="text-xs text-ink-dim leading-relaxed">
+          継続率が低いという理由だけでは実装しない。非継続理由の上位に「忘れる」「始めるきっかけがない」があり、
+          確認できた回答の<span class="text-white num"> 30% 以上</span>に該当する場合だけ、最小構成を検証する。
+          責める表現、症状を推測する表現、入力を強制する表現は使わない。
+        </p>
+      </div>
+    </div>
+
+    <!-- P3 -->
+    <div class="gate-step rounded-r-2xl bg-night-900 border-y border-r border-white/10 ml-0 sm:ml-[4.5rem]" data-open="false">
+      <button type="button" class="gate-toggle w-full text-left px-5 py-4 flex items-center gap-4" aria-expanded="false">
+        <span class="shrink-0 w-12 h-12 rounded-xl bg-night-700 text-ink-dim grid place-items-center font-maru font-black">P3</span>
+        <span class="flex-1">
+          <span class="block font-maru font-bold text-white">アカウントとクラウド保存</span>
+          <span class="block text-xs text-ink-dim mt-0.5">構成は確定済み。契約と実装は止めている</span>
+        </span>
+        <span class="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-400/15 text-slate-300">保留</span>
+        <span class="gate-caret shrink-0 text-ink-faint transition-transform" aria-hidden="true">▾</span>
+      </button>
+      <div class="gate-body hidden px-5 pb-5 pl-[4.75rem]">
+        <p class="text-xs font-bold text-moon-300 mb-2 tracking-wider">Gate 3 の条件（すべて満たしたときだけ）</p>
+        <ul class="text-xs text-ink-dim space-y-1.5 leading-relaxed list-disc pl-4">
+          <li>Gate 1 の継続投資基準を満たす</li>
+          <li>端末変更・データ消失・複数端末利用が、3人以上または確認対象の15%以上で阻害要因になっている</li>
+          <li>認証、アクセス制御、保護、バックアップ、保存期間、本人による削除、権限、インシデント対応が文書化されている</li>
+          <li>参加説明・同意・研究手続きへの影響確認が完了している</li>
+        </ul>
+        <p class="text-xs text-ink-faint mt-3">満たさない間は、端末保存と本人操作によるバックアップを維持する。</p>
+      </div>
+    </div>
+
+    <!-- P4 -->
+    <div class="gate-step rounded-r-2xl bg-night-900 border-y border-r border-white/10 ml-0 sm:ml-24" data-open="false">
+      <button type="button" class="gate-toggle w-full text-left px-5 py-4 flex items-center gap-4" aria-expanded="false">
+        <span class="shrink-0 w-12 h-12 rounded-xl bg-night-700 text-ink-dim grid place-items-center font-maru font-black">P4</span>
+        <span class="flex-1">
+          <span class="block font-maru font-bold text-white">本人同意による週次まとめの共有</span>
+          <span class="block text-xs text-ink-dim mt-0.5">端末内のテキスト生成までは実装済み</span>
+        </span>
+        <span class="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-400/15 text-slate-300">保留</span>
+        <span class="gate-caret shrink-0 text-ink-faint transition-transform" aria-hidden="true">▾</span>
+      </button>
+      <div class="gate-body hidden px-5 pb-5 pl-[4.75rem]">
+        <p class="text-xs font-bold text-moon-300 mb-2 tracking-wider">Gate 4 の条件（すべて満たしたときだけ）</p>
+        <ul class="text-xs text-ink-dim space-y-1.5 leading-relaxed list-disc pl-4">
+          <li>週次まとめのタスクテストで、5人中4人以上が内容を理解し、共有前に期間と項目を確認できる</li>
+          <li>5人以上から、自分で選んだ相手へ共有したいという明示的な需要が確認できる</li>
+          <li>初期状態が非共有で、相手・項目・期間・有効期限・取り消し・閲覧権限を本人が選べる</li>
+          <li>勤務先や支援機関への自動共有、常時監視、本人の知らない二次利用を行わない</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. AIの境界 ============ -->
+<section id="ai" class="reveal scroll-mt-20">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-6">
+    <span class="shrink-0 whitespace-nowrap text-[11px] font-bold tracking-[0.2em] text-care-300">AI BOUNDARY</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">AIには「何を渡さないか」から決めた</h2>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-3xl bg-night-900 border-2 border-emerald-300/30 p-6">
+      <p class="text-xs font-bold tracking-wider text-emerald-300 mb-3">渡してよいもの</p>
+      <ul class="space-y-2.5 text-sm">
+        <li class="flex gap-3"><span class="text-emerald-300 font-bold shrink-0">○</span><span class="text-white">集計値<span class="block text-xs text-ink-dim">記録日数、就寝時刻の中央値など</span></span></li>
+        <li class="flex gap-3"><span class="text-emerald-300 font-bold shrink-0">○</span><span class="text-white">選択式のタグ<span class="block text-xs text-ink-dim">しんどさのサインなど、選択肢から選んだもの</span></span></li>
+        <li class="flex gap-3"><span class="text-emerald-300 font-bold shrink-0">○</span><span class="text-white">辞書のタイトル<span class="block text-xs text-ink-dim">「できること」として本人が登録した項目名</span></span></li>
+      </ul>
+    </div>
+    <div class="rounded-3xl bg-night-900 border-2 border-rose-300/30 p-6">
+      <p class="text-xs font-bold tracking-wider text-rose-300 mb-3">端末の中にとどめるもの</p>
+      <ul class="space-y-2.5 text-sm">
+        <li class="flex gap-3"><span class="text-rose-300 font-bold shrink-0">×</span><span class="text-white">本人が書いたメモ本文<span class="block text-xs text-ink-dim">一番デリケートで、一番集計に要らない部分</span></span></li>
+        <li class="flex gap-3"><span class="text-rose-300 font-bold shrink-0">×</span><span class="text-white">記録の全文<span class="block text-xs text-ink-dim">端末外へ出す経路をそもそも作らない</span></span></li>
+        <li class="flex gap-3"><span class="text-rose-300 font-bold shrink-0">×</span><span class="text-white">書き込み・削除の手段<span class="block text-xs text-ink-dim">ツールは読み取り専用。確定は本人のボタン操作だけ</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="rounded-3xl bg-gradient-to-br from-care-500/20 to-night-900 border border-care-400/30 p-6 mt-4">
+    <p class="text-sm sm:text-base text-white leading-relaxed">
+      この方針で大事なのは、<span class="text-moon-300 font-bold">運用ルールで守らないこと</span>です。
+      ツールの戻り値の型に本文のフィールドをそもそも持たせないので、うっかり渡すコードが書けません。
+    </p>
+    <p class="text-xs text-ink-dim mt-3">気をつけようと決めるのではなく、間違えられない形にする。ここが一番学びになった部分です。</p>
+  </div>
+
+  <!-- 穴埋め方式 -->
+  <h3 class="font-maru font-bold text-white text-lg mt-10 mb-2">文章の作り方：数値はアプリ、つなぎの言葉だけLLM</h3>
+  <p class="text-sm text-ink-dim mb-5">数値をLLMに書かせると、健康の記録では誤りが致命的になります。そこで穴埋め方式にしました。</p>
+
+  <div class="rounded-3xl bg-night-900 border border-white/10 p-6">
+    <div class="flex flex-wrap gap-4 text-xs mb-5">
+      <span class="flex items-center gap-2"><span class="w-8 h-3 blank-app rounded-sm"></span><span class="text-ink-dim">アプリが確定させる数値</span></span>
+      <span class="flex items-center gap-2"><span class="w-8 h-3 blank-llm rounded-sm"></span><span class="text-ink-dim">LLMが書く文章の穴</span></span>
+    </div>
+    <p class="text-base sm:text-lg leading-loose text-white">
+      この7日間のうち、記録があったのは <span class="blank-app px-1.5 num font-bold">5日</span> でした。
+      <span class="blank-llm px-1.5">記録できた日をふりかえると</span>、就寝時刻の中央値は <span class="blank-app px-1.5 num font-bold">24:30</span>、
+      「しんどさのサイン」で多かったのは <span class="blank-app px-1.5 font-bold">頭が重い</span>（<span class="blank-app px-1.5 num font-bold">3日</span> / <span class="blank-app px-1.5 num font-bold">5日</span>）です。
+      <span class="blank-llm px-1.5">来週の振り返りでは、この2つを見てみるのがよさそうです</span>。
+    </p>
+    <p class="text-xs text-ink-faint mt-5 leading-relaxed">
+      表示例です。LLM呼び出し自体はまだ未実装で、設計と集計側だけが完成しています。
+      数値には必ず母数（<span class="num">3日 / 5日</span>）を添え、割合では示しません。「達成率60%」は、できなかった側を強調してしまうためです。
+    </p>
+  </div>
+
+  <div class="grid sm:grid-cols-3 gap-3 mt-4">
+    <div class="rounded-2xl bg-night-900 border border-white/10 p-5">
+      <p class="font-maru font-bold text-white text-sm">0件は 0 ではなく null</p>
+      <p class="text-xs text-ink-dim mt-2 leading-relaxed">「値が低い」と「データがない」を区別する。書けなかった日を、状態が悪かった日として扱わない。</p>
+    </div>
+    <div class="rounded-2xl bg-night-900 border border-white/10 p-5">
+      <p class="font-maru font-bold text-white text-sm">相関を因果に読ませない</p>
+      <p class="text-xs text-ink-dim mt-2 leading-relaxed">差分の戻り値は、効果ではなく事実だけを述べるキー名にする。片側の日数が少なければ差分を返さない。</p>
+    </div>
+    <div class="rounded-2xl bg-night-900 border border-white/10 p-5">
+      <p class="font-maru font-bold text-white text-sm">週次まとめは、あえてLLMを使わない</p>
+      <p class="text-xs text-ink-dim mt-2 leading-relaxed">毎週読むものは、言い方がぶれないほうが本人にとって安心。速く、無料で、毎回同じ言葉になる。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. 次の一手 ============ -->
+<section id="next" class="reveal scroll-mt-20">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-6">
+    <span class="shrink-0 whitespace-nowrap text-[11px] font-bold tracking-[0.2em] text-care-300">NEXT</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">次の一手</h2>
+  </div>
+
+  <div class="scroll-x -mx-4 px-4">
+    <ol class="min-w-[680px] grid grid-cols-3 gap-3">
+      <li class="rounded-2xl bg-night-900 border border-moon-400/40 p-5 relative">
+        <span class="absolute -top-2.5 left-5 text-[10px] font-bold bg-moon-400 text-night-950 rounded-full px-2 py-0.5 num">1</span>
+        <p class="font-maru font-bold text-white mt-1">スマホ実機テスト</p>
+        <p class="text-xs text-ink-dim mt-2 leading-relaxed">iPhone と Android でチェックリストを実施。ダミーデータで、基本記録が2分以内に終わるかを見る。</p>
+      </li>
+      <li class="rounded-2xl bg-night-900 border border-white/10 p-5 relative">
+        <span class="absolute -top-2.5 left-5 text-[10px] font-bold bg-night-700 text-ink rounded-full px-2 py-0.5 num">2</span>
+        <p class="font-maru font-bold text-white mt-1">4週間の観測</p>
+        <p class="text-xs text-ink-dim mt-2 leading-relaxed">初週複数日記録率、Week 2、Week 4 継続率を同じ定義で集計する。install が15未満なら合否を出さない。</p>
+      </li>
+      <li class="rounded-2xl bg-night-900 border border-white/10 p-5 relative">
+        <span class="absolute -top-2.5 left-5 text-[10px] font-bold bg-night-700 text-ink rounded-full px-2 py-0.5 num">3</span>
+        <p class="font-maru font-bold text-white mt-1">Gate 1 の判定</p>
+        <p class="text-xs text-ink-dim mt-2 leading-relaxed">継続投資／改善して再検証／保留・縮小のどれかを決める。ここで初めて、次に作るものが決まる。</p>
+      </li>
+    </ol>
+  </div>
+
+  <div class="rounded-3xl bg-night-900 border border-white/10 p-6 mt-6">
+    <p class="text-xs font-bold tracking-wider text-rose-300 mb-3">この制作で言わないと決めていること</p>
+    <ul class="text-sm text-ink-dim space-y-2 leading-relaxed">
+      <li>・ヨルケアは診断・治療・処方の代替ではない。ガイドラインの推奨を製品の医学的効能として主張しない。</li>
+      <li>・継続率などの利用指標を、症状が改善した根拠として語らない。</li>
+      <li>・リアルタイムの監視や緊急対応はしない。緊急時は医療機関・公的サービスへ直接、と明示する。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 7. 1分原稿 ============ -->
+<section id="talk" class="reveal scroll-mt-20">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-6">
+    <span class="shrink-0 whitespace-nowrap text-[11px] font-bold tracking-[0.2em] text-care-300">SCRIPT</span>
+    <h2 class="font-maru font-black text-2xl sm:text-3xl text-white">1分で話すこと</h2>
+  </div>
+
+  <div class="grid lg:grid-cols-[1.6fr,1fr] gap-4">
+    <div class="rounded-3xl bg-gradient-to-br from-night-850 to-night-900 border border-moon-400/25 p-6 sm:p-8">
+      <p class="text-[11px] font-bold tracking-wider text-moon-300 mb-4 num">読み上げ用 · 約360字 · 3段落で約60秒</p>
+      <div class="space-y-4 text-sm sm:text-base leading-loose text-ink">
+        <p>ヨルケアという、メンタル不調を経験して今も働いている人向けの、セルフケア記録アプリを作っています。気分・睡眠・お薬・しんどさのサインを1日1〜2分で残して、日曜の振り返りの会で自分の状態を話す材料にする、という使い方です。</p>
+        <p>今は Phase 1 を Vercel で公開して、スマホで実際に使える状態です。この1か月は、機能を増やす前に何を検証するかを先に決めて、匿名の利用計測の永続化、相談窓口の常設、直近7日の週次まとめ、本人が選んだ項目だけを共有テキストにする機能まで実装しました。テストは155件で、CI で lint・テスト・ビルドが通っています。</p>
+        <p>苦戦しているのは AI の入れ方です。健康の記録なので、数値はアプリ側で確定させて、文章の穴だけを LLM に書かせる穴埋め方式にしました。次は、スマホ実機テストと、4週間の継続率の観測です。</p>
+      </div>
+      <p class="text-xs text-ink-faint mt-5">焦って早口にするより、段落のあいだで一呼吸置く。</p>
+    </div>
+
+    <div class="rounded-3xl bg-night-900 border border-white/10 p-6">
+      <p class="text-[11px] font-bold tracking-wider text-care-300 mb-4">キーワードだけのカンペ</p>
+      <ol class="space-y-3 text-sm">
+        <li class="flex gap-3"><span class="num text-ink-faint font-bold shrink-0">1</span><span class="text-white">働いている当事者／1日1〜2分</span></li>
+        <li class="flex gap-3"><span class="num text-ink-faint font-bold shrink-0">2</span><span class="text-white">日曜25分の振り返りの会の材料</span></li>
+        <li class="flex gap-3"><span class="num text-ink-faint font-bold shrink-0">3</span><span class="text-white">Phase 1 公開済み・スマホで使える</span></li>
+        <li class="flex gap-3"><span class="num text-ink-faint font-bold shrink-0">4</span><span class="text-white">計測 → 相談窓口 → 週次まとめ → 選択共有</span></li>
+        <li class="flex gap-3"><span class="num text-ink-faint font-bold shrink-0">5</span><span class="text-white">テスト155件・CI</span></li>
+        <li class="flex gap-3"><span class="num text-ink-faint font-bold shrink-0">6</span><span class="text-white">AIは穴埋め方式・型で境界を作る</span></li>
+        <li class="flex gap-3"><span class="num text-ink-faint font-bold shrink-0">7</span><span class="text-white">次は実機テスト → 4週間観測</span></li>
+      </ol>
+      <div class="mt-6 pt-5 border-t border-white/10">
+        <p class="text-[11px] font-bold tracking-wider text-care-300 mb-2">時間が押したら（30秒）</p>
+        <p class="text-xs text-ink-dim leading-relaxed">働きながらメンタル不調と付き合う人向けのセルフケア記録アプリ「ヨルケア」です。Phase 1 は公開済みで、いまは週次まとめと共有機能まで実装できました。次は AI を入れる段階ですが、健康の記録なので、数値はアプリが確定させて文章の穴だけ LLM に書かせる形にしています。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="border-t border-white/10 bg-night-900/60">
+  <div class="max-w-6xl mx-auto px-4 py-10 text-xs text-ink-faint space-y-2">
+    <p class="text-ink-dim font-bold">ヨルケア 進捗図解 ／ AI Driven School 卒業制作 進捗シェア用</p>
+    <p class="num">図解の更新日 2026-08-12 ・ 発表日 2026-08-15 ・ 進捗の集計時点 2026-08-12</p>
+    <p>出典: <span class="font-mono">docs/DEVELOPMENT_BOARD.md</span> ／ <span class="font-mono">docs/phase2-plan.md</span> ／ <span class="font-mono">docs/ai-consent-decision.md</span> ／ <span class="font-mono">docs/evidence/yorucare-5month-program-spec.md</span></p>
+    <p>この図解には、利用者が入力した記録の内容、健康・服薬・面談に関する情報、個人を特定できる情報を含めていません。</p>
+    <p>ヨルケアは診断・治療の代替ではありません。緊急の相談が必要なときは、このアプリではなく医療機関や公的な緊急サービスへ直接連絡してください。</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* スクロール進捗 */
+  var bar = document.getElementById('progress-bar');
+  function onScroll() {
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* セクションの出現 */
+  var revealTargets = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && !reduce) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.08 });
+    revealTargets.forEach(function (t) { io.observe(t); });
+  } else {
+    revealTargets.forEach(function (t) { t.classList.add('is-visible'); });
+  }
+
+  /* 数値のカウントアップ */
+  function countUp(el) {
+    var target = parseInt(el.getAttribute('data-count'), 10);
+    if (reduce) { el.textContent = String(target); return; }
+    var start = performance.now(), dur = 900;
+    function step(now) {
+      var p = Math.min((now - start) / dur, 1);
+      el.textContent = String(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  var counters = document.querySelectorAll('[data-count]');
+  if ('IntersectionObserver' in window) {
+    var cio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { countUp(e.target); cio.unobserve(e.target); }
+      });
+    }, { threshold: 0.5 });
+    counters.forEach(function (c) { cio.observe(c); });
+  } else {
+    counters.forEach(countUp);
+  }
+
+  /* ドーナツ：課題28件の内訳 */
+  var C = 2 * Math.PI * 80, TOTAL = 28;
+  var segs = document.querySelectorAll('.ring-seg');
+  var acc = 0;
+  var plan = [];
+  segs.forEach(function (seg) {
+    var len = (parseInt(seg.getAttribute('data-seg'), 10) / TOTAL) * C;
+    /*
+      各セグメントは「dash が自分の長さ、gap が一周ぶん」のパターンにする。
+      gap を C にしておけばパターンが一周内で繰り返さないので、
+      dashoffset を len から 0 へ動かすと dash が始点から伸びて見える。
+      並び順は、それまでの合計長ぶん回転させて作る。
+    */
+    seg.style.strokeDasharray = len + ' ' + C;
+    seg.style.strokeDashoffset = String(len);
+    seg.style.transformOrigin = '100px 100px';
+    seg.style.transform = 'rotate(' + (acc / C) * 360 + 'deg)';
+    plan.push({ el: seg, len: len });
+    acc += len;
+  });
+  function drawRing() {
+    plan.forEach(function (p, i) {
+      if (reduce) { p.el.style.strokeDashoffset = '0'; return; }
+      setTimeout(function () { p.el.style.strokeDashoffset = '0'; }, i * 160);
+    });
+  }
+  /* SVGの子要素ではなく囲みの figure を監視する（子要素だと交差判定が安定しない） */
+  var ringWrap = document.querySelector('.ring-track') && document.querySelector('.ring-track').closest('figure');
+  if (ringWrap && 'IntersectionObserver' in window) {
+    var rio = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { drawRing(); rio.unobserve(e.target); }
+      });
+    }, { threshold: 0.35 });
+    rio.observe(ringWrap);
+  } else {
+    drawRing();
+  }
+
+  /* 課題一覧の絞り込み */
+  var items = Array.prototype.slice.call(document.querySelectorAll('.board-item'));
+  var btns = Array.prototype.slice.call(document.querySelectorAll('.filter-btn'));
+  var statusText = document.getElementById('filter-status');
+  var activeClasses = ['border-moon-400', 'bg-moon-400', 'text-night-950'];
+
+  function applyFilter(value, clicked) {
+    var shown = 0;
+    items.forEach(function (item) {
+      var match = value === 'all' || item.getAttribute('data-status') === value;
+      item.hidden = !match;
+      if (match) shown++;
+    });
+    statusText.textContent = value === 'all'
+      ? shown + '件を表示中'
+      : value + ' の ' + shown + '件を表示中';
+
+    btns.forEach(function (b) {
+      var isActive = b === clicked;
+      b.setAttribute('aria-pressed', String(isActive));
+      if (isActive) {
+        b.dataset.rest = b.dataset.rest || b.className;
+        b.className = 'filter-btn px-4 py-2 rounded-full text-sm font-bold ' + activeClasses.join(' ');
+      } else if (b.dataset.rest) {
+        b.className = b.dataset.rest;
+      }
+    });
+  }
+  btns.forEach(function (b) {
+    b.dataset.rest = b.className;
+    b.setAttribute('aria-pressed', String(b.getAttribute('data-filter') === 'all'));
+    b.addEventListener('click', function () { applyFilter(b.getAttribute('data-filter'), b); });
+  });
+
+  /* ゲートの開閉 */
+  document.querySelectorAll('.gate-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var step = btn.closest('.gate-step');
+      var body = step.querySelector('.gate-body');
+      var caret = btn.querySelector('.gate-caret');
+      var open = body.classList.toggle('hidden') === false;
+      step.setAttribute('data-open', String(open));
+      btn.setAttribute('aria-expanded', String(open));
+      caret.style.transform = open ? 'rotate(180deg)' : 'none';
+    });
+  });
+})();
+</script>
+</body>
+</html>
