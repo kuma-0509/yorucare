@@ -1,9 +1,18 @@
 import { z } from "zod";
 import { normalizeMoodLabels } from "./mood-labels";
 
-export const STORAGE_SCHEMA_VERSION = 1;
+/**
+ * 2: `tomorrowGoal` と `goalReviewStatus` を追加。
+ * どちらも既定値を持つため、版1の保存データはそのまま読める。
+ */
+export const STORAGE_SCHEMA_VERSION = 2;
+/**
+ * 取り込み側は `z.literal` で版を照合するため、既存の書き出しを読めなくしないよう据え置く。
+ * 追加フィールドは既定値を持ち、版1の書き出しからも復元できる。
+ */
 export const EXPORT_VERSION = 1;
 export const MAX_NOTE_LENGTH = 2000;
+export const MAX_GOAL_LENGTH = 100;
 export const MAX_SELF_CARE_TITLE_LENGTH = 100;
 export const MAX_MOOD_LABEL_LENGTH = 10;
 export const MAX_IMPORT_RECORDS = 5000;
@@ -28,6 +37,7 @@ const moodScoreSchema = z.union([
 
 const medicationStatusSchema = z.enum(["done", "partial", "forgot", "none"]);
 const warningLevelSchema = z.enum(["none", "small", "yes"]);
+const goalReviewStatusSchema = z.enum(["done", "partial", "notDone"]);
 
 const moodLabelCategorySchema = z.enum([
   "ポジティブ",
@@ -68,6 +78,9 @@ export const dailyRecordSchema = z.object({
   selfCareIds: z.array(idSchema).max(100),
   selfCareMemo: memoSchema,
   note: memoSchema,
+  // 既定値を持たせ、フィールドがない版1の保存データも読めるようにする
+  tomorrowGoal: z.string().max(MAX_GOAL_LENGTH).default(""),
+  goalReviewStatus: goalReviewStatusSchema.nullable().default(null),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 });

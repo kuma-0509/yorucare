@@ -24,6 +24,20 @@ export const COPY = {
   /** 「書く」タブで今日の分を選ぶときの見出し */
   doneTodayToday: "今日できたこと",
   medicationNone: "お薬は飲んでいない",
+  /** 翌日に向けた小さな目標・行動実験。達成を評価せず、次の大きさを決める材料として扱う */
+  goal: {
+    fieldToday: "明日の小さな目標",
+    fieldOther: "翌日の小さな目標",
+    fieldDescription:
+      "すぐ終わる大きさにすると続けやすくなります。書かなくても構いません。",
+    fieldPlaceholder: "例：昼休みに5分だけ外に出る",
+    reviewToday: "昨日の目標をふりかえる",
+    reviewOther: "前日の目標をふりかえる",
+    reviewDescription:
+      "できていなくても大丈夫です。次の大きさを決めるために使います。",
+    helperHeading: "次は、もう少し小さくできそうですか？",
+    suggestionHint: "選ぶと、翌日の目標に入ります",
+  },
   notEntered: "まだ入力していません",
   sleepNotEntered: "まだ入力していません",
   chartWarningDescription: "なし／少しあり／あり の3段階で表示します",

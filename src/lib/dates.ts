@@ -16,6 +16,14 @@ export function getYesterdayString(): string {
   return toDateString(d);
 }
 
+/** 指定日の前日。月初・年初はローカル日付の演算に任せる */
+export function getPreviousDateString(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() - 1);
+  return toDateString(date);
+}
+
 /** 直近7日（今日を含む、古い順） */
 export function getLast7Days(): string[] {
   const days: string[] = [];

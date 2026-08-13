@@ -1,4 +1,5 @@
 import type {
+  GoalReviewStatus,
   MedicationStatus,
   MoodScore,
   StateLevel,
@@ -21,6 +22,16 @@ export const STATE_LEVEL_OPTIONS: {
   { value: "good", label: "よい", description: "気分は落ち着いています" },
   { value: "normal", label: "ふつう", description: "いつもどおりです" },
   { value: "hard", label: "しんどい", description: "いつもと違うしんどさがあります" },
+];
+
+/** 達成度の段階が読み取れるよう、できた側から並べる */
+export const GOAL_REVIEW_OPTIONS: {
+  value: GoalReviewStatus;
+  label: string;
+}[] = [
+  { value: "done", label: "できた" },
+  { value: "partial", label: "一部できた" },
+  { value: "notDone", label: "できなかった" },
 ];
 
 export const MOOD_LABEL_POSITIVE = [

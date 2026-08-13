@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   EXPORT_VERSION,
+  MAX_GOAL_LENGTH,
   parseExportPayload,
   parseRecordsJson,
 } from "./schemas";
@@ -42,6 +43,47 @@ describe("parseRecordsJson", () => {
 
   it("不正な moodScore を拒否する", () => {
     const result = parseRecordsJson([{ ...validRecord, moodScore: 6 }]);
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("目標フィールドの後方互換", () => {
+  it("目標フィールドがない版1の保存データをそのまま読める", () => {
+    // validRecord は tomorrowGoal / goalReviewStatus を持たない旧データ
+    const result = parseRecordsJson([validRecord]);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data[0].tomorrowGoal).toBe("");
+      expect(result.data[0].goalReviewStatus).toBeNull();
+    }
+  });
+
+  it("保存済みの目標とふりかえり結果を保持する", () => {
+    const result = parseRecordsJson([
+      {
+        ...validRecord,
+        tomorrowGoal: "昼休みに5分だけ外に出る",
+        goalReviewStatus: "partial",
+      },
+    ]);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data[0].tomorrowGoal).toBe("昼休みに5分だけ外に出る");
+      expect(result.data[0].goalReviewStatus).toBe("partial");
+    }
+  });
+
+  it("長すぎる目標を拒否する", () => {
+    const result = parseRecordsJson([
+      { ...validRecord, tomorrowGoal: "あ".repeat(MAX_GOAL_LENGTH + 1) },
+    ]);
+    expect(result.success).toBe(false);
+  });
+
+  it("未定義のふりかえり結果を拒否する", () => {
+    const result = parseRecordsJson([
+      { ...validRecord, goalReviewStatus: "maybe" },
+    ]);
     expect(result.success).toBe(false);
   });
 });

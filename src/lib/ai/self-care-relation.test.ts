@@ -35,6 +35,8 @@ function makeRecord(
     selfCareIds,
     selfCareMemo: "",
     note: "",
+    tomorrowGoal: "",
+    goalReviewStatus: null,
     createdAt: `${date}T00:00:00.000Z`,
     updatedAt: `${date}T00:00:00.000Z`,
     ...overrides,

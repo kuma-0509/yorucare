@@ -5,6 +5,7 @@ import {
   repository,
   type Repository,
 } from "./repository";
+import { STORAGE_SCHEMA_VERSION } from "./schemas";
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
@@ -80,6 +81,79 @@ describe("Repository の非同期境界", () => {
     expect(result).toEqual({
       ok: false,
       error: { code: "CORRUPTED", key: STORAGE_KEYS.records },
+    });
+  });
+});
+
+/** 目標フィールドを持たない、版1時点の保存データ */
+const RECORD_BEFORE_GOAL_FIELDS = {
+  id: "r1",
+  date: "2026-08-01",
+  moodScore: 4,
+  moodLabels: [],
+  sleepStart: null,
+  sleepEnd: null,
+  sleepMinutes: null,
+  medication: null,
+  warningLevel: null,
+  warningTags: [],
+  warningNote: "",
+  selfCareIds: [],
+  selfCareMemo: "",
+  note: "前の版で書いたメモ",
+  createdAt: "2026-08-01T00:00:00.000Z",
+  updatedAt: "2026-08-01T00:00:00.000Z",
+};
+
+describe("目標フィールド追加後の保存データ移行", () => {
+  beforeEach(() => {
+    localStorage.setItem(
+      STORAGE_KEYS.records,
+      JSON.stringify([RECORD_BEFORE_GOAL_FIELDS])
+    );
+    localStorage.setItem(STORAGE_KEYS.schemaVersion, "1");
+  });
+
+  it("版1の記録を移行なしでも読める", async () => {
+    const result = await typedRepository.getAllRecords();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toHaveLength(1);
+      expect(result.value[0].tomorrowGoal).toBe("");
+      expect(result.value[0].goalReviewStatus).toBeNull();
+    }
+  });
+
+  it("移行後も既存の入力内容を失わない", async () => {
+    const migrated = await typedRepository.runStorageMigrations();
+    expect(migrated.ok).toBe(true);
+
+    const result = await typedRepository.getAllRecords();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value[0].note).toBe("前の版で書いたメモ");
+      expect(result.value[0].moodScore).toBe(4);
+      expect(result.value[0].createdAt).toBe("2026-08-01T00:00:00.000Z");
+    }
+  });
+
+  it("移行後は保存データの版が最新になる", async () => {
+    await typedRepository.runStorageMigrations();
+
+    expect(localStorage.getItem(STORAGE_KEYS.schemaVersion)).toBe(
+      String(STORAGE_SCHEMA_VERSION)
+    );
+  });
+
+  it("移行で目標フィールドが保存形にも書き込まれる", async () => {
+    await typedRepository.runStorageMigrations();
+
+    const raw = localStorage.getItem(STORAGE_KEYS.records) ?? "[]";
+    const stored = JSON.parse(raw) as Record<string, unknown>[];
+    expect(stored[0]).toMatchObject({
+      tomorrowGoal: "",
+      goalReviewStatus: null,
     });
   });
 });

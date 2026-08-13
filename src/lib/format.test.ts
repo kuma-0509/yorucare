@@ -23,6 +23,8 @@ function makeRecord(overrides: Partial<DailyRecord> = {}): DailyRecord {
     selfCareIds: [],
     selfCareMemo: "",
     note: "",
+    tomorrowGoal: "",
+    goalReviewStatus: null,
     createdAt: "2026-01-05T00:00:00.000Z",
     updatedAt: "2026-01-05T00:00:00.000Z",
     ...overrides,
