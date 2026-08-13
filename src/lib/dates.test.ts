@@ -4,6 +4,7 @@ import {
   getDateRangeForPeriod,
   getLast7Days,
   getMonthRangeForPeriod,
+  getPreviousDateString,
   isMonthlyChartPeriod,
   toDateString,
   toMonthKey,
@@ -13,6 +14,25 @@ describe("toDateString", () => {
   it("ローカル日付を YYYY-MM-DD に整形（ゼロ埋め）", () => {
     expect(toDateString(new Date(2026, 0, 5))).toBe("2026-01-05");
     expect(toDateString(new Date(2026, 11, 31))).toBe("2026-12-31");
+  });
+});
+
+describe("getPreviousDateString", () => {
+  it("同じ月の前日を返す", () => {
+    expect(getPreviousDateString("2026-08-13")).toBe("2026-08-12");
+  });
+
+  it("月初は前月の末日にまたがる", () => {
+    expect(getPreviousDateString("2026-08-01")).toBe("2026-07-31");
+    expect(getPreviousDateString("2026-03-01")).toBe("2026-02-28");
+  });
+
+  it("年初は前年の末日にまたがる", () => {
+    expect(getPreviousDateString("2026-01-01")).toBe("2025-12-31");
+  });
+
+  it("うるう年の3月1日は2月29日になる", () => {
+    expect(getPreviousDateString("2028-03-01")).toBe("2028-02-29");
   });
 });
 

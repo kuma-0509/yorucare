@@ -22,11 +22,13 @@ import {
 } from "@/components/shared/option-button";
 import { SaveRecordButton } from "@/components/shared/save-record-button";
 import { MoodCategoryDialog } from "@/components/mood/mood-category-dialog";
+import { GoalReviewCard } from "@/components/goal/goal-review-card";
 import { CompletionChoice } from "@/components/completion/completion-choice";
 import { trackRecordSaved } from "@/lib/analytics";
 import { COPY } from "@/lib/copy";
 import { storageErrorMessage } from "@/lib/result";
 import {
+  MAX_GOAL_LENGTH,
   MAX_NOTE_LENGTH,
   MAX_SELF_CARE_TITLE_LENGTH,
   MAX_MOOD_LABEL_LENGTH,
@@ -48,6 +50,7 @@ import {
   formatDatePickerLabel,
   formatDisplayDate,
   getLast7Days,
+  getPreviousDateString,
   getTodayString,
   isWithinLast7Days,
 } from "@/lib/dates";
@@ -55,6 +58,7 @@ import {
   getDefaultScoreForStateLevel,
   getStateLevelFromScore,
 } from "@/lib/state-level";
+import { getGoalToReview } from "@/lib/goal";
 import { buildRecordSummaryLines } from "@/lib/format";
 import { calculateSleepMinutes, formatSleepDuration } from "@/lib/sleep";
 import {
@@ -116,6 +120,7 @@ export function TodayRecordTab({
   const [showMemo, setShowMemo] = useState(false);
   const [newSelfCareTitle, setNewSelfCareTitle] = useState("");
   const [showAddSelfCare, setShowAddSelfCare] = useState(false);
+  const [goalToReview, setGoalToReview] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(true);
   const [formLoadError, setFormLoadError] = useState<string | null>(null);
   const [addingSelfCare, setAddingSelfCare] = useState(false);
@@ -127,7 +132,10 @@ export function TodayRecordTab({
     const requestId = ++loadRequestRef.current;
     setFormLoading(true);
     setFormLoadError(null);
-    const result = await getRecordByDate(date);
+    const [result, previousResult] = await Promise.all([
+      getRecordByDate(date),
+      getRecordByDate(getPreviousDateString(date)),
+    ]);
     if (requestId !== loadRequestRef.current) return;
     setFormLoading(false);
     if (!result.ok) {
@@ -137,6 +145,10 @@ export function TodayRecordTab({
       return;
     }
     setForm(recordToFormState(result.value, date));
+    // 前日を読めなくても記録自体は書けるようにし、ふりかえりだけを出さない
+    setGoalToReview(
+      previousResult.ok ? getGoalToReview(previousResult.value) : null
+    );
     setShowSaved(false);
     setSavedRecord(null);
     setCustomMoodInput("");
@@ -514,6 +526,26 @@ export function TodayRecordTab({
         </CardContent>
       </Card>
 
+      {/* 前日に目標を決めた日だけ、記録の入口の直後にふりかえりを出す */}
+      {goalToReview && (
+        <GoalReviewCard
+          goal={goalToReview}
+          status={form.goalReviewStatus}
+          isToday={targetDate === today}
+          currentGoalDraft={form.tomorrowGoal}
+          onStatusChange={(status) =>
+            setForm((prev) => ({ ...prev, goalReviewStatus: status }))
+          }
+          onSelectSuggestion={(suggestion) =>
+            setForm((prev) => ({
+              ...prev,
+              tomorrowGoal:
+                prev.tomorrowGoal === suggestion ? "" : suggestion,
+            }))
+          }
+        />
+      )}
+
       <CollapsibleSection
         title="くわしく書く（任意）"
         description="気分の詳しさ、気持ち、睡眠、お薬の記録"
@@ -866,6 +898,32 @@ export function TodayRecordTab({
               />
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {targetDate === today
+              ? COPY.goal.fieldToday
+              : COPY.goal.fieldOther}
+            （任意）
+          </CardTitle>
+          <CardDescription>{COPY.goal.fieldDescription}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Label htmlFor="tomorrow-goal" className="sr-only">
+            {targetDate === today ? COPY.goal.fieldToday : COPY.goal.fieldOther}
+          </Label>
+          <Input
+            id="tomorrow-goal"
+            value={form.tomorrowGoal}
+            maxLength={MAX_GOAL_LENGTH}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, tomorrowGoal: e.target.value }))
+            }
+            placeholder={COPY.goal.fieldPlaceholder}
+          />
         </CardContent>
       </Card>
 
