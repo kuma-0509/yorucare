@@ -23,7 +23,10 @@
 
 - `pnpm lint`: 成功（警告・エラーなし）
 - `pnpm test`: 成功（23 test files / 161 tests、新規6件を含む）
-- `pnpm build`: **ローカルでは最後まで実行できていない。** このサンドボックス環境は物理メモリが約900MBしかなくswapも作成できず、変更前の`main`ブランチをそのままビルドしても同じく `Next.js build worker exited with code: null and signal: SIGKILL`（メモリ不足によるOOM Kill）で失敗することを確認済みで、今回の変更に起因する問題ではない。代替として `npx tsc --noEmit` を実行し、型エラーがないことを確認した。GitHub Actions（`.github/workflows/ci.yml`）は `ubuntu-latest` 上で `pnpm build` を実行するため、push後にCIの実行結果（Actionsタブ）を必ず確認すること。もしCIで失敗した場合は、それをこのタスクのやり直しとして最優先で対応する。
+- `pnpm build`: ✅ 成功（CI: GitHub Actions run #31663761671、build-and-test job、2026-08-13）。
+  Cowork側のサンドボックスは物理メモリ約900MBでOOM Killが発生しローカル完走できなかったが、
+  mainブランチでも同じ制約下で同じ失敗が再現することを確認済みで、コード起因ではないと判明。
+  PR #7 のCIで正式に成功を確認した。
 
 ## 次のタスク候補
 
