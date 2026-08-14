@@ -1,6 +1,7 @@
 import { countDaysInRange, indexRecordsByDate } from "./range";
 import type {
   DailyRecord,
+  GoalReviewStatus,
   MedicationStatus,
   MoodScore,
   WarningLevel,
@@ -9,7 +10,7 @@ import type {
 /**
  * 期間集計の結果型。
  *
- * この型には note / warningNote / selfCareMemo を含めない。
+ * この型には note / warningNote / selfCareMemo / tomorrowGoal を含めない。
  * 本人が書いた本文を端末外へ出さない方針を、運用ルールではなく型で保証するため。
  * 集計はすべてアプリ側で確定させ、LLM には計算させない。
  */
@@ -69,6 +70,23 @@ export type WarningSummary = {
   countByLevel: Record<WarningLevel, number>;
 };
 
+/**
+ * 前日に決めた目標のふりかえり結果の集計。
+ *
+ * 数えるのは選択式の goalReviewStatus だけとし、本人が書いた目標の文面
+ * （tomorrowGoal）は数えも持ちもしない。本文を端末外へ出さない方針を、
+ * 運用ルールではなくこの型で保証する。
+ */
+export type GoalReviewSummary = {
+  /**
+   * goalReviewStatus が選ばれていた日数。countByStatus の母数。
+   * 目標を決めた日数でも、記録があった日数でもない。
+   * ふりかえりは任意なので、決めた目標より少なくなる。
+   */
+  answeredDays: number;
+  countByStatus: Record<GoalReviewStatus, number>;
+};
+
 export type PeriodSummary = {
   range: PeriodRange;
   /** 期間の暦日数（from と to を含む） */
@@ -83,6 +101,7 @@ export type PeriodSummary = {
   sleep: SleepSummary;
   medication: MedicationSummary;
   warning: WarningSummary;
+  goalReview: GoalReviewSummary;
 };
 
 const MINUTES_PER_DAY = 24 * 60;
@@ -219,6 +238,25 @@ function summarizeWarning(records: DailyRecord[]): WarningSummary {
   return { countByLevel, answeredDays };
 }
 
+function summarizeGoalReview(records: DailyRecord[]): GoalReviewSummary {
+  const countByStatus: Record<GoalReviewStatus, number> = {
+    done: 0,
+    partial: 0,
+    notDone: 0,
+  };
+  let answeredDays = 0;
+
+  for (const record of records) {
+    // 目標を決めていてもふりかえらなかった日は数えない。
+    // ふりかえらなかったことを「できなかった」に寄せないため。
+    if (record.goalReviewStatus === null) continue;
+    countByStatus[record.goalReviewStatus] += 1;
+    answeredDays += 1;
+  }
+
+  return { countByStatus, answeredDays };
+}
+
 /**
  * 期間内の記録を集計する。
  *
@@ -243,5 +281,6 @@ export function summarizePeriod(
     sleep: summarizeSleep(target),
     medication: summarizeMedication(target),
     warning: summarizeWarning(target),
+    goalReview: summarizeGoalReview(target),
   };
 }

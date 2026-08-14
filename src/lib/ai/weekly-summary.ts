@@ -81,7 +81,7 @@ function buildHeadline(recordedDays: number, daysInRange: number): string {
 
 function buildLines(summary: PeriodSummary, longestStreak: number): SummaryLine[] {
   const lines: SummaryLine[] = [];
-  const { mood, sleep, medication, warning } = summary;
+  const { mood, sleep, medication, warning, goalReview } = summary;
 
   if (mood.averageScore !== null) {
     const range = moodRange(summary);
@@ -140,6 +140,21 @@ function buildLines(summary: PeriodSummary, longestStreak: number): SummaryLine[
       label: "しんどさのサイン",
       value: parts.join("・"),
       note: `サインについて答えた${warning.answeredDays}日分`,
+    });
+  }
+
+  if (goalReview.answeredDays > 0) {
+    const { done, partial } = goalReview.countByStatus;
+    // 服薬と同じ形にする。日数で示し、できなかった日数は項目として並べない。
+    // 母数は note に置くので、本人は残りを自分で読み取れる。
+    // 数えるのは選択式の結果だけで、本人が書いた目標の文面はここへ出さない。
+    const parts = [`できた ${done}日`];
+    if (partial > 0) parts.push(`一部できた ${partial}日`);
+    lines.push({
+      id: "goal-review",
+      label: "目標のふりかえり",
+      value: parts.join("・"),
+      note: `ふりかえった${goalReview.answeredDays}日分`,
     });
   }
 
