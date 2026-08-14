@@ -205,6 +205,49 @@ describe("summarizePeriod", () => {
     });
   });
 
+  it("目標のふりかえりを結果ごとの日数で返す", () => {
+    const summary = summarizePeriod(
+      [
+        makeRecord({ id: "a", date: "2026-07-21", goalReviewStatus: "done" }),
+        makeRecord({ id: "b", date: "2026-07-22", goalReviewStatus: "partial" }),
+        makeRecord({ id: "c", date: "2026-07-23", goalReviewStatus: "done" }),
+        makeRecord({ id: "d", date: "2026-07-24", goalReviewStatus: null }),
+      ],
+      "2026-07-21",
+      "2026-07-24"
+    );
+
+    // 母数は記録があった4日ではなく、ふりかえりを選んだ3日
+    expect(summary.goalReview.answeredDays).toBe(3);
+    expect(summary.goalReview.countByStatus).toEqual({
+      done: 2,
+      partial: 1,
+      notDone: 0,
+    });
+  });
+
+  it("目標を決めていてもふりかえらなかった日は母数に入れない", () => {
+    const summary = summarizePeriod(
+      [
+        makeRecord({
+          id: "a",
+          date: "2026-07-21",
+          tomorrowGoal: "散歩する",
+          goalReviewStatus: null,
+        }),
+      ],
+      "2026-07-21",
+      "2026-07-21"
+    );
+
+    expect(summary.goalReview.answeredDays).toBe(0);
+    expect(summary.goalReview.countByStatus).toEqual({
+      done: 0,
+      partial: 0,
+      notDone: 0,
+    });
+  });
+
   it("記録が1件もなくても暦日数を返し、集計値はすべて null になる", () => {
     const summary = summarizePeriod([], "2026-07-21", "2026-07-27");
 
@@ -224,6 +267,8 @@ describe("summarizePeriod", () => {
           note: "自由記述の内容",
           warningNote: "警告のメモ",
           selfCareMemo: "セルフケアのメモ",
+          tomorrowGoal: "目標の文面",
+          goalReviewStatus: "done",
         }),
       ],
       "2026-07-21",
@@ -235,5 +280,8 @@ describe("summarizePeriod", () => {
     expect(serialized).not.toContain("自由記述の内容");
     expect(serialized).not.toContain("警告のメモ");
     expect(serialized).not.toContain("セルフケアのメモ");
+    // 目標は選択式の結果だけを数え、本人が書いた文面は持たない
+    expect(serialized).not.toContain("目標の文面");
+    expect(summary.goalReview.countByStatus.done).toBe(1);
   });
 });

@@ -177,6 +177,58 @@ describe("buildWeeklySummary の各項目", () => {
     expect(line?.value).toBe("あり 1日・なし 1日");
   });
 
+  it("目標のふりかえりを割合ではなく日数で示す", () => {
+    const line = lineById(
+      [
+        makeRecord("2026-07-21", { goalReviewStatus: "done" }),
+        makeRecord("2026-07-22", { goalReviewStatus: "partial" }),
+        makeRecord("2026-07-23", { goalReviewStatus: "notDone" }),
+      ],
+      "goal-review"
+    );
+
+    // 達成率にすると、できなかった側が強調される
+    expect(line?.value).toBe("できた 1日・一部できた 1日");
+    expect(line?.value).not.toContain("%");
+    expect(line?.note).toBe("ふりかえった3日分");
+  });
+
+  it("できなかった日数を項目として並べない", () => {
+    const line = lineById(
+      [
+        makeRecord("2026-07-21", { goalReviewStatus: "notDone" }),
+        makeRecord("2026-07-22", { goalReviewStatus: "notDone" }),
+      ],
+      "goal-review"
+    );
+
+    expect(line?.value).toBe("できた 0日");
+    expect(line?.value).not.toContain("できなかった");
+  });
+
+  it("ふりかえりを選んだ日がなければ目標の行を出さない", () => {
+    const line = lineById(
+      [makeRecord("2026-07-21", { tomorrowGoal: "散歩する" })],
+      "goal-review"
+    );
+
+    // 目標を決めただけの日を、ふりかえりの母数に見せない
+    expect(line).toBeUndefined();
+  });
+
+  it("本人が書いた目標の文面をまとめへ出さない", () => {
+    const records = [
+      makeRecord("2026-07-21", {
+        tomorrowGoal: "目標の文面",
+        goalReviewStatus: "done",
+      }),
+    ];
+    const summary = buildWeeklySummary(records, selfCareItems, FROM, TO);
+
+    expect(JSON.stringify(summary)).not.toContain("目標の文面");
+    expect(buildWeeklySummaryText(summary)).not.toContain("目標の文面");
+  });
+
   it("連続して記録できた日数は2日以上のときだけ出す", () => {
     const single = lineById([makeRecord("2026-07-21")], "streak");
     expect(single).toBeUndefined();

@@ -130,6 +130,35 @@ describe("WeeklySummaryCard の表示", () => {
     });
   });
 
+  it("目標のふりかえりを日数と母数で出す", async () => {
+    mockData([
+      makeRecord(daysAgo(0), { goalReviewStatus: "done" }),
+      makeRecord(daysAgo(1), { goalReviewStatus: "partial" }),
+    ]);
+    render(<WeeklySummaryCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText("目標のふりかえり")).toBeTruthy();
+    });
+    expect(screen.getByText("できた 1日・一部できた 1日")).toBeTruthy();
+    expect(screen.getByText("ふりかえった2日分")).toBeTruthy();
+  });
+
+  it("本人が書いた目標の文面を画面に出さない", async () => {
+    mockData([
+      makeRecord(daysAgo(0), {
+        tomorrowGoal: "目標の文面",
+        goalReviewStatus: "done",
+      }),
+    ]);
+    render(<WeeklySummaryCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText("目標のふりかえり")).toBeTruthy();
+    });
+    expect(document.body.textContent ?? "").not.toContain("目標の文面");
+  });
+
   it("メモ本文を画面に出さない", async () => {
     mockData([
       makeRecord(daysAgo(0), {
