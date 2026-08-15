@@ -8,6 +8,12 @@ export type StateLevel = "good" | "normal" | "hard";
 
 export type GoalReviewStatus = "done" | "partial" | "notDone";
 
+/**
+ * その日のセルフケアをやってみた感想。
+ * 本人や結果の評価ではなく、その行動が自分に合ったかどうかだけを選ぶ。
+ */
+export type SelfCareFeeling = "good" | "neutral" | "notFit";
+
 export type MoodLabelCategory =
   | "ポジティブ"
   | "ややポジティブ"
@@ -35,6 +41,8 @@ export interface DailyRecord {
   warningNote: string;
   selfCareIds: string[];
   selfCareMemo: string;
+  /** その日のセルフケアの感想。選択式のみで、未選択なら null */
+  selfCareFeeling: SelfCareFeeling | null;
   note: string;
   /** この日に決めた「翌日の小さな目標」。未設定なら空文字 */
   tomorrowGoal: string;

@@ -38,6 +38,15 @@ export const COPY = {
     helperHeading: "次は、もう少し小さくできそうですか？",
     suggestionHint: "選ぶと、翌日の目標に入ります",
   },
+  /** 記録した状態から、その日に選べそうなセルフケア行動へつなぐ入口 */
+  selfCareSuggestion: {
+    title: "自分メンテ",
+    description:
+      "今日の状態から、選べそうなことを並べています。選ぶと「できること」に登録され、今日できたこととして残ります。",
+    notice:
+      "体調を判断したり、治し方を示すものではありません。合わないものは選ばなくて構いません。",
+    feelingHeading: "やってみて、どうでしたか？（任意）",
+  },
   notEntered: "まだ入力していません",
   sleepNotEntered: "まだ入力していません",
   chartWarningDescription: "なし／少しあり／あり の3段階で表示します",

@@ -23,6 +23,7 @@ import {
 import { SaveRecordButton } from "@/components/shared/save-record-button";
 import { MoodCategoryDialog } from "@/components/mood/mood-category-dialog";
 import { GoalReviewCard } from "@/components/goal/goal-review-card";
+import { SelfCareSuggestionCard } from "@/components/selfcare/self-care-suggestion-card";
 import { CompletionChoice } from "@/components/completion/completion-choice";
 import { trackRecordSaved } from "@/lib/analytics";
 import { COPY } from "@/lib/copy";
@@ -39,6 +40,7 @@ import {
   MOOD_LABEL_NEUTRAL,
   MOOD_LABEL_POSITIVE,
   MOOD_OPTIONS,
+  SELF_CARE_FEELING_OPTIONS,
   STATE_LEVEL_OPTIONS,
   WARNING_LEVEL_OPTIONS,
   WARNING_TAGS_MOOD,
@@ -286,13 +288,42 @@ export function TodayRecordTab({
   const toggleSelfCare = (id: string) => {
     setForm((prev) => {
       const has = prev.selfCareIds.includes(id);
+      const selfCareIds = has
+        ? prev.selfCareIds.filter((sid) => sid !== id)
+        : [...prev.selfCareIds, id];
       return {
         ...prev,
-        selfCareIds: has
-          ? prev.selfCareIds.filter((sid) => sid !== id)
-          : [...prev.selfCareIds, id],
+        selfCareIds,
+        // 実施をすべて外したら、感想も残さない（画面から消えた値を保存しない）
+        selfCareFeeling:
+          selfCareIds.length === 0 ? null : prev.selfCareFeeling,
       };
     });
+  };
+
+  /**
+   * 自分メンテの案を「できること」へ登録し、その日の実施として選ぶ。
+   * 同じ名前がすでにあれば登録し直さず、辞書が二重にならないようにする。
+   */
+  const handleToggleSuggestion = async (title: string) => {
+    const existing = selfCareItems.find((item) => item.title === title);
+    if (existing) {
+      toggleSelfCare(existing.id);
+      return;
+    }
+    if (addingSelfCare) return;
+    setAddingSelfCare(true);
+    const result = await addSelfCareItem(title);
+    setAddingSelfCare(false);
+    if (!result.ok) {
+      setLiveMessage(storageErrorMessage(result.error));
+      return;
+    }
+    setSelfCareItems((items) => [...items, result.value]);
+    setForm((prev) => ({
+      ...prev,
+      selfCareIds: [...prev.selfCareIds, result.value.id],
+    }));
   };
 
   const handleAddSelfCareInline = async () => {
@@ -344,6 +375,10 @@ export function TodayRecordTab({
 
   const showWarningTags =
     form.warningLevel === "small" || form.warningLevel === "yes";
+
+  const selectedSelfCareTitles = selfCareItems
+    .filter((item) => form.selfCareIds.includes(item.id))
+    .map((item) => item.title);
 
   const warningHasContent =
     (form.warningLevel !== null && form.warningLevel !== "none") ||
@@ -545,6 +580,14 @@ export function TodayRecordTab({
           }
         />
       )}
+
+      {/* 記録した状態から、その日に選べそうなセルフケアへつなぐ */}
+      <SelfCareSuggestionCard
+        stateLevel={stateLevel}
+        warningTags={form.warningTags}
+        selectedTitles={selectedSelfCareTitles}
+        onToggle={(title) => void handleToggleSuggestion(title)}
+      />
 
       <CollapsibleSection
         title="くわしく書く（任意）"
@@ -863,6 +906,34 @@ export function TodayRecordTab({
                 ? `${COPY.doneTodayToday}を追加`
                 : `${COPY.doneToday}を追加`}
             </Button>
+          )}
+
+          {/* 実施を選んだ日だけ、やってみた感想を選択式で残せるようにする */}
+          {form.selfCareIds.length > 0 && (
+            <div className="border-t border-border pt-3">
+              <Label className="mb-2 block text-sm text-muted-foreground">
+                {COPY.selfCareSuggestion.feelingHeading}
+              </Label>
+              <SelectionGroup legend="やってみた感想" mode="radio">
+                {SELF_CARE_FEELING_OPTIONS.map(({ value, label }) => (
+                  <SelectionControl
+                    key={value}
+                    selected={form.selfCareFeeling === value}
+                    mode="radio"
+                    layout="row"
+                    onClick={() =>
+                      setForm((prev) => ({
+                        ...prev,
+                        selfCareFeeling:
+                          prev.selfCareFeeling === value ? null : value,
+                      }))
+                    }
+                  >
+                    {label}
+                  </SelectionControl>
+                ))}
+              </SelectionGroup>
+            </div>
           )}
 
           <button

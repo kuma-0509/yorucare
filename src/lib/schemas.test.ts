@@ -88,6 +88,34 @@ describe("目標フィールドの後方互換", () => {
   });
 });
 
+describe("セルフケアの感想フィールドの後方互換", () => {
+  it("感想フィールドがない版2以前の保存データをそのまま読める", () => {
+    // validRecord は selfCareFeeling を持たない旧データ
+    const result = parseRecordsJson([validRecord]);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data[0].selfCareFeeling).toBeNull();
+    }
+  });
+
+  it("保存済みの感想を保持する", () => {
+    const result = parseRecordsJson([
+      { ...validRecord, selfCareFeeling: "notFit" },
+    ]);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data[0].selfCareFeeling).toBe("notFit");
+    }
+  });
+
+  it("未定義の感想を拒否する", () => {
+    const result = parseRecordsJson([
+      { ...validRecord, selfCareFeeling: "とてもよかった" },
+    ]);
+    expect(result.success).toBe(false);
+  });
+});
+
 describe("parseExportPayload", () => {
   it("正しいエクスポート形式を受け付ける", () => {
     const result = parseExportPayload({

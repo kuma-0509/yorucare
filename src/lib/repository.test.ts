@@ -157,3 +157,83 @@ describe("目標フィールド追加後の保存データ移行", () => {
     });
   });
 });
+
+/** セルフケアの感想を持たない、版2時点の保存データ */
+const RECORD_BEFORE_SELF_CARE_FEELING = {
+  ...RECORD_BEFORE_GOAL_FIELDS,
+  selfCareIds: ["s1"],
+  selfCareMemo: "前の版で書いたセルフケアのメモ",
+  tomorrowGoal: "昼休みに5分だけ外に出る",
+  goalReviewStatus: "done",
+};
+
+describe("セルフケアの感想フィールド追加後の保存データ移行", () => {
+  beforeEach(() => {
+    localStorage.setItem(
+      STORAGE_KEYS.records,
+      JSON.stringify([RECORD_BEFORE_SELF_CARE_FEELING])
+    );
+    localStorage.setItem(STORAGE_KEYS.schemaVersion, "2");
+  });
+
+  it("版2の記録を移行なしでも読める", async () => {
+    const result = await typedRepository.getAllRecords();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toHaveLength(1);
+      expect(result.value[0].selfCareFeeling).toBeNull();
+    }
+  });
+
+  it("移行後も版2までの入力内容を失わない", async () => {
+    const migrated = await typedRepository.runStorageMigrations();
+    expect(migrated.ok).toBe(true);
+
+    const result = await typedRepository.getAllRecords();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value[0].note).toBe("前の版で書いたメモ");
+      expect(result.value[0].selfCareMemo).toBe(
+        "前の版で書いたセルフケアのメモ"
+      );
+      expect(result.value[0].selfCareIds).toEqual(["s1"]);
+      expect(result.value[0].tomorrowGoal).toBe("昼休みに5分だけ外に出る");
+      expect(result.value[0].goalReviewStatus).toBe("done");
+      expect(result.value[0].createdAt).toBe("2026-08-01T00:00:00.000Z");
+    }
+  });
+
+  it("移行後は保存データの版が最新になる", async () => {
+    await typedRepository.runStorageMigrations();
+
+    expect(localStorage.getItem(STORAGE_KEYS.schemaVersion)).toBe(
+      String(STORAGE_SCHEMA_VERSION)
+    );
+  });
+
+  it("移行で感想フィールドが保存形にも書き込まれる", async () => {
+    await typedRepository.runStorageMigrations();
+
+    const raw = localStorage.getItem(STORAGE_KEYS.records) ?? "[]";
+    const stored = JSON.parse(raw) as Record<string, unknown>[];
+    expect(stored[0]).toMatchObject({ selfCareFeeling: null });
+  });
+
+  it("保存済みの感想は移行で書き換えない", async () => {
+    localStorage.setItem(
+      STORAGE_KEYS.records,
+      JSON.stringify([
+        { ...RECORD_BEFORE_SELF_CARE_FEELING, selfCareFeeling: "good" },
+      ])
+    );
+
+    await typedRepository.runStorageMigrations();
+
+    const result = await typedRepository.getAllRecords();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value[0].selfCareFeeling).toBe("good");
+    }
+  });
+});

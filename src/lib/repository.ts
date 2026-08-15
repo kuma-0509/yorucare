@@ -195,6 +195,7 @@ const localStorageRepository: LocalStorageRepository = {
       warningNote: data.warningNote,
       selfCareIds: data.selfCareIds,
       selfCareMemo: data.selfCareMemo,
+      selfCareFeeling: data.selfCareFeeling,
       note: data.note,
       tomorrowGoal: data.tomorrowGoal,
       goalReviewStatus: data.goalReviewStatus,
@@ -485,6 +486,7 @@ export function createEmptyRecordForm(date: string): Omit<
     warningNote: "",
     selfCareIds: [],
     selfCareMemo: "",
+    selfCareFeeling: null,
     note: "",
     tomorrowGoal: "",
     goalReviewStatus: null,
@@ -508,6 +510,7 @@ export function recordToFormState(
     warningNote: record.warningNote,
     selfCareIds: [...record.selfCareIds],
     selfCareMemo: record.selfCareMemo,
+    selfCareFeeling: record.selfCareFeeling,
     note: record.note,
     tomorrowGoal: record.tomorrowGoal,
     goalReviewStatus: record.goalReviewStatus,
@@ -528,6 +531,7 @@ export function isRecordEmpty(
     !form.warningNote &&
     form.selfCareIds.length === 0 &&
     !form.selfCareMemo &&
+    form.selfCareFeeling === null &&
     !form.note &&
     form.tomorrowGoal.trim().length === 0 &&
     form.goalReviewStatus === null
@@ -553,6 +557,7 @@ export function isDailyRecordEmpty(record: DailyRecord): boolean {
     warningNote: record.warningNote,
     selfCareIds: record.selfCareIds,
     selfCareMemo: record.selfCareMemo,
+    selfCareFeeling: record.selfCareFeeling,
     note: record.note,
     tomorrowGoal: record.tomorrowGoal,
     goalReviewStatus: record.goalReviewStatus,
