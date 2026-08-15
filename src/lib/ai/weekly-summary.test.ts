@@ -29,6 +29,7 @@ function makeRecord(
     warningNote: "",
     selfCareIds: [],
     selfCareMemo: "",
+    selfCareFeeling: null,
     note: "",
     tomorrowGoal: "",
     goalReviewStatus: null,

@@ -17,6 +17,7 @@ function makeRecord(overrides: Partial<DailyRecord> = {}): DailyRecord {
     warningNote: "",
     selfCareIds: [],
     selfCareMemo: "",
+    selfCareFeeling: null,
     note: "",
     tomorrowGoal: "",
     goalReviewStatus: null,
@@ -121,5 +122,19 @@ describe("buildDailyViews", () => {
     );
 
     expect(views[0].moodLabels).toEqual(["つかれた"]);
+  });
+});
+
+describe("セルフケアの感想の扱い", () => {
+  it("感想を戻り値に含めない", () => {
+    const views = buildDailyViews(
+      [makeRecord({ selfCareFeeling: "notFit" })],
+      selfCareItems,
+      "2026-07-21",
+      "2026-07-21"
+    );
+
+    expect(views[0]).not.toHaveProperty("selfCareFeeling");
+    expect(JSON.stringify(views)).not.toContain("notFit");
   });
 });

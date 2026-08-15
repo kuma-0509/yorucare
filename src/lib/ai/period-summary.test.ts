@@ -17,6 +17,7 @@ function makeRecord(overrides: Partial<DailyRecord> = {}): DailyRecord {
     warningNote: "",
     selfCareIds: [],
     selfCareMemo: "",
+    selfCareFeeling: null,
     note: "",
     tomorrowGoal: "",
     goalReviewStatus: null,
@@ -283,5 +284,23 @@ describe("summarizePeriod", () => {
     // 目標は選択式の結果だけを数え、本人が書いた文面は持たない
     expect(serialized).not.toContain("目標の文面");
     expect(summary.goalReview.countByStatus.done).toBe(1);
+  });
+});
+
+describe("セルフケアの感想の扱い", () => {
+  it("感想を集計にも戻り値にも含めない", () => {
+    const summary = summarizePeriod(
+      [
+        makeRecord({ id: "a", date: "2026-07-21", selfCareFeeling: "good" }),
+        makeRecord({ id: "b", date: "2026-07-22", selfCareFeeling: "notFit" }),
+      ],
+      "2026-07-21",
+      "2026-07-22"
+    );
+
+    expect(summary).not.toHaveProperty("selfCareFeeling");
+    const serialized = JSON.stringify(summary);
+    expect(serialized).not.toContain("notFit");
+    expect(serialized).not.toContain("selfCareFeeling");
   });
 });

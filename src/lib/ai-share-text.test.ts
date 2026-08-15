@@ -17,6 +17,7 @@ function makeRecord(overrides: Partial<DailyRecord> = {}): DailyRecord {
     warningNote: "早めに休む",
     selfCareIds: ["s1"],
     selfCareMemo: "少し楽になった",
+    selfCareFeeling: "good",
     note: "自由記述の内容",
     tomorrowGoal: "",
     goalReviewStatus: null,
@@ -105,5 +106,23 @@ describe("buildAiShareText", () => {
       ok: false,
       message: "選んだ期間には共有できる記録がありません。",
     });
+  });
+});
+
+describe("セルフケアの感想の扱い", () => {
+  it("感想を共有テキストに出さない", () => {
+    const result = buildAiShareText({
+      records: [makeRecord({ selfCareFeeling: "notFit" })],
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-21",
+      fields: ["selfCare"],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.text).not.toContain("感想");
+    expect(result.text).not.toContain("合わなかった");
+    expect(result.text).not.toContain("やってよかった");
   });
 });

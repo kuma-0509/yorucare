@@ -2,6 +2,7 @@ import type {
   GoalReviewStatus,
   MedicationStatus,
   MoodScore,
+  SelfCareFeeling,
   StateLevel,
   WarningLevel,
 } from "./types";
@@ -32,6 +33,19 @@ export const GOAL_REVIEW_OPTIONS: {
   { value: "done", label: "できた" },
   { value: "partial", label: "一部できた" },
   { value: "notDone", label: "できなかった" },
+];
+
+/**
+ * やってみた感想。合ったかどうかだけを選び、本人の努力や結果は評価しない。
+ * 「合わなかった」を最後に置き、できた側から並べる他の選択肢と向きを揃える。
+ */
+export const SELF_CARE_FEELING_OPTIONS: {
+  value: SelfCareFeeling;
+  label: string;
+}[] = [
+  { value: "good", label: "やってよかった" },
+  { value: "neutral", label: "ふつう" },
+  { value: "notFit", label: "今日は合わなかった" },
 ];
 
 export const MOOD_LABEL_POSITIVE = [
