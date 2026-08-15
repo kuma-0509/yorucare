@@ -99,6 +99,12 @@ export const selfCareItemSchema = z.object({
 export const exportPayloadSchema = z.object({
   version: z.literal(EXPORT_VERSION),
   exportedAt: timestampSchema,
+  /**
+   * 積み重ねの起点として本人が設定した復職日。未設定なら null。
+   * 既定値を持たせ、フィールドがない既存の書き出しもそのまま読めるようにする。
+   * 追加しても取り込み互換が壊れないため EXPORT_VERSION は据え置く。
+   */
+  returnDate: dateSchema.nullable().default(null),
   records: z.array(dailyRecordSchema).max(MAX_IMPORT_RECORDS),
   selfCareItems: z.array(selfCareItemSchema).max(MAX_IMPORT_SELF_CARE),
 });
@@ -111,6 +117,16 @@ export function parseRecordsJson(raw: unknown): z.ZodSafeParseResult<z.infer<typ
 
 export function parseSelfCareJson(raw: unknown): z.ZodSafeParseResult<z.infer<typeof selfCareItemSchema>[]> {
   return z.array(selfCareItemSchema).safeParse(raw);
+}
+
+/**
+ * 保存済みの復職日を読む。形式が違えば未設定として扱う。
+ * 表示の起点にすぎず、壊れていても記録の読み書きを止める理由にはならないため、
+ * エラーにせず既定（最初の記録日）へ落とす。
+ */
+export function parseReturnDate(raw: unknown): string | null {
+  const parsed = dateSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
 }
 
 export function parseExportPayload(

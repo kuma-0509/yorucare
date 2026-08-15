@@ -4,6 +4,7 @@ import {
   EXPORT_VERSION,
   parseExportPayload,
   parseRecordsJson,
+  parseReturnDate,
   parseSelfCareJson,
   STORAGE_SCHEMA_VERSION,
   type ExportPayload,
@@ -45,6 +46,10 @@ export interface Repository {
   addSelfCareItem(title: string): Promise<Result<SelfCareItem>>;
   updateSelfCareItem(id: string, title: string): Promise<Result<SelfCareItem>>;
   deleteSelfCareItem(id: string): Promise<Result<void>>;
+  /** 積み重ねの起点として本人が設定した復職日。未設定なら null */
+  getReturnDate(): Promise<Result<string | null>>;
+  /** 復職日を設定する。null を渡すと未設定へ戻す */
+  saveReturnDate(date: string | null): Promise<Result<void>>;
   buildExportPayload(): Promise<Result<ExportPayload>>;
   importBackup(jsonText: string): Promise<Result<ImportSummary>>;
   runStorageMigrations(): Promise<Result<void>>;
@@ -313,15 +318,51 @@ const localStorageRepository: LocalStorageRepository = {
     );
   },
 
+  async getReturnDate(): Promise<Result<string | null>> {
+    if (!isBrowser()) return ok(null);
+    try {
+      return ok(parseReturnDate(localStorage.getItem(STORAGE_KEYS.returnDate)));
+    } catch {
+      return ok(null);
+    }
+  },
+
+  async saveReturnDate(date: string | null): Promise<Result<void>> {
+    if (!isBrowser()) return err({ code: "BROWSER_ONLY" });
+
+    if (date === null) {
+      try {
+        localStorage.removeItem(STORAGE_KEYS.returnDate);
+        return ok(undefined);
+      } catch {
+        return err({
+          code: "WRITE_FAILED",
+          message: "復職日の削除に失敗しました。",
+        });
+      }
+    }
+
+    if (parseReturnDate(date) === null) {
+      return err({
+        code: "VALIDATION_FAILED",
+        message: "日付の形式が正しくありません。",
+      });
+    }
+    return writeRaw(STORAGE_KEYS.returnDate, date);
+  },
+
   async buildExportPayload(): Promise<Result<ExportPayload>> {
     const records = readRecords();
     if (!records.ok) return records;
     const selfCare = readSelfCareItems();
     if (!selfCare.ok) return selfCare;
+    const returnDate = await localStorageRepository.getReturnDate();
+    if (!returnDate.ok) return returnDate;
 
     return ok({
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
+      returnDate: returnDate.value,
       records: records.value,
       selfCareItems: selfCare.value,
     });
@@ -362,7 +403,11 @@ const localStorageRepository: LocalStorageRepository = {
   async applyImport(payload: ExportPayload): Promise<Result<void>> {
     const recordsWrite = writeRecords(payload.records);
     if (!recordsWrite.ok) return recordsWrite;
-    return writeSelfCareItems(payload.selfCareItems);
+    const selfCareWrite = writeSelfCareItems(payload.selfCareItems);
+    if (!selfCareWrite.ok) return selfCareWrite;
+    // 復職日を持たない書き出しからの取り込みでは、既定値の null で未設定へ戻す。
+    // 端末に残った前の設定が、取り込んだ記録の起点として残らないようにする。
+    return localStorageRepository.saveReturnDate(payload.returnDate);
   },
 
   async clearImportRollback(): Promise<Result<void>> {

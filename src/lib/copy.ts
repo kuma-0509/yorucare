@@ -47,6 +47,24 @@ export const COPY = {
       "体調を判断したり、治し方を示すものではありません。合わないものは選ばなくて構いません。",
     feelingHeading: "やってみて、どうでしたか？（任意）",
   },
+  /** 起点からの積み重ね。連続記録を主役にせず、中断で減らない累計を先に置く */
+  accumulation: {
+    title: "積み重ね",
+    description:
+      "書けた日を数えています。空いた日があっても、これまでの記録は減りません。",
+    milestoneHeading: "節目",
+    nextPrefix: "つぎは",
+    notReached: "これから",
+    startHeading: "復職日",
+    startDescription:
+      "積み重ねを数えはじめる日です。設定しなければ、はじめて記録した日から数えます。",
+    startEditAction: "復職日を設定する",
+    startChangeAction: "復職日を変更する",
+    startClearAction: "設定を消す",
+    startSaved: "復職日を設定しました。",
+    startCleared: "復職日の設定を消しました。はじめて記録した日から数えます。",
+    startNotice: "復職日はこの端末にだけ保存され、どこへも送信しません。",
+  },
   notEntered: "まだ入力していません",
   sleepNotEntered: "まだ入力していません",
   chartWarningDescription: "なし／少しあり／あり の3段階で表示します",

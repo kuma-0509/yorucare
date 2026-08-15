@@ -237,3 +237,97 @@ describe("セルフケアの感想フィールド追加後の保存データ移�
     }
   });
 });
+
+describe("積み重ねの起点となる復職日", () => {
+  it("未設定なら null を返す", async () => {
+    await expect(typedRepository.getReturnDate()).resolves.toEqual({
+      ok: true,
+      value: null,
+    });
+  });
+
+  it("設定した日付を読み書きできる", async () => {
+    const saved = await typedRepository.saveReturnDate("2026-04-01");
+
+    expect(saved.ok).toBe(true);
+    await expect(typedRepository.getReturnDate()).resolves.toEqual({
+      ok: true,
+      value: "2026-04-01",
+    });
+  });
+
+  it("null を渡すと未設定へ戻す", async () => {
+    await typedRepository.saveReturnDate("2026-04-01");
+    const cleared = await typedRepository.saveReturnDate(null);
+
+    expect(cleared.ok).toBe(true);
+    await expect(typedRepository.getReturnDate()).resolves.toEqual({
+      ok: true,
+      value: null,
+    });
+  });
+
+  it("形式が違う日付は保存しない", async () => {
+    const result = await typedRepository.saveReturnDate("2026/04/01");
+
+    expect(result.ok).toBe(false);
+    expect(localStorage.getItem(STORAGE_KEYS.returnDate)).toBeNull();
+  });
+
+  it("保存済みの値が壊れていても未設定として読む", async () => {
+    localStorage.setItem(STORAGE_KEYS.returnDate, "こわれた値");
+
+    await expect(typedRepository.getReturnDate()).resolves.toEqual({
+      ok: true,
+      value: null,
+    });
+  });
+
+  it("書き出しに復職日を含める", async () => {
+    await typedRepository.saveReturnDate("2026-04-01");
+
+    const payload = await typedRepository.buildExportPayload();
+
+    expect(payload.ok).toBe(true);
+    if (payload.ok) {
+      expect(payload.value.returnDate).toBe("2026-04-01");
+    }
+  });
+
+  it("取り込みで復職日を復元する", async () => {
+    const result = await typedRepository.importBackup(
+      JSON.stringify({
+        version: 1,
+        exportedAt: "2026-08-15T00:00:00.000Z",
+        returnDate: "2026-04-01",
+        records: [],
+        selfCareItems: [],
+      })
+    );
+
+    expect(result.ok).toBe(true);
+    await expect(typedRepository.getReturnDate()).resolves.toEqual({
+      ok: true,
+      value: "2026-04-01",
+    });
+  });
+
+  it("復職日を持たない書き出しを取り込むと未設定へ戻す", async () => {
+    await typedRepository.saveReturnDate("2026-04-01");
+
+    const result = await typedRepository.importBackup(
+      JSON.stringify({
+        version: 1,
+        exportedAt: "2026-08-15T00:00:00.000Z",
+        records: [],
+        selfCareItems: [],
+      })
+    );
+
+    expect(result.ok).toBe(true);
+    await expect(typedRepository.getReturnDate()).resolves.toEqual({
+      ok: true,
+      value: null,
+    });
+  });
+});
