@@ -145,6 +145,8 @@ export const STORAGE_KEYS = {
   lastBackupAt: "yorucare_last_backup_at",
   installId: "yorucare_install_id",
   completionLog: "yorucare_completion_log",
+  /** 積み重ねを数える起点として本人が設定した復職日。未設定なら最初の記録日を使う */
+  returnDate: "yorucare_return_date",
 } as const;
 
 /** 利用者向けふりかえりタブに表示する予定機能（短く） */

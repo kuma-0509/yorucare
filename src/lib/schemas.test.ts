@@ -3,6 +3,7 @@ import {
   EXPORT_VERSION,
   MAX_GOAL_LENGTH,
   parseExportPayload,
+  parseReturnDate,
   parseRecordsJson,
 } from "./schemas";
 
@@ -140,5 +141,57 @@ describe("parseExportPayload", () => {
   it("壊れた入力を拒否する", () => {
     expect(parseExportPayload(null).ok).toBe(false);
     expect(parseExportPayload({}).ok).toBe(false);
+  });
+});
+
+describe("復職日の後方互換", () => {
+  it("復職日を持たない書き出しを読める", () => {
+    const result = parseExportPayload({
+      version: EXPORT_VERSION,
+      exportedAt: "2026-01-05T00:00:00.000Z",
+      records: [validRecord],
+      selfCareItems: [],
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.returnDate).toBeNull();
+    }
+  });
+
+  it("復職日を持つ書き出しを読める", () => {
+    const result = parseExportPayload({
+      version: EXPORT_VERSION,
+      exportedAt: "2026-01-05T00:00:00.000Z",
+      returnDate: "2026-04-01",
+      records: [],
+      selfCareItems: [],
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.returnDate).toBe("2026-04-01");
+    }
+  });
+
+  it("形式が違う復職日を持つ書き出しは拒否する", () => {
+    const result = parseExportPayload({
+      version: EXPORT_VERSION,
+      exportedAt: "2026-01-05T00:00:00.000Z",
+      returnDate: "2026/04/01",
+      records: [],
+      selfCareItems: [],
+    });
+
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe("parseReturnDate", () => {
+  it("YYYY-MM-DD だけを受け付ける", () => {
+    expect(parseReturnDate("2026-04-01")).toBe("2026-04-01");
+    expect(parseReturnDate("2026/04/01")).toBeNull();
+    expect(parseReturnDate(null)).toBeNull();
+    expect(parseReturnDate(42)).toBeNull();
   });
 });

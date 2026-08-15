@@ -1,55 +1,54 @@
 # Handoff
 
 日付: 2026-08-15
-担当チャット: 4件目
+担当チャット: 5件目
 
 ## 今回実装したタスク
 
-- DEVELOPMENT_BOARD.md「記録した状態から実行しやすいセルフケア行動へつなげる仕組みが不足している」（自分メンテ）
-- 記録画面に「自分メンテ」カードを追加し、記録した状態から選べそうなセルフケア案を出すようにした。提案は `src/lib/self-care.ts` の定型ルールだけで組み、LLMも外部通信も使わない。既存の `src/lib/goal.ts` と同じく、ルールと文言をライブラリ側に置き、コンポーネントは並べ方だけを持つ。
-- 既存の「できること」（`SelfCareItem`）とは**役割を一本化**した。案を押すと `SelfCareItem` として登録され、その日の `selfCareIds` に入る。つまり実施可否は既存の記録経路そのままで残る。同じ名前がすでにあれば登録し直さず、その項目を選ぶだけにして辞書が二重にならないようにしている。
-- 実施後の感想は選択式だけにし、`DailyRecord.selfCareFeeling`（`good` / `neutral` / `notFit`、未選択は `null`）を追加した。自由記述の置き場を増やさないため、本文フィールドは作っていない。
-- 出し分けの入力は `StateLevel`（3段階、`src/lib/state-level.ts`）と選択式の `warningTags` の2つだけ。どちらも本人の自由記述ではない。タグは個々のサインと1対1で対応させず、既存の3区分（睡眠・気分・仕事）ごとにまとめて案を足す。個別のサインに対する処置の提示に読ませないため。「その他」タグは内容が分からないので案を変えない。
-- 上限は4件。タグ由来の案は `上限 - 1` 件までに抑え、状態由来の案が必ず1件は残るようにした。状態が主で、タグは絞り込みという位置づけを保つため。
-- `DailyRecord` にフィールドを追加したため、Zodに既定値（`null`）を付け、`STORAGE_SCHEMA_VERSION` を2から3へ上げた。`EXPORT_VERSION` は取り込み互換のため1のまま据え置き。
+- DEVELOPMENT_BOARD.md「継続や積み重ねを実感しにくくモチベーションを保ちにくい」（積み重ね表示）
+- ふりかえりタブの先頭に「積み重ね」カードを追加した。起点から今日までの「記録した日」「できたことがあった日」「復職からの日数」「続けて書けた日（最長）」を並べ、記録日数の累計と経過日数の節目、節目に届いた日のねぎらいを出す。集計と文言は `src/lib/ai/milestones.ts` に置き、コンポーネントは並べるだけにした（`weekly-summary.ts` と同じ構成）。LLMも外部通信も使わない。
+- **起点は「復職日」として `STORAGE_KEYS.returnDate` に持つ。** `DailyRecord` ではなく設定値。日々の記録に持たせると日ごとに違う値を持ててしまうため。未設定なら最初の記録日を既定の起点にするので、何も設定しなくても表示は成立する。ユーザー確認の結果、画面では「復職日」と明示し、経過日数も「復職からの日数」と呼ぶ（未設定時は「はじめてからの日数」）。
+- **連続日数を主役にしない。** phase2-plan 2節の「未入力や中断を失敗として扱わず、連続記録だけを評価・強調しない」に従い、中断で減らない累計を上に置き、連続は最長を1行だけ最後に添えた。**「いま何日続いているか」は出していない。** 1日空けた翌日に数字が1へ戻る表示は、書けなかった日を目に見える損失として示すことになるため。節目も累計と経過日数だけに置き、連続日数は節目にしていない。
+- 節目は記録日数 1/3/7/14/30/50/100日と、起点からの経過日数 7/30/90/180/365日（1週間・1か月・3か月・6か月・1年）。ねぎらいは、その値にちょうど届いた日だけ出す（過ぎた節目を毎日祝うと言葉が軽くなる）。文面は「記録した日が30日になりました。ここまでおつかれさまです。」の形に固定し、評価語・助言・診断語を出さないことを2つのテストで固定した。
+- `DailyRecord` は変更していないため `STORAGE_SCHEMA_VERSION` は3のまま据え置いた。復職日は独立したキーで、既存の保存形を変えないので移行の対象にならない。書き出し（`ExportPayload`）には既定値 `null` を持つ任意フィールドとして追加したので、`EXPORT_VERSION` は1のままで既存の書き出しもそのまま読める。
 
 ## 変更ファイル
 
-- `src/lib/self-care.ts`（新規）: `buildSelfCareSuggestions` と案の定型ルール
-- `src/lib/self-care.test.ts`（新規）: 出し分け、上限、決定性、診断・治療語を含めないことのテスト
-- `src/components/selfcare/self-care-suggestion-card.tsx`（新規）: 自分メンテのカード
-- `src/components/selfcare/self-care-suggestion-card.test.tsx`（新規）: 表示テスト
-- `src/lib/types.ts`: `SelfCareFeeling` 型と `DailyRecord.selfCareFeeling` を追加
-- `src/lib/schemas.ts`: `selfCareFeeling` のZod定義（既定値 `null`）、`STORAGE_SCHEMA_VERSION` を3へ
-- `src/lib/repository.ts`: `saveRecord` / `createEmptyRecordForm` / `recordToFormState` / `isRecordEmpty` / `isDailyRecordEmpty` に `selfCareFeeling` を反映
-- `src/lib/constants.ts`: `SELF_CARE_FEELING_OPTIONS` を追加
-- `src/lib/copy.ts`: `selfCareSuggestion`（見出し・説明・注意書き・感想の見出し）を追加
-- `src/components/tabs/today-record-tab.tsx`: 自分メンテカードの配置、案から「できること」への登録導線、感想の選択UI
-- テスト（追記・修正）: `src/lib/repository.test.ts`（版2→版3の移行テスト）、`src/lib/schemas.test.ts`（後方互換）、`src/lib/ai/daily-view.test.ts`、`src/lib/ai/period-summary.test.ts`、`src/lib/ai-share-text.test.ts`（感想を外へ出さないことの固定）、および `DailyRecord` を組み立てる既存テストの fixture 更新
+- `src/lib/ai/milestones.ts`（新規）: 累計集計（`summarizeAccumulation`）、節目判定、表示の並べ方と文言（`buildAccumulationBoard`）
+- `src/lib/ai/milestones.test.ts`（新規）: 累計・節目・並び順・禁止語のテスト（29件）
+- `src/components/reflection/accumulation-card.tsx`（新規）: 積み重ねカードと復職日の設定UI
+- `src/components/reflection/accumulation-card.test.tsx`（新規）: 表示テスト（8件）
+- `src/lib/constants.ts`: `STORAGE_KEYS.returnDate` を追加
+- `src/lib/schemas.ts`: `exportPayloadSchema` に `returnDate`（既定値 `null`）、`parseReturnDate` を追加
+- `src/lib/repository.ts`: `getReturnDate` / `saveReturnDate` を `Repository` へ追加し、`buildExportPayload` と `applyImport` を復職日に対応
+- `src/lib/copy.ts`: `COPY.accumulation` を追加
+- `src/components/tabs/reflection-tab.tsx`: 積み重ねカードを週のまとめの上に配置
+- `src/lib/repository.test.ts` / `src/lib/schemas.test.ts`: 復職日の読み書き・検証・書き出し・取り込み・後方互換のテストを追記
+- `docs/DEVELOPMENT_BOARD.md`: 該当行を `完了`（2026-08-15）へ更新し、改善方法を実装内容に合わせて具体化
+- `docs/ai-consent-decision.md`: 1節に復職日を渡さない旨、3節の表に復職日の行、7節「積み重ね表示で決めたこと」を追加（従来の7節は8節へ）
 
 ## 検証結果
 
 - `pnpm lint`: 成功（警告・エラーなし）
-- `pnpm test`: 成功（27 test files / 235 tests。前回の25ファイル・202件から2ファイル・33件増）
+- `pnpm test`: 成功（29 test files / 284 tests。前回の27ファイル・235件から2ファイル・49件増）
 - `pnpm build`: 成功（Compiled successfully、型チェック通過、8ページ生成）。ローカルで完走したため代替検証は不要
 
 ## 次のタスク候補
 
-- DEVELOPMENT_BOARD.md「継続や積み重ねを実感しにくくモチベーションを保ちにくい」（積み重ね表示）。`docs/phase2-plan.md` 5節のP1で最後に残った項目で、記載順でも次に来る。`findStreaks`（`src/lib/ai/streaks.ts`）と `summarizePeriod`（`src/lib/ai/period-summary.ts`）が既にあるため、集計側の土台は揃っている。
-  - 着手前の論点: 「本人が選んだ起点」をどこに持つか。`DailyRecord` ではなく設定値なので、`STORAGE_KEYS` に新しいキーを足すのか、最初の記録日を既定の起点にするのかを先に決める必要がある。前者なら `repository.ts` に読み書きを足し、書き出し・取り込みの対象に含めるかも判断する。
-  - 制約: `phase2-plan.md` 2節に「未入力や中断を失敗として扱わず、連続記録だけを評価・強調しない」とある。連続日数を主役にしない並べ方と、途切れを責めない文言を先に決めること。`findStreaks` は未記録日で連続を途切れさせる実装になっている。
-- P1が終わったあとは、`phase2-plan.md` 5節ではP2（リマインドの最小検証）だが、これはGate 2（固定選択フィードバックの30%以上）を満たすまで着手しない。管理表でも「保留」のまま。実装で進められる残りは、管理表の演出系（改善中・確認待ち・未着手）と「LLM呼び出しと報告書出力が未実装」になる。
+- P1（3段階の入口・翌日のふりかえり・自分メンテ・週次まとめ・積み重ね表示）は、今回でコーディングで進められる分がすべて完了した。`docs/phase2-plan.md` 5節ではP1の次はP2（リマインドの最小検証）だが、これはGate 2（固定選択フィードバックで「忘れる」「始めるきっかけがない」が30%以上）を満たすまで着手しない。管理表でも「保留」のまま。
+- **次点候補は「スマートフォン実機テストの実施結果が文書化されていない」。** P0の残りであり、P1完了後にGate 1の観測へ進むには実機確認が前提になる（phase2-plan 6節の3）。ただし実機操作とヒアリングを伴うため、チャット内のコーディング作業だけでは完了できない。`docs/cowork-task-relay-prompt.md` の運用ルールに従い、「実装」扱いにはできない。次チャットで着手する場合は、`docs/smartphone-test-checklist.md` に今回までに追加した機能（3段階の入口、目標のふりかえり、自分メンテ、週次まとめ、積み重ね表示）の確認項目が入っているかを見直し、チェックリストの更新までを作業範囲にするのが現実的。
+- コーディングで進められる残りは、管理表の演出系（「R3F版『本棚にしまう』演出の品質」＝改善中、「記録完了演出を本番フローへ統合」＝未着手ほか）と「LLM呼び出しと報告書出力が未実装」。後者は `docs/sharing-decision.md` のGateに従うため、本番投入はできない。演出系に進む場合は、下記の未確認論点を先に解消すること。
 
 ## 引き継ぎ事項・注意点
 
-- **感想（`selfCareFeeling`）は外部へ渡る型に入れていない。** `DailyView`（`src/lib/ai/daily-view.ts`）と `PeriodSummary`（`src/lib/ai/period-summary.ts`）はどちらも変更していない。`daily-view.test.ts` と `period-summary.test.ts` に、感想が戻り値に現れないことを確認するテストを置いた。選択式なので方針上は渡せる値だが、利用側を確認せずに戻り値型を広げない、という3件目の判断をそのまま継いでいる。
-- `src/lib/ai-share-text.ts`（本人が全文確認して自分で渡すテキスト）にも感想を追加していない。共有項目を増やすと `AI_SHARE_FIELDS` の選択UIと確認手順に影響するため。`ai-share-text.test.ts` に、感想が共有テキストに出ないことを確認するテストを置いた。
-- `src/lib/format.ts` の `buildRecordSummaryLines`（保存後のまとめ表示）にも感想を追加していない。保存直後のまとめは行数を増やさない方が読みやすいと判断した。追加する場合は `CompletionChoice` へ渡す `summaryTextLines` にも入るため、演出側と併せて確認すること。
-- **自分メンテカードの位置は、状態カードとふりかえりカードの下、「くわしく書く（任意）」の上。** 状態選択の直後という依頼どおりに上部へ置いたが、絞り込みに使う `warningTags` は画面のもっと下（しんどさのサインの節）で入力する。タグを選ぶとカードの案は即座に入れ替わるが、その位置は画面外になりうる。実機テストで「タグを入れても案が変わったことに気づけない」という所見が出たら、カードをしんどさのサインの直後へ動かすことを検討してほしい。
-- 感想の選択UIは自分メンテカードではなく、既存の「できること」カードの中（実施のチップとメモの間）に置いた。実施の記録とすぐ隣に並び、状態を選んでいない日でも感想を残せるようにするため。自分メンテカードは状態を選んだ日にしか出ないので、そちらに置くと感想が出せない日ができてしまう。
-- 実施をすべて外すと感想も `null` に戻す（`toggleSelfCare`）。画面から消えた値をそのまま保存しないため。
-- 提案の文言は `src/lib/self-care.ts` に直接置いており、`COPY` には入れていない。`goal.ts` の `GOAL_HELPER_QUESTIONS` と同じ扱い（ルールと一体の文言はルール側に置く）。画面の見出し・説明・注意書きは `COPY.selfCareSuggestion` にある。
-- 案の文言を足すときは `self-care.test.ts` の「診断・治療・危機判定に読める語を案に含めない」テストが効く。禁止語の一覧はそこにある。
-- `docs/ai-consent-decision.md` は今回も更新した。3節の表に `selfCareFeeling` の行（選択式なので渡してよい）を足し、1節・3節の「渡さない」列挙が本文フィールドだけを指すことを保った。3件目のあと、この文書が `DailyRecord` に目標フィールドがない前提のまま古くなっていたことが分かり、別PR（#12）で1節・3節・6節が修正されている。**`DailyRecord` にフィールドを足すときは、この文書の1節と3節も同じ作業内で見直すこと。**
-- **LLM呼び出しを実装するときは、修正後の3節の表を前提にすること**（`goalReviewStatus` と `selfCareFeeling` は渡してよい、`tomorrowGoal` と各メモ本文は渡さない）。ただし現時点でどちらも `DailyView` / `PeriodSummary` の型には入っていないので、渡すなら利用側と併せて型を広げる判断が要る。
-- 3件目からの持ち越しで未確認の論点が1件ある。管理表の「本棚演出の方向性確定前には着手しない項目がある」（判断済み）にある「本番データ構造の `DailyRecord` と `schemas.ts` は変更しない」を、記録完了演出の作業に対する制約と解釈して2件目が `DailyRecord` を変更した。今回も同じ解釈で `DailyRecord` と `schemas.ts` を変更している。演出側の作業を再開する前に、この解釈で問題がないか確認してほしい。
+- **復職日は外部へ渡る型に入れていない。** `DailyView`（`src/lib/ai/daily-view.ts`）と `PeriodSummary`（`src/lib/ai/period-summary.ts`）はどちらも変更していない。選択式ではあるが、休職と復職という職歴上の事実を1つの日付で示すため、集計値と同じ扱いにはできないと判断した。`docs/ai-consent-decision.md` の1節・3節にこの判断を書いた。**LLM呼び出しを実装するときは3節の表を前提にすること。**
+- 復職日は `src/lib/ai-share-text.ts`（本人が全文確認して自分で渡すテキスト）にも、`buildWeeklySummaryText` にも入れていない。共有項目を増やすと `AI_SHARE_FIELDS` の選択UIと確認手順に影響するため。積み重ねカードには共有・コピーの導線を付けていない（週のまとめと違い、渡す用途が確認できていないため）。
+- **`STORAGE_SCHEMA_VERSION` は3のまま。** 今回は `DailyRecord` を変更しておらず、復職日は独立したキーなので既存の保存形が変わらない。版を上げると全記録の書き戻しが理由なく走る。移行テストの代わりに、復職日が未設定・壊れている場合に既定（最初の記録日）へ落ちることを `repository.test.ts` で固定した。
+- 取り込み（`importBackup`）は、**復職日を持たない書き出しを読むと端末の復職日を未設定へ戻す。** 取り込んだ記録に対して、端末に残った前の設定が起点として残らないようにするため。既存のバックアップから復元した人は復職日を設定し直すことになる。この挙動は `repository.test.ts` で固定してある。
+- 起点が何年も前だと `enumerateDates` の上限（`MAX_RANGE_DAYS` = 3700）を超えて連続日数が数えられなくなる。`streakWindowStart` で「記録がある最古の日」まで窓を縮めて回避している（連続は記録がある日にしか生まれないので結果は変わらない）。それでも収まらない場合だけ直近3700日へ切り詰める。復職日に極端に古い日付を入れても表示が壊れないことを `milestones.test.ts` で固定した。
+- 復職日を未来の日付にした場合は、累計を数えず「設定した復職日は、まだこれからの日付です。」を出す（`hasStarted: false`）。復職予定日を先に入れる使い方を想定している。
+- **積み重ねカードの位置はふりかえりタブの先頭（週のまとめの上）。** 見出しの「記録を重ねた分だけ、自分の体調の波が見えてきます。」と続けて読める並びにした。実機テストで「週のまとめのほうを先に見たい」という所見が出たら、順序の入れ替えは `reflection-tab.tsx` の1箇所で済む。
+- 復職日の設定UIは積み重ねカードの中（下部、区切り線の下）に置いた。「これまで」タブの設定群へ移すことも考えたが、数字の意味を決める設定なので、その数字のすぐ下に置くほうが分かると判断した。
+- 節目の文言を足すときは、`milestones.test.ts` の「評価語・助言・診断に読める語を文面に出さない」と、`accumulation-card.test.tsx` の同名テストが効く。禁止語の一覧はそこにある。**「この調子で」「続けましょう」は助言なので出さない**（禁止語の「しましょう」で機械的に止まる）。
+- 経過日数は起点当日を0として数える（`countDaysInRange` は両端を含むので1を引いている）。節目の7日は「起点の7日後」であり「7日目」ではない。月は暦月ではなく30日で数える（暦月にすると月の長さで節目の間隔が変わり、何日で届くかを本人が数えられなくなる）。
+- 4件目からの持ち越しで、未確認の論点が1件そのまま残っている。管理表の「本棚演出の方向性確定前には着手しない項目がある」（判断済み）にある「本番データ構造の `DailyRecord` と `schemas.ts` は変更しない」を、記録完了演出の作業に対する制約と解釈して2件目・4件目が `DailyRecord` を変更した。今回 `DailyRecord` は変更していないが `schemas.ts`（書き出しの型）は変更している。**演出側の作業を再開する前に、この解釈で問題がないか確認してほしい。**
