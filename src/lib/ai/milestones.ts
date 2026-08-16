@@ -171,13 +171,21 @@ function collectMilestones(
   kind: MilestoneKind,
   values: readonly number[],
   current: number,
+  /**
+   * この値が今日動いたか。
+   * 節目ちょうどの値というだけでは「今日届いた」と言えない種類があるため、
+   * 判定を呼び出し側から渡す。
+   */
+  changedToday: boolean,
   into: { reached: Milestone[]; justReached: Milestone[]; next: Milestone[] }
 ): void {
   const reached = highestReached(values, current);
   if (reached !== null) into.reached.push({ kind, value: reached });
 
   // ちょうど届いた日だけねぎらう。過ぎた節目を毎日祝うと言葉が軽くなる
-  if (values.includes(current)) into.justReached.push({ kind, value: current });
+  if (changedToday && values.includes(current)) {
+    into.justReached.push({ kind, value: current });
+  }
 
   const next = nextAhead(values, current);
   if (next !== null) into.next.push({ kind, value: next });
@@ -234,6 +242,19 @@ export function summarizeAccumulation(
     (record) => record.selfCareIds.length > 0
   ).length;
 
+  /**
+   * 記録した日の累計が今日増えたか。
+   *
+   * 累計は新しい記録がなければ動かないので、「節目ちょうどの値かどうか」だけで
+   * ねぎらうと、節目に届いたあと記録しない日が続くかぎり同じ言葉が出続ける。
+   * 累計を今の値へ届かせたのは範囲内でいちばん新しい記録なので、それが今日の
+   * ものであるときだけ「今日届いた」とする。
+   *
+   * 数日前の日付をあとから記録して節目に届いた場合は、ねぎらいを出さない。
+   * 届いたのはその記録の日付の話であり、今日ではないため。
+   */
+  const reachedRecordedToday = target.some((record) => record.date === today);
+
   // 起点当日を 0 とする経過日数。countDaysInRange は両端を含むので1を引く
   const elapsedDays = countDaysInRange(start.date, today) - 1;
 
@@ -254,8 +275,21 @@ export function summarizeAccumulation(
     justReached: [] as Milestone[],
     next: [] as Milestone[],
   };
-  collectMilestones("recordedDays", RECORDED_DAY_MILESTONES, recordedDays, collected);
-  collectMilestones("elapsedDays", ELAPSED_DAY_MILESTONES, elapsedDays, collected);
+  collectMilestones(
+    "recordedDays",
+    RECORDED_DAY_MILESTONES,
+    recordedDays,
+    reachedRecordedToday,
+    collected
+  );
+  // 経過日数は毎日1つ増えるので、節目ちょうどの値になる日は1日しかない
+  collectMilestones(
+    "elapsedDays",
+    ELAPSED_DAY_MILESTONES,
+    elapsedDays,
+    true,
+    collected
+  );
 
   return {
     start,

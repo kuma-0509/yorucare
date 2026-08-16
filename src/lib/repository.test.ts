@@ -331,3 +331,94 @@ describe("積み重ねの起点となる復職日", () => {
     });
   });
 });
+
+describe("「できること」を削除したときの感想の後始末", () => {
+  it("実施が1つも残らない記録は感想も消す", async () => {
+    const date = "2026-08-01";
+    const item = await typedRepository.addSelfCareItem("深呼吸");
+    expect(item.ok).toBe(true);
+    if (!item.ok) return;
+
+    const { date: _date, ...emptyForm } = createEmptyRecordForm(date);
+    await typedRepository.saveRecord(date, {
+      ...emptyForm,
+      selfCareIds: [item.value.id],
+      selfCareFeeling: "good",
+    });
+
+    await typedRepository.deleteSelfCareItem(item.value.id);
+
+    const loaded = await typedRepository.getRecordByDate(date);
+    expect(loaded.ok).toBe(true);
+    if (loaded.ok) {
+      expect(loaded.value?.selfCareIds).toEqual([]);
+      expect(loaded.value?.selfCareFeeling).toBeNull();
+    }
+  });
+
+  it("実施が残る記録の感想はそのままにする", async () => {
+    const date = "2026-08-02";
+    const keep = await typedRepository.addSelfCareItem("深呼吸");
+    const remove = await typedRepository.addSelfCareItem("散歩");
+    expect(keep.ok && remove.ok).toBe(true);
+    if (!keep.ok || !remove.ok) return;
+
+    const { date: _date, ...emptyForm } = createEmptyRecordForm(date);
+    await typedRepository.saveRecord(date, {
+      ...emptyForm,
+      selfCareIds: [keep.value.id, remove.value.id],
+      selfCareFeeling: "good",
+    });
+
+    await typedRepository.deleteSelfCareItem(remove.value.id);
+
+    const loaded = await typedRepository.getRecordByDate(date);
+    expect(loaded.ok).toBe(true);
+    if (loaded.ok) {
+      expect(loaded.value?.selfCareIds).toEqual([keep.value.id]);
+      expect(loaded.value?.selfCareFeeling).toBe("good");
+    }
+  });
+});
+
+describe("暦に実在しない復職日", () => {
+  it("保存しない", async () => {
+    const result = await typedRepository.saveReturnDate("2026-02-31");
+
+    expect(result.ok).toBe(false);
+    expect(localStorage.getItem(STORAGE_KEYS.returnDate)).toBeNull();
+  });
+
+  it("保存済みの値が実在しない日なら未設定として読む", async () => {
+    localStorage.setItem(STORAGE_KEYS.returnDate, "2026-02-31");
+
+    await expect(typedRepository.getReturnDate()).resolves.toEqual({
+      ok: true,
+      value: null,
+    });
+  });
+
+  it("取り込みでも受け付けない", async () => {
+    const result = await typedRepository.importBackup(
+      JSON.stringify({
+        version: 1,
+        exportedAt: "2026-08-15T00:00:00.000Z",
+        returnDate: "2026-02-31",
+        records: [],
+        selfCareItems: [],
+      })
+    );
+
+    expect(result.ok).toBe(false);
+  });
+
+  it("うるう年の2月29日は受け付ける", async () => {
+    const result = await typedRepository.saveReturnDate("2024-02-29");
+
+    expect(result.ok).toBe(true);
+    await expect(typedRepository.getReturnDate()).resolves.toEqual({
+      ok: true,
+      value: "2024-02-29",
+    });
+  });
+});
