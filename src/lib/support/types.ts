@@ -35,6 +35,42 @@ export type SupportUrgency = "now" | "today" | "withinDays";
 export type DataSourceKind = "demo" | "official";
 
 /**
+ * そのデータを使ってよい根拠。
+ *
+ * 一般公開されるプロトタイプでは、出典を書けば使えるわけではない。
+ * 「引用」として許諾不要にできるのは、引用部分があくまで補足である場合に限る。
+ * 施設情報を検索の中核コンテンツとして使う本アプリは引用に当たらないため、
+ * 掲載元のライセンスか個別の許諾が要る。
+ *
+ * 根拠を任意の文字列ではなく閉じた集合にして、
+ * 「たぶん大丈夫」で実データを載せられないようにする。
+ */
+export type DataPermissionBasis =
+  /** オープンデータカタログ掲載、またはCCライセンス等が明記され、許諾なく使える */
+  | "openDataCatalog"
+  /** 掲載元へ個別に申請し、許諾を得た */
+  | "permissionGranted"
+  /** 許諾が必要だと分かっているが、まだ得られていない */
+  | "permissionRequired"
+  /** 掲載元の利用条件をまだ確認していない */
+  | "unverified"
+  /** 外部データを含まないデモデータ */
+  | "demoOnly";
+
+/**
+ * 一般公開してよい根拠かどうか。
+ *
+ * 判定を1か所に閉じ込め、呼び出し側で条件を書き直せないようにする。
+ */
+export function isPubliclyUsable(basis: DataPermissionBasis): boolean {
+  return (
+    basis === "openDataCatalog" ||
+    basis === "permissionGranted" ||
+    basis === "demoOnly"
+  );
+}
+
+/**
  * 外部データの出典。
  * すべての外部データに必ず持たせ、画面の「データについて」で開示する。
  */
@@ -48,6 +84,11 @@ export type DataSource = {
   /** 参照URL。確認できていないときは持たせない */
   referenceUrl?: string;
   kind: DataSourceKind;
+  /**
+   * 使ってよい根拠。任意ではなく必須にする。
+   * 省略できると、根拠を確かめないまま実データを載せる実装ができてしまう。
+   */
+  permissionBasis: DataPermissionBasis;
   /** オープンデータのライセンス表記が必要な場合に入れる */
   license?: string;
 };
@@ -87,7 +128,8 @@ export type SupportResource = {
 /** 外部データの読み込みで起きうる失敗。個人記録の StorageError とは分ける */
 export type SupportDataError =
   | { code: "PARSE_FAILED"; message: string }
-  | { code: "SOURCE_UNAVAILABLE"; message: string };
+  | { code: "SOURCE_UNAVAILABLE"; message: string }
+  | { code: "PERMISSION_UNCONFIRMED"; message: string };
 
 export const SUPPORT_CATEGORY_ORDER: SupportCategory[] = [
   "emergency",

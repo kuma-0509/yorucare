@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { createDemoTokyoAdapter } from "./adapter";
+import {
+  createDemoTokyoAdapter,
+  createTokyoOpenDataAdapter,
+  PLANNED_TOKYO_DATASETS,
+} from "./adapter";
 import { listMunicipalities, searchSupportResources } from "./search";
-import type { SupportResource } from "./types";
+import { isPubliclyUsable, type SupportResource } from "./types";
 
 const demoSource = {
   provider: "テスト",
   datasetName: "テスト用",
   updatedAt: null,
   kind: "demo",
+  permissionBasis: "demoOnly",
 } as const;
 
 function makeResource(overrides: Partial<SupportResource>): SupportResource {
@@ -167,6 +172,86 @@ describe("デモデータ", () => {
     for (const resource of result.value) {
       expect(resource.prefecture).toBe("東京都");
       expect(resource.name).toContain("デモ");
+    }
+  });
+});
+
+describe("利用の根拠", () => {
+  const dataset = (
+    permissionBasis: string,
+    kind: "demo" | "official" = "official"
+  ) => ({
+    source: {
+      provider: "東京都",
+      datasetName: "テスト用",
+      updatedAt: "2026-08-01",
+      kind,
+      permissionBasis,
+    },
+    resources: [
+      {
+        id: "x",
+        name: "窓口",
+        category: "mentalHealth",
+        description: "テスト",
+        prefecture: "東京都",
+        consultationMethod: ["phone"],
+      },
+    ],
+  });
+
+  const load = (raw: unknown) =>
+    createTokyoOpenDataAdapter(
+      {
+        provider: "東京都",
+        datasetName: "テスト用",
+        updatedAt: "2026-08-01",
+        kind: "official",
+        permissionBasis: "unverified",
+      },
+      async () => raw
+    ).loadResources();
+
+  it("利用条件を確認していないデータは読み込まない", async () => {
+    const result = await load(dataset("unverified"));
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe("PERMISSION_UNCONFIRMED");
+  });
+
+  it("許諾が必要でまだ得ていないデータは読み込まない", async () => {
+    const result = await load(dataset("permissionRequired"));
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe("PERMISSION_UNCONFIRMED");
+  });
+
+  it("オープンデータとして公開されているデータは読み込める", async () => {
+    const result = await load(dataset("openDataCatalog"));
+    expect(result.ok).toBe(true);
+  });
+
+  it("許諾を得たデータは読み込める", async () => {
+    const result = await load(dataset("permissionGranted"));
+    expect(result.ok).toBe(true);
+  });
+
+  it("実データにデモ用の根拠を付け替えても通さない", async () => {
+    const result = await load(dataset("demoOnly", "official"));
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe("PERMISSION_UNCONFIRMED");
+  });
+
+  it("デモデータは、外部データを含まない根拠を持つ", async () => {
+    const adapter = createDemoTokyoAdapter();
+    expect(adapter.dataSource.permissionBasis).toBe("demoOnly");
+  });
+
+  it("接続予定のデータは、確認できるまで unverified のままにする", () => {
+    expect(PLANNED_TOKYO_DATASETS.length).toBeGreaterThan(0);
+    for (const dataset of PLANNED_TOKYO_DATASETS) {
+      expect(isPubliclyUsable(dataset.permissionBasis)).toBe(false);
     }
   });
 });

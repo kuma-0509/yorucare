@@ -140,13 +140,22 @@ export const COPY = {
     dataReferenceLabel: "参照",
     dataKindOfficial: "出典を確認したデータ",
     dataUpdatedUnknown: "確認できていません",
+    dataPermissionLabel: "利用の根拠",
+    dataPermissionOpenDataCatalog:
+      "オープンデータとして公開され、許諾なく利用できるデータ",
+    dataPermissionGranted: "掲載元から利用の許諾を得たデータ",
+    dataPermissionRequired: "利用の許諾が必要で、まだ得られていないデータ",
+    dataPermissionUnverified: "掲載元の利用条件を確認していないデータ",
+    dataPermissionDemoOnly: "外部データを含まない、画面確認用のデータ",
     officialPage: "公式ページ",
     openUntilSuffix: "まで",
     dataVerifyBody:
       "受付時間や連絡先は変わることがあります。利用の前に、公式サイトか電話で最新の情報をご確認ください。",
     plannedHeading: "接続を予定しているデータ",
     plannedNote:
-      "実際の接続先URLとデータ形式は確認できていないため、まだ接続していません。",
+      "接続先のデータ形式に加えて、掲載元の利用条件を確認できていないため、まだ接続していません。利用の根拠が確かめられたデータだけを、確認できた順に足していきます。",
+    plannedMunicipalNote:
+      "区市町村や他の道府県のデータは、掲載元ごとに利用条件が異なります。条件を確認できた地域から順に足します。",
     // 受付状況（色だけに頼らず、必ず語でも示す）
     statusOpen24Hours: "24時間対応",
     statusOpen: "受付中",

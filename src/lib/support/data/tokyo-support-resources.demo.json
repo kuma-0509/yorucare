@@ -3,7 +3,8 @@
     "provider": "ヨルケア開発チーム",
     "datasetName": "東京都内の支援先 デモデータ（将来「東京都の相談窓口・保健所・精神保健福祉センター一覧」へ差し替え）",
     "updatedAt": null,
-    "kind": "demo"
+    "kind": "demo",
+    "permissionBasis": "demoOnly"
   },
   "resources": [
     {

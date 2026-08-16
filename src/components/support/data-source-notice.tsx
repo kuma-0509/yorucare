@@ -2,11 +2,20 @@
 
 import { COPY } from "@/lib/copy";
 import { PLANNED_TOKYO_DATASETS } from "@/lib/support/adapter";
-import type { DataSource } from "@/lib/support/types";
+import type { DataPermissionBasis, DataSource } from "@/lib/support/types";
 
 interface DataSourceNoticeProps {
   dataSource: DataSource;
 }
+
+/** 利用の根拠を、当事者向けの言い方で示す */
+const PERMISSION_LABEL: Record<DataPermissionBasis, string> = {
+  openDataCatalog: COPY.support.dataPermissionOpenDataCatalog,
+  permissionGranted: COPY.support.dataPermissionGranted,
+  permissionRequired: COPY.support.dataPermissionRequired,
+  unverified: COPY.support.dataPermissionUnverified,
+  demoOnly: COPY.support.dataPermissionDemoOnly,
+};
 
 /**
  * 「データについて」。
@@ -45,6 +54,10 @@ export function DataSourceNotice({ dataSource }: DataSourceNoticeProps) {
               : COPY.support.dataKindOfficial}
           </dd>
         </div>
+        <div className="flex gap-2">
+          <dt className="shrink-0">{COPY.support.dataPermissionLabel}</dt>
+          <dd>{PERMISSION_LABEL[dataSource.permissionBasis]}</dd>
+        </div>
         {dataSource.license && (
           <div className="flex gap-2">
             <dt className="shrink-0">{COPY.support.dataLicenseLabel}</dt>
@@ -78,12 +91,16 @@ export function DataSourceNotice({ dataSource }: DataSourceNoticeProps) {
       <ul className="mt-1 space-y-1 text-xs leading-relaxed text-muted-foreground">
         {PLANNED_TOKYO_DATASETS.map((dataset) => (
           <li key={`${dataset.provider}-${dataset.datasetName}`}>
-            {dataset.provider}「{dataset.datasetName}」— {dataset.usedFor}
+            {dataset.provider}「{dataset.datasetName}」— {dataset.usedFor}（
+            {PERMISSION_LABEL[dataset.permissionBasis]}）
           </li>
         ))}
       </ul>
       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
         {COPY.support.plannedNote}
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+        {COPY.support.plannedMunicipalNote}
       </p>
     </section>
   );

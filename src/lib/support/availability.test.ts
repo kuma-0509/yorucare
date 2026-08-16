@@ -7,6 +7,7 @@ const demoSource = {
   datasetName: "テスト用",
   updatedAt: null,
   kind: "demo",
+  permissionBasis: "demoOnly",
 } as const;
 
 function makeResource(overrides: Partial<SupportResource> = {}): SupportResource {

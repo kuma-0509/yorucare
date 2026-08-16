@@ -1,9 +1,11 @@
 import { z } from "zod";
 import demoDataset from "./data/tokyo-support-resources.demo.json";
-import type {
-  DataSource,
-  SupportDataError,
-  SupportResource,
+import {
+  isPubliclyUsable,
+  type DataPermissionBasis,
+  type DataSource,
+  type SupportDataError,
+  type SupportResource,
 } from "./types";
 import { err, ok, type Result } from "../result";
 
@@ -25,6 +27,13 @@ const dataSourceSchema = z.object({
   updatedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   referenceUrl: z.url().optional(),
   kind: z.enum(["demo", "official"]),
+  permissionBasis: z.enum([
+    "openDataCatalog",
+    "permissionGranted",
+    "permissionRequired",
+    "unverified",
+    "demoOnly",
+  ]),
   license: z.string().optional(),
 });
 
@@ -88,6 +97,26 @@ function parseDataset(
   }
 
   const source = parsed.data.source;
+
+  // 根拠が確定していないデータは、そもそも読み込ませない。
+  // プロトタイプは First Stage で一般公開されるため、
+  // 「開発中だけ実データで動かす」余地を実装として残さない。
+  if (!isPubliclyUsable(source.permissionBasis)) {
+    return err({
+      code: "PERMISSION_UNCONFIRMED",
+      message:
+        "このデータは利用の許諾が確認できていないため、表示しません。",
+    });
+  }
+
+  // デモ以外を demoOnly として通せないようにする（根拠の付け替えを防ぐ）
+  if (source.kind === "official" && source.permissionBasis === "demoOnly") {
+    return err({
+      code: "PERMISSION_UNCONFIRMED",
+      message: "実データにデモ用の根拠が付いているため読み込みを止めました。",
+    });
+  }
+
   if (source.kind === "demo") {
     for (const resource of parsed.data.resources) {
       if (!demoContactSchema.safeParse(resource).success) {
@@ -117,14 +146,19 @@ export function createDemoTokyoAdapter(): SupportResourceAdapter {
 /**
  * 将来の接続先として想定しているデータセット。
  *
- * 実URLとAPI仕様が確認できていないため、ここにURLは書かない。
- * 接続作業のときに、公式のカタログで確認した値を入れる。
+ * 実URLとAPI仕様、そして利用の根拠が確認できていないため、ここにURLは書かない。
+ * 接続作業のときに、掲載元で確認した値を入れる。
+ *
+ * `permissionBasis` は確認するまで `unverified` のままにする。
+ * ここを先に書き換えても、掲載元の条件が変わるわけではない。
  */
 export type PlannedDataset = {
   provider: string;
   datasetName: string;
   /** このデータセットで満たしたい画面上の役割 */
   usedFor: string;
+  /** 確認できるまで unverified。確認した結果だけを書き換える */
+  permissionBasis: DataPermissionBasis;
 };
 
 export const PLANNED_TOKYO_DATASETS: PlannedDataset[] = [
@@ -132,23 +166,40 @@ export const PLANNED_TOKYO_DATASETS: PlannedDataset[] = [
     provider: "東京都",
     datasetName: "相談窓口・保健所・精神保健福祉センター一覧",
     usedFor: "市区町村・相談内容・相談方法で絞り込む支援先の一覧",
+    permissionBasis: "unverified",
   },
   {
     provider: "東京都",
     datasetName: "TOKYO WALKING MAP",
     usedFor: "近所を歩く選択肢の、実在するコース情報",
+    permissionBasis: "unverified",
   },
   {
     provider: "東京都",
     datasetName: "都立公園・庭園一覧",
     usedFor: "公園への散歩という選択肢の、実在する行き先",
+    permissionBasis: "unverified",
   },
   {
     provider: "東京都",
     datasetName: "都立スポーツ施設一覧",
     usedFor: "近隣スポーツ施設という選択肢の、実在する行き先",
+    permissionBasis: "unverified",
   },
 ];
+
+/**
+ * 区市町村・他道府県のデータを足す場合の注意。
+ *
+ * 都のオープンデータカタログの扱いは、そのまま区市町村へは及ばない。
+ * 掲載元ごとに利用条件を確認し、必要なら個別に許諾を取る。
+ *
+ * 検索の設計上、市区町村ごとのデータが揃っていなくても壊れない。
+ * 都全域が対象の窓口は市区町村を選んでも候補に残るため、
+ * 条件を確認できた自治体から1件ずつ足していける。
+ */
+export const MUNICIPAL_DATA_NOTE =
+  "区市町村や他道府県のデータは、掲載元ごとに利用条件を確認し、必要なら個別に許諾を得てから足す。";
 
 /**
  * 実データ用アダプターの受け口。

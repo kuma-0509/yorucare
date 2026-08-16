@@ -34,6 +34,12 @@ const allNewTexts: string[] = [
   COPY.support.dataVerifyBody,
   COPY.support.dataAboutHeading,
   COPY.support.plannedNote,
+  COPY.support.plannedMunicipalNote,
+  COPY.support.dataPermissionOpenDataCatalog,
+  COPY.support.dataPermissionGranted,
+  COPY.support.dataPermissionRequired,
+  COPY.support.dataPermissionUnverified,
+  COPY.support.dataPermissionDemoOnly,
 ];
 
 describe("追加した画面文言", () => {
@@ -103,5 +109,11 @@ describe("追加した画面文言", () => {
 
   it("データの更新日が確認できない場合の案内を持つ", () => {
     expect(COPY.support.dataVerifyBody).toContain("公式サイトか電話");
+  });
+
+  it("利用の根拠を、確認済みかどうかが分かる言い方で示す", () => {
+    expect(COPY.support.dataPermissionUnverified).toContain("確認していない");
+    expect(COPY.support.dataPermissionRequired).toContain("まだ得られていない");
+    expect(COPY.support.plannedNote).toContain("利用条件");
   });
 });
