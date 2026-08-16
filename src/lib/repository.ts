@@ -311,10 +311,16 @@ const localStorageRepository: LocalStorageRepository = {
     if (!recordsResult.ok) return recordsResult;
 
     return writeRecords(
-      recordsResult.value.map((r) => ({
-        ...r,
-        selfCareIds: r.selfCareIds.filter((sid) => sid !== id),
-      }))
+      recordsResult.value.map((r) => {
+        const selfCareIds = r.selfCareIds.filter((sid) => sid !== id);
+        return {
+          ...r,
+          selfCareIds,
+          // 実施が1つも残らなければ感想も消す。画面は実施があるときだけ感想を
+          // 出すため、残したままだと本人に見えない値が保存され続ける
+          selfCareFeeling: selfCareIds.length === 0 ? null : r.selfCareFeeling,
+        };
+      })
     );
   },
 

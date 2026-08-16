@@ -157,6 +157,39 @@ describe("summarizeAccumulation", () => {
     ]);
   });
 
+  it("記録した日の節目は、その累計に届いた日を過ぎたら祝わない", () => {
+    // 3日連続で記録したあと、記録しない日が続いても累計は3のまま。
+    // 節目ちょうどの値だからと祝い続けないこと
+    const records = dates("2026-04-01", 3).map((d) => record(d));
+
+    expect(
+      summarizeAccumulation(records, "2026-04-01", "2026-04-03").justReached
+    ).toContainEqual({ kind: "recordedDays", value: 3 });
+    expect(
+      summarizeAccumulation(records, "2026-04-01", "2026-04-04").justReached
+    ).not.toContainEqual({ kind: "recordedDays", value: 3 });
+    expect(
+      summarizeAccumulation(records, "2026-04-01", "2026-04-20").justReached
+    ).toEqual([]);
+  });
+
+  it("過去の日付をあとから記録して節目に届いても祝わない", () => {
+    const records = dates("2026-04-01", 3).map((d) => record(d));
+    const totals = summarizeAccumulation(records, "2026-04-01", "2026-04-05");
+
+    expect(totals.recordedDays).toBe(3);
+    expect(totals.justReached).toEqual([]);
+  });
+
+  it("経過日数の節目は記録がない日でも届いた日に祝う", () => {
+    expect(
+      summarizeAccumulation([], "2026-04-01", "2026-04-08").justReached
+    ).toContainEqual({ kind: "elapsedDays", value: 7 });
+    expect(
+      summarizeAccumulation([], "2026-04-01", "2026-04-09").justReached
+    ).toEqual([]);
+  });
+
   it("ちょうど節目に届いた日だけ justReached を返す", () => {
     const records = dates("2026-04-01", 7).map((d) => record(d));
     const onDay = summarizeAccumulation(records, "2026-04-01", "2026-04-07");

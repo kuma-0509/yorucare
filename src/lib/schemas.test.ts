@@ -195,3 +195,28 @@ describe("parseReturnDate", () => {
     expect(parseReturnDate(42)).toBeNull();
   });
 });
+
+describe("暦に実在しない日付の扱い", () => {
+  it("parseReturnDate は実在しない日を受け付けない", () => {
+    expect(parseReturnDate("2026-02-31")).toBeNull();
+    expect(parseReturnDate("2026-13-01")).toBeNull();
+    expect(parseReturnDate("2026-04-31")).toBeNull();
+    expect(parseReturnDate("2025-02-29")).toBeNull();
+  });
+
+  it("parseReturnDate はうるう年の2月29日を受け付ける", () => {
+    expect(parseReturnDate("2024-02-29")).toBe("2024-02-29");
+  });
+
+  it("書き出しの復職日が実在しない日なら取り込みを拒否する", () => {
+    const result = parseExportPayload({
+      version: EXPORT_VERSION,
+      exportedAt: "2026-01-05T00:00:00.000Z",
+      returnDate: "2026-02-31",
+      records: [],
+      selfCareItems: [],
+    });
+
+    expect(result.ok).toBe(false);
+  });
+});

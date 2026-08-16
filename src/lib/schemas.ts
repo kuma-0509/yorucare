@@ -20,6 +20,27 @@ export const MAX_IMPORT_RECORDS = 5000;
 export const MAX_IMPORT_SELF_CARE = 1000;
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/**
+ * 書式だけでなく、暦に実在する日かどうかも確かめる。
+ *
+ * `2026-02-31` は正規表現を通るが、範囲の絞り込みは文字列の比較で行う一方、
+ * 経過日数は `Date.parse` が繰り上げた別の日から数えるため、
+ * 累計と経過日数が食い違う。取り込み境界で弾く。
+ */
+function isRealCalendarDate(value: string): boolean {
+  const [y, m, d] = value.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return (
+    date.getFullYear() === y &&
+    date.getMonth() === m - 1 &&
+    date.getDate() === d
+  );
+}
+
+const calendarDateSchema = dateSchema.refine(isRealCalendarDate, {
+  message: "存在しない日付です。",
+});
 const timeSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
@@ -104,7 +125,7 @@ export const exportPayloadSchema = z.object({
    * 既定値を持たせ、フィールドがない既存の書き出しもそのまま読めるようにする。
    * 追加しても取り込み互換が壊れないため EXPORT_VERSION は据え置く。
    */
-  returnDate: dateSchema.nullable().default(null),
+  returnDate: calendarDateSchema.nullable().default(null),
   records: z.array(dailyRecordSchema).max(MAX_IMPORT_RECORDS),
   selfCareItems: z.array(selfCareItemSchema).max(MAX_IMPORT_SELF_CARE),
 });
@@ -125,7 +146,7 @@ export function parseSelfCareJson(raw: unknown): z.ZodSafeParseResult<z.infer<ty
  * エラーにせず既定（最初の記録日）へ落とす。
  */
 export function parseReturnDate(raw: unknown): string | null {
-  const parsed = dateSchema.safeParse(raw);
+  const parsed = calendarDateSchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
 }
 

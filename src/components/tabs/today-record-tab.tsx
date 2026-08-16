@@ -306,7 +306,13 @@ export function TodayRecordTab({
    * 同じ名前がすでにあれば登録し直さず、辞書が二重にならないようにする。
    */
   const handleToggleSuggestion = async (title: string) => {
-    const existing = selfCareItems.find((item) => item.title === title);
+    // 同じ名前が複数あるときは、すでに選んでいるものを先に外す。
+    // 常に先頭を選ぶと、2つめを選んだ状態で押したときに1つめが増えるだけになり、
+    // 選択済みの表示のまま解除できなくなる
+    const sameTitle = selfCareItems.filter((item) => item.title === title);
+    const existing =
+      sameTitle.find((item) => form.selfCareIds.includes(item.id)) ??
+      sameTitle[0];
     if (existing) {
       toggleSelfCare(existing.id);
       return;
@@ -584,7 +590,9 @@ export function TodayRecordTab({
       {/* 記録した状態から、その日に選べそうなセルフケアへつなぐ */}
       <SelfCareSuggestionCard
         stateLevel={stateLevel}
-        warningTags={form.warningTags}
+        // 画面に出ていないサインは案に効かせない。この修正より前に保存した
+        // 記録には、サインを選び直して隠したままのタグが残っていることがある
+        warningTags={showWarningTags ? form.warningTags : []}
         selectedTitles={selectedSelfCareTitles}
         onToggle={(title) => void handleToggleSuggestion(title)}
       />
@@ -782,12 +790,22 @@ export function TodayRecordTab({
               mode="radio"
               layout="row"
               onClick={() =>
-                setForm((prev) => ({
-                  ...prev,
-                  warningLevel: prev.warningLevel === value ? null : value,
-                  warningTags: value === "none" ? [] : prev.warningTags,
-                  warningNote: value === "none" ? "" : prev.warningNote,
-                }))
+                setForm((prev) => {
+                  const warningLevel =
+                    prev.warningLevel === value ? null : value;
+                  // サインの内容は「少しある」「ある」のときだけ表示する。
+                  // 表示が消える選び方に変えたら値も残さない。
+                  // 選び直して隠しただけの値が、本人に見えないまま保存され、
+                  // 自分メンテの案にも効き続けることを防ぐ
+                  const keepDetails =
+                    warningLevel === "small" || warningLevel === "yes";
+                  return {
+                    ...prev,
+                    warningLevel,
+                    warningTags: keepDetails ? prev.warningTags : [],
+                    warningNote: keepDetails ? prev.warningNote : "",
+                  };
+                })
               }
             >
               {label}
