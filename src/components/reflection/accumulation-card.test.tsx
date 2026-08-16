@@ -127,6 +127,23 @@ describe("AccumulationCard", () => {
     });
   });
 
+  it("節目に届いた日を過ぎたら、ねぎらいを画面に出さない", async () => {
+    // 記録した日の累計は新しい記録がなければ動かない。節目ちょうどの値というだけで
+    // 出し続けると、届いた翌日以降も同じ文が毎日出る（チェックリスト F-10）
+    getAllRecords.mockResolvedValue(
+      ok([1, 2, 3].map((offset) => makeRecord(daysAgo(offset))))
+    );
+    getReturnDate.mockResolvedValue(ok(null));
+
+    const { container } = render(<AccumulationCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText("記録した日")).toBeTruthy();
+    });
+
+    expect(container.textContent ?? "").not.toContain("記録した日が3日になりました");
+  });
+
   it("評価語・助言・診断に読める表現を画面に出さない", async () => {
     getAllRecords.mockResolvedValue(
       ok([0, 1, 2, 3, 4, 5, 6].map((offset) => makeRecord(daysAgo(offset))))
