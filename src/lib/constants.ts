@@ -147,6 +147,8 @@ export const STORAGE_KEYS = {
   completionLog: "yorucare_completion_log",
   /** 積み重ねを数える起点として本人が設定した復職日。未設定なら最初の記録日を使う */
   returnDate: "yorucare_return_date",
+  /** 必要なときに自分で見せるための、お薬の覚え書き。日々の記録とは別に1つだけ持つ */
+  medicationNote: "yorucare_medication_note",
 } as const;
 
 /** 利用者向けふりかえりタブに表示する予定機能（短く） */

@@ -5,7 +5,10 @@ import {
   repository,
   type Repository,
 } from "./repository";
-import { STORAGE_SCHEMA_VERSION } from "./schemas";
+import {
+  MAX_MEDICATION_NOTE_LENGTH,
+  STORAGE_SCHEMA_VERSION,
+} from "./schemas";
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
@@ -333,6 +336,107 @@ describe("控えたいこと追加後の登録簿の移行", () => {
     if (result.ok) {
       expect(result.value.stateLevels).toEqual(["hard"]);
     }
+  });
+});
+
+describe("お薬メモ", () => {
+  it("未入力なら空文字を返す", async () => {
+    await expect(typedRepository.getMedicationNote()).resolves.toEqual({
+      ok: true,
+      value: "",
+    });
+  });
+
+  it("入力した内容を読み書きできる", async () => {
+    const saved = await typedRepository.saveMedicationNote("朝1錠");
+    expect(saved.ok).toBe(true);
+
+    await expect(typedRepository.getMedicationNote()).resolves.toEqual({
+      ok: true,
+      value: "朝1錠",
+    });
+  });
+
+  it("空文字を渡すと保存内容を消す", async () => {
+    await typedRepository.saveMedicationNote("朝1錠");
+    const cleared = await typedRepository.saveMedicationNote("");
+
+    expect(cleared.ok).toBe(true);
+    await expect(typedRepository.getMedicationNote()).resolves.toEqual({
+      ok: true,
+      value: "",
+    });
+  });
+
+  it("上限を超える入力は保存しない", async () => {
+    const result = await typedRepository.saveMedicationNote(
+      "あ".repeat(MAX_MEDICATION_NOTE_LENGTH + 1)
+    );
+
+    expect(result.ok).toBe(false);
+    await expect(typedRepository.getMedicationNote()).resolves.toEqual({
+      ok: true,
+      value: "",
+    });
+  });
+
+  it("保存済みの値が壊れていても未入力として読む", async () => {
+    localStorage.setItem(
+      STORAGE_KEYS.medicationNote,
+      "あ".repeat(MAX_MEDICATION_NOTE_LENGTH + 1)
+    );
+
+    await expect(typedRepository.getMedicationNote()).resolves.toEqual({
+      ok: true,
+      value: "",
+    });
+  });
+
+  it("書き出しにお薬メモを含める", async () => {
+    await typedRepository.saveMedicationNote("朝1錠");
+
+    const payload = await typedRepository.buildExportPayload();
+    expect(payload.ok).toBe(true);
+    if (payload.ok) {
+      expect(payload.value.medicationNote).toBe("朝1錠");
+    }
+  });
+
+  it("取り込みでお薬メモを復元する", async () => {
+    const json = JSON.stringify({
+      version: 1,
+      exportedAt: "2026-08-16T00:00:00.000Z",
+      returnDate: null,
+      medicationNote: "就寝前1錠",
+      records: [],
+      selfCareItems: [],
+    });
+
+    const imported = await typedRepository.importBackup(json);
+    expect(imported.ok).toBe(true);
+
+    await expect(typedRepository.getMedicationNote()).resolves.toEqual({
+      ok: true,
+      value: "就寝前1錠",
+    });
+  });
+
+  it("お薬メモを持たない書き出しを取り込むと未入力へ戻す", async () => {
+    await typedRepository.saveMedicationNote("端末に残っていた内容");
+
+    const json = JSON.stringify({
+      version: 1,
+      exportedAt: "2026-08-16T00:00:00.000Z",
+      records: [],
+      selfCareItems: [],
+    });
+    const imported = await typedRepository.importBackup(json);
+    expect(imported.ok).toBe(true);
+
+    await expect(typedRepository.getMedicationNote()).resolves.toEqual({
+      ok: true,
+      value: "",
+    });
   });
 });
 

@@ -2,7 +2,9 @@ import { SAMPLE_SELF_CARE, STORAGE_KEYS } from "./constants";
 import { getTodayString } from "./dates";
 import {
   EXPORT_VERSION,
+  MAX_MEDICATION_NOTE_LENGTH,
   parseExportPayload,
+  parseMedicationNote,
   parseRecordsJson,
   parseReturnDate,
   parseSelfCareJson,
@@ -63,6 +65,10 @@ export interface Repository {
   getReturnDate(): Promise<Result<string | null>>;
   /** 復職日を設定する。null を渡すと未設定へ戻す */
   saveReturnDate(date: string | null): Promise<Result<void>>;
+  /** 必要なときに自分で見せるためのお薬の覚え書き。未入力なら空文字 */
+  getMedicationNote(): Promise<Result<string>>;
+  /** お薬の覚え書きを保存する。空文字を渡すと消す */
+  saveMedicationNote(note: string): Promise<Result<void>>;
   buildExportPayload(): Promise<Result<ExportPayload>>;
   importBackup(jsonText: string): Promise<Result<ImportSummary>>;
   runStorageMigrations(): Promise<Result<void>>;
@@ -393,6 +399,42 @@ const localStorageRepository: LocalStorageRepository = {
     return writeRaw(STORAGE_KEYS.returnDate, date);
   },
 
+  async getMedicationNote(): Promise<Result<string>> {
+    if (!isBrowser()) return ok("");
+    try {
+      return ok(
+        parseMedicationNote(localStorage.getItem(STORAGE_KEYS.medicationNote))
+      );
+    } catch {
+      return ok("");
+    }
+  },
+
+  async saveMedicationNote(note: string): Promise<Result<void>> {
+    if (!isBrowser()) return err({ code: "BROWSER_ONLY" });
+
+    if (note.length > MAX_MEDICATION_NOTE_LENGTH) {
+      return err({
+        code: "VALIDATION_FAILED",
+        message: `${MAX_MEDICATION_NOTE_LENGTH}文字以内で入力してください。`,
+      });
+    }
+
+    if (note.trim().length === 0) {
+      try {
+        localStorage.removeItem(STORAGE_KEYS.medicationNote);
+        return ok(undefined);
+      } catch {
+        return err({
+          code: "WRITE_FAILED",
+          message: "お薬メモの削除に失敗しました。",
+        });
+      }
+    }
+
+    return writeRaw(STORAGE_KEYS.medicationNote, note);
+  },
+
   async buildExportPayload(): Promise<Result<ExportPayload>> {
     const records = readRecords();
     if (!records.ok) return records;
@@ -400,11 +442,14 @@ const localStorageRepository: LocalStorageRepository = {
     if (!selfCare.ok) return selfCare;
     const returnDate = await localStorageRepository.getReturnDate();
     if (!returnDate.ok) return returnDate;
+    const medicationNote = await localStorageRepository.getMedicationNote();
+    if (!medicationNote.ok) return medicationNote;
 
     return ok({
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
       returnDate: returnDate.value,
+      medicationNote: medicationNote.value,
       records: records.value,
       selfCareItems: selfCare.value,
     });
@@ -449,7 +494,12 @@ const localStorageRepository: LocalStorageRepository = {
     if (!selfCareWrite.ok) return selfCareWrite;
     // 復職日を持たない書き出しからの取り込みでは、既定値の null で未設定へ戻す。
     // 端末に残った前の設定が、取り込んだ記録の起点として残らないようにする。
-    return localStorageRepository.saveReturnDate(payload.returnDate);
+    const returnDateWrite = await localStorageRepository.saveReturnDate(
+      payload.returnDate
+    );
+    if (!returnDateWrite.ok) return returnDateWrite;
+    // お薬メモも同じ理由で、取り込んだファイルの内容へ置き換える
+    return localStorageRepository.saveMedicationNote(payload.medicationNote);
   },
 
   async clearImportRollback(): Promise<Result<void>> {

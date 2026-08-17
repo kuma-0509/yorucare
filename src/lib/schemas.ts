@@ -14,6 +14,7 @@ export const STORAGE_SCHEMA_VERSION = 4;
  */
 export const EXPORT_VERSION = 1;
 export const MAX_NOTE_LENGTH = 2000;
+export const MAX_MEDICATION_NOTE_LENGTH = 1000;
 export const MAX_GOAL_LENGTH = 100;
 export const MAX_SELF_CARE_TITLE_LENGTH = 100;
 export const MAX_MOOD_LABEL_LENGTH = 10;
@@ -27,6 +28,7 @@ const timeSchema = z
   .nullable();
 const timestampSchema = z.string().min(1).max(40);
 const memoSchema = z.string().max(MAX_NOTE_LENGTH);
+const medicationNoteSchema = z.string().max(MAX_MEDICATION_NOTE_LENGTH);
 const idSchema = z.string().min(1).max(80);
 
 const moodScoreSchema = z.union([
@@ -117,6 +119,12 @@ export const exportPayloadSchema = z.object({
    * 追加しても取り込み互換が壊れないため EXPORT_VERSION は据え置く。
    */
   returnDate: dateSchema.nullable().default(null),
+  /**
+   * 必要なときに自分で見せるためのお薬の覚え書き。未入力なら空文字。
+   * 既定値を持たせ、フィールドがない既存の書き出しもそのまま読めるようにする。
+   * 追加しても取り込み互換が壊れないため EXPORT_VERSION は据え置く。
+   */
+  medicationNote: medicationNoteSchema.default(""),
   records: z.array(dailyRecordSchema).max(MAX_IMPORT_RECORDS),
   selfCareItems: z.array(selfCareItemSchema).max(MAX_IMPORT_SELF_CARE),
 });
@@ -139,6 +147,15 @@ export function parseSelfCareJson(raw: unknown): z.ZodSafeParseResult<z.infer<ty
 export function parseReturnDate(raw: unknown): string | null {
   const parsed = dateSchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
+}
+
+/**
+ * 保存済みのお薬の覚え書きを読む。
+ * 上限を超えていれば切り詰めず未入力として扱い、壊れた値をそのまま画面へ出さない。
+ */
+export function parseMedicationNote(raw: unknown): string {
+  const parsed = medicationNoteSchema.safeParse(raw);
+  return parsed.success ? parsed.data : "";
 }
 
 export function parseExportPayload(
