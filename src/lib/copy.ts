@@ -65,6 +65,37 @@ export const COPY = {
     startCleared: "復職日の設定を消しました。はじめて記録した日から数えます。",
     startNotice: "復職日はこの端末にだけ保存され、どこへも送信しません。",
   },
+  /**
+   * 期間の報告書。数値はアプリが確定させ、文章の穴だけを LLM が埋める。
+   * 載せる項目は `docs/sharing-decision.md` 5節の初期版に合わせる。
+   */
+  report: {
+    title: "期間の報告書",
+    description:
+      "記録した数を並べたものです。お薬、しんどさのサイン、メモ、できることの名前は含みません。",
+    sectionPeriod: "対象期間",
+    sectionMood: "状態の推移",
+    sectionSleep: "睡眠時間の推移",
+    sectionSelfCare: "できたことがあった日",
+    factRecordedDays: "記録した日数",
+    factMoodAverage: "気分の平均",
+    factMoodRange: "気分の幅",
+    factSleepAverage: "睡眠時間の平均",
+    factSleepDeviation: "日による差",
+    factSelfCareDays: "できたことがあった日数",
+    // 数値の穴が埋まらないときに出す定型文。評価語・助言・診断を含めない
+    fallbackOverview: "この期間に残った記録を、下に並べています。",
+    fallbackMood: "気分の数値は、記録した日の平均です。",
+    fallbackSleep: "睡眠時間は、記録した日の平均です。",
+    fallbackSelfCare: "できたことがあった日を数えています。",
+    emptyHeadline:
+      "この期間の記録はまだありません。書けそうなときに、1日分からで大丈夫です。",
+    notice:
+      "記録した内容をそのまま数えたものです。診断や治療の判断には使えません。",
+    copyAction: "報告書をコピー",
+    copied: "報告書をコピーしました。渡す相手はご自身で選べます。",
+    copyFailed: "コピーできませんでした。",
+  },
   notEntered: "まだ入力していません",
   sleepNotEntered: "まだ入力していません",
   chartWarningDescription: "なし／少しあり／あり の3段階で表示します",

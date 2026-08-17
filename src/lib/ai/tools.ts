@@ -6,6 +6,7 @@ import {
   type FrequencyResult,
 } from "./frequency";
 import { summarizePeriod, type PeriodSummary } from "./period-summary";
+import { buildReportSkeleton, type ReportSkeleton } from "./report";
 import {
   relateSelfCareToMood,
   type SelfCareRelationResult,
@@ -102,6 +103,28 @@ export async function getSelfCareRelation(
   if (!loaded.ok) return loaded;
   return ok(
     relateSelfCareToMood(
+      loaded.value.records,
+      loaded.value.selfCareItems,
+      from,
+      to
+    )
+  );
+}
+
+/**
+ * 報告書の骨格を取り出す。
+ *
+ * 数値はここで確定し、文章の穴だけが空いた状態で返る。
+ * 穴を埋める経路は `report-narrative.ts` にあり、この層は読み取りだけを行う。
+ */
+export async function getReportSkeleton(
+  from: string,
+  to: string
+): Promise<Result<ReportSkeleton>> {
+  const loaded = await loadAll();
+  if (!loaded.ok) return loaded;
+  return ok(
+    buildReportSkeleton(
       loaded.value.records,
       loaded.value.selfCareItems,
       from,
