@@ -35,7 +35,7 @@ describe("buildSelfCareSuggestions", () => {
 
   it("区分が違うタグでは違う案が加わる", () => {
     const sleep = buildSelfCareSuggestions("hard", ["眠れない"]);
-    const mood = buildSelfCareSuggestions("hard", ["強い不安"]);
+    const mood = buildSelfCareSuggestions("hard", ["涙が出る"]);
     const work = buildSelfCareSuggestions("hard", ["出勤がつらい"]);
 
     expect(sleep[0]).not.toBe(mood[0]);
@@ -57,7 +57,7 @@ describe("buildSelfCareSuggestions", () => {
   it("タグを多く選んでも上限を超えない", () => {
     const suggestions = buildSelfCareSuggestions("hard", [
       "眠れない",
-      "強い不安",
+      "涙が出る",
       "出勤がつらい",
     ]);
     expect(suggestions.length).toBeLessThanOrEqual(MAX_SELF_CARE_SUGGESTIONS);
@@ -67,7 +67,7 @@ describe("buildSelfCareSuggestions", () => {
     const base = buildSelfCareSuggestions("hard", []);
     const withAllTags = buildSelfCareSuggestions("hard", [
       "眠れない",
-      "強い不安",
+      "涙が出る",
       "出勤がつらい",
     ]);
     expect(withAllTags.some((item) => base.includes(item))).toBe(true);
@@ -76,14 +76,14 @@ describe("buildSelfCareSuggestions", () => {
   it("同じ案を重複させない", () => {
     const suggestions = buildSelfCareSuggestions("hard", [
       "眠れない",
-      "強い不安",
+      "涙が出る",
     ]);
     expect(new Set(suggestions).size).toBe(suggestions.length);
   });
 
   it("同じ入力からは常に同じ並びを返す", () => {
-    expect(buildSelfCareSuggestions("normal", ["強い不安"])).toEqual(
-      buildSelfCareSuggestions("normal", ["強い不安"])
+    expect(buildSelfCareSuggestions("normal", ["涙が出る"])).toEqual(
+      buildSelfCareSuggestions("normal", ["涙が出る"])
     );
   });
 
@@ -97,7 +97,7 @@ describe("buildSelfCareSuggestions", () => {
     const all = ALL_LEVELS.flatMap((level) =>
       buildSelfCareSuggestions(level, [
         "眠れない",
-        "強い不安",
+        "涙が出る",
         "出勤がつらい",
       ])
     ).join("");

@@ -1,5 +1,5 @@
 import {
-  WARNING_TAGS_MOOD,
+  WARNING_TAGS_BODY,
   WARNING_TAGS_SLEEP,
   WARNING_TAGS_WORK,
 } from "./constants";
@@ -40,7 +40,7 @@ const BY_WARNING_TAG_GROUP: {
     suggestions: ["布団に入る時間を15分早める", "寝る前にスマホを置く"],
   },
   {
-    tags: WARNING_TAGS_MOOD,
+    tags: WARNING_TAGS_BODY,
     suggestions: ["ゆっくり3回、息を吐く", "今の気持ちを1行だけ書く"],
   },
   {

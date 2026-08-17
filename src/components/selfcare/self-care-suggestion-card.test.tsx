@@ -65,7 +65,7 @@ describe("SelfCareSuggestionCard", () => {
   });
 
   it("実行を促す表現や評価する表現を含めない", () => {
-    const { container } = renderCard({ warningTags: ["強い不安", "出勤がつらい"] });
+    const { container } = renderCard({ warningTags: ["涙が出る", "出勤がつらい"] });
     const text = container.textContent ?? "";
     for (const word of [
       "しましょう",

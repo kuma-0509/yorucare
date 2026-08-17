@@ -73,7 +73,9 @@ export const MOOD_LABEL_NEUTRAL = [
 export const MOOD_LABEL_NEGATIVE = [
   "不安",
   "悲しい",
+  "落ち込み",
   "疲れた",
+  "焦り",
   "後悔",
   "こわい",
   "イライラ",
@@ -100,20 +102,28 @@ export const WARNING_LEVEL_OPTIONS: {
   { value: "yes", label: "あり" },
 ];
 
+/**
+ * しんどさのサインは「体と生活に出た変化」だけを扱う。
+ *
+ * 感じている気持ちそのものは「気持ち」のラベルで選ぶ。
+ * 以前はサイン側にも感情の語（強い不安、イライラが強い など）があり、
+ * 気持ちのラベルと言い換えの関係になっていて、どちらを選ぶか迷う原因になっていた。
+ * 程度は3段階の状態と、サインの3段階（なし／少しあり／あり）で表す。
+ *
+ * 選択肢から外した語も、過去の記録には文字列としてそのまま残り、一覧や
+ * 週のまとめでこれまでどおり読める。
+ */
 export const WARNING_TAGS_SLEEP = [
   "眠れない",
   "朝起きづらい",
   "生活リズムが崩れた",
-  "食欲がない",
-  "疲れが抜けない",
 ] as const;
 
-export const WARNING_TAGS_MOOD = [
-  "強い不安",
-  "イライラが強い",
+export const WARNING_TAGS_BODY = [
+  "食欲がない",
+  "疲れが抜けない",
   "涙が出る",
-  "落ち込みが強い",
-  "気持ちが焦る",
+  "頭やお腹が痛む",
 ] as const;
 
 export const WARNING_TAGS_WORK = [

@@ -44,7 +44,7 @@ import {
   SELF_CARE_FEELING_OPTIONS,
   STATE_LEVEL_OPTIONS,
   WARNING_LEVEL_OPTIONS,
-  WARNING_TAGS_MOOD,
+  WARNING_TAGS_BODY,
   WARNING_TAGS_OTHER,
   WARNING_TAGS_SLEEP,
   WARNING_TAGS_WORK,
@@ -782,7 +782,7 @@ export function TodayRecordTab({
       <CollapsibleSection
         key={`warning-${targetDate}-${stateLevel === "hard" || warningHasContent ? "open" : "closed"}`}
         title={`${COPY.warningSign}（任意）`}
-        description="いつもと違うしんどさがあれば選んでください。気になることがなければ、選ばなくても構いません。"
+        description={COPY.warningSignDescription}
         defaultOpen={stateLevel === "hard" || warningHasContent}
         variant="caution"
       >
@@ -816,8 +816,8 @@ export function TodayRecordTab({
               onToggle={toggleWarningTag}
             />
             <WarningTagGroup
-              title="気分・感情"
-              tags={WARNING_TAGS_MOOD}
+              title="からだ"
+              tags={WARNING_TAGS_BODY}
               selected={form.warningTags}
               onToggle={toggleWarningTag}
             />
