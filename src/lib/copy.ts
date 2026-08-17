@@ -88,6 +88,18 @@ export const COPY = {
   sleepNotEntered: "まだ入力していません",
   chartWarningDescription: "なし／少しあり／あり の3段階で表示します",
   chartWarningAxis: "しんどさ",
+  /**
+   * 2項目を重ねて見る機能。
+   * 目盛りを並べるだけにとどめ、相関の強さや向きは出さない。
+   * 一方が他方の原因だと読めてしまう表現を画面に出さないため。
+   */
+  chartCompare: {
+    heading: "重ねて比べる（任意）",
+    none: "重ねない",
+    axisNotice: "重ねた項目は右の目盛りで読みます。",
+    causeNotice:
+      "同じ時期に動いて見えても、どちらかがもう一方の原因であるとは限りません。",
+  },
   // 動作ボタンは「〜する」で統一
   add: "追加する",
   delete: "削除する",

@@ -62,6 +62,11 @@ export interface TrendDataPoint {
   value: number | null;
 }
 
+/** 2項目を重ねて見るときの点。比べる項目を選んでいなければ `compareValue` は常に null */
+export interface ComparisonDataPoint extends TrendDataPoint {
+  compareValue: number | null;
+}
+
 export const CHART_METRICS: ChartMetricConfig[] = [
   {
     id: "mood",
@@ -204,8 +209,64 @@ export async function buildTrendSeries(
   return ok(buildTrendSeriesFromRecords(period, metric, records.value));
 }
 
+/**
+ * 2項目を同じ期間で並べる。
+ *
+ * 期間の目盛りは項目によらず同じ並びで作られるため、位置どうしを対応させてよい。
+ * 比べる項目が未選択、または主の項目と同じときは `compareValue` を null にし、
+ * 同じ線を二重に描かないようにする。
+ *
+ * ここでは値を並べるだけで、相関の強さや向きは算出しない。
+ * 一方が他方の原因だと読めてしまう数値を出さないため。
+ */
+export function buildComparisonSeriesFromRecords(
+  period: ChartPeriod,
+  metric: ChartMetricId,
+  compareMetric: ChartMetricId | null,
+  records: DailyRecord[]
+): ComparisonDataPoint[] {
+  const base = buildTrendSeriesFromRecords(period, metric, records);
+  if (compareMetric === null || compareMetric === metric) {
+    return base.map((point) => ({ ...point, compareValue: null }));
+  }
+
+  const compare = buildTrendSeriesFromRecords(period, compareMetric, records);
+  return base.map((point, index) => ({
+    ...point,
+    compareValue: compare[index]?.value ?? null,
+  }));
+}
+
+export async function buildComparisonSeries(
+  period: ChartPeriod,
+  metric: ChartMetricId,
+  compareMetric: ChartMetricId | null
+): Promise<Result<ComparisonDataPoint[]>> {
+  const records = await repository.getAllRecords();
+  if (!records.ok) return records;
+  return ok(
+    buildComparisonSeriesFromRecords(period, metric, compareMetric, records.value)
+  );
+}
+
 export function countRecordedPoints(points: TrendDataPoint[]): number {
   return points.filter((p) => p.value !== null).length;
+}
+
+/** 比べる項目の側に値がある点の数。母数を示すために使う */
+export function countComparisonPoints(points: ComparisonDataPoint[]): number {
+  return points.filter((p) => p.compareValue !== null).length;
+}
+
+/** 比べる項目の縦軸を決めるため、比べる側の値だけを取り出す */
+export function toComparisonPoints(
+  points: ComparisonDataPoint[]
+): TrendDataPoint[] {
+  return points.map(({ date, label, compareValue }) => ({
+    date,
+    label,
+    value: compareValue,
+  }));
 }
 
 export function getYAxisDomain(
