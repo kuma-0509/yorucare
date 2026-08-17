@@ -5,6 +5,7 @@ import {
   buildReportSkeleton,
   buildReportText,
   countSelfCareDoneDays,
+  fallbackNarrative,
   REPORT_SLOT_IDS,
 } from "./report";
 import type { DailyRecord, SelfCareItem } from "../types";
@@ -142,7 +143,7 @@ describe("buildReportSkeleton", () => {
     expect(selfCare?.facts[0].note).toBe("記録した3日分のうち");
   });
 
-  it("すべての節に文章の穴と定型のフォールバック文がある", () => {
+  it("すべての節に文章の穴と、選べる候補がある", () => {
     const skeleton = buildReportSkeleton(
       [makeRecord({ id: "a", date: "2026-07-21", selfCareIds: ["s1"] })],
       [makeItem("s1", "散歩する")],
@@ -155,12 +156,14 @@ describe("buildReportSkeleton", () => {
     ]);
     for (const section of skeleton.sections) {
       expect(section.slot.id).toBe(section.id);
-      expect(section.slot.fallback.length).toBeGreaterThan(0);
       expect(section.slot.maxLength).toBeGreaterThan(0);
+      // 候補が2つ以上ないと、LLM に選ばせる意味がない
+      expect(section.slot.candidates.length).toBeGreaterThan(1);
+      expect(fallbackNarrative(section.slot)).toBe(section.slot.candidates[0].text);
     }
   });
 
-  it("定型のフォールバック文は、LLMの文と同じ検証を通る", () => {
+  it("候補の id は節の中で重複しない", () => {
     const skeleton = buildReportSkeleton(
       [makeRecord({ id: "a", date: "2026-07-21", selfCareIds: ["s1"] })],
       [makeItem("s1", "散歩する")],
@@ -169,11 +172,25 @@ describe("buildReportSkeleton", () => {
     );
 
     for (const section of skeleton.sections) {
-      const verdict = verifyNarrative(
-        section.slot.fallback,
-        section.slot.maxLength
-      );
-      expect(verdict.ok, section.slot.fallback).toBe(true);
+      const ids = section.slot.candidates.map((candidate) => candidate.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    }
+  });
+
+  it("穴に入り得る文は、すべて表現の制約を通る", () => {
+    const skeleton = buildReportSkeleton(
+      [makeRecord({ id: "a", date: "2026-07-21", selfCareIds: ["s1"] })],
+      [makeItem("s1", "散歩する")],
+      FROM,
+      TO
+    );
+
+    // 出せる文は候補が全部なので、候補を全部通せば画面に出る文をすべて確かめたことになる
+    for (const section of skeleton.sections) {
+      for (const candidate of section.slot.candidates) {
+        const verdict = verifyNarrative(candidate.text, section.slot.maxLength);
+        expect(verdict.ok, candidate.text).toBe(true);
+      }
     }
   });
 });
@@ -286,7 +303,7 @@ describe("buildReport / buildReportText", () => {
 
     for (const section of report.sections) {
       expect(section.narrativeSource).toBe("fallback");
-      expect(section.narrative).toBe(section.slot.fallback);
+      expect(section.narrative).toBe(fallbackNarrative(section.slot));
     }
   });
 

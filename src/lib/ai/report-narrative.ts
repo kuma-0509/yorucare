@@ -6,6 +6,7 @@ import {
   buildReport,
   type Report,
   type ReportFact,
+  type ReportNarrativeCandidate,
   type ReportSkeleton,
   type ReportSlotId,
 } from "./report";
@@ -22,9 +23,18 @@ import {
  * LLM は報告書に出ている以上のことを知らないので、
  * 報告書へ載せないと決めた項目について書きようがない。
  *
+ * ## LLM は文を書かず、候補を選ぶ
+ *
+ * 穴へ入る文はアプリが書き、LLM は候補の `id` を1つ返すだけとする。
+ * 自由文を受け取って禁止語で濾す設計は採らない。禁止語の一覧は必ず取りこぼすので
+ * （「肺炎です。」のような文が通ってしまう）、診断・治療・助言を出さないという
+ * 制約を担保できない。**選択肢を閉じておけば、出せる文はアプリが書いたものだけになる。**
+ *
+ * `verifyNarrative` は候補そのものの検査として残し、選ばれた文にも実行時に掛ける。
+ *
  * ## 何を渡さないか
  *
- * 保存・削除の手段は渡さない。ここにあるのは文章を受け取る経路だけで、
+ * 保存・削除の手段は渡さない。ここにあるのは選択を受け取る経路だけで、
  * 書き込み系のツールは `tools.ts` にも存在しない。
  * 報告書の確定は本人のボタン操作に限る。
  *
@@ -41,9 +51,11 @@ import {
 /** LLM へ渡す1つの穴の説明 */
 export type NarrativeSlotRequest = {
   id: ReportSlotId;
-  /** その穴で何を書くか */
+  /** その穴が何を述べるものか */
   purpose: string;
   maxLength: number;
+  /** この中から1つ選ばせる。ここに無い文は報告書へ入らない */
+  candidates: ReportNarrativeCandidate[];
 };
 
 /** LLM へ渡す1つの節。報告書に出る数値と見出しだけを持つ */
@@ -61,10 +73,16 @@ export type NarrativeRequest = {
   slots: NarrativeSlotRequest[];
 };
 
-/** LLM から受け取る1つの穴の答え */
+/**
+ * LLM から受け取る1つの穴の答え。
+ *
+ * 文そのものではなく候補の `id` を受け取る。
+ * 自由文を受け取るフィールドを型に置かないことで、
+ * アプリが書いていない文が報告書へ入る経路を無くす。
+ */
 export type NarrativeFill = {
   slotId: string;
-  text: string;
+  candidateId: string;
 };
 
 /**
@@ -85,6 +103,8 @@ export type NarrativeFallbackReason =
   | "fillerFailed"
   /** その穴の答えが返ってこなかった */
   | "notFilled"
+  /** 候補に無い id が返ってきた */
+  | "unknownCandidate"
   /** 検証に落ちた */
   | NarrativeRejectReason;
 
@@ -128,22 +148,20 @@ export function resolveNarrativeFiller(): NarrativeFiller | null {
 /**
  * LLM へ渡す依頼データを組み立てる。
  *
- * 制約は文章で伝えるが、守られる保証はプロンプトではなく
- * `verifyNarrative` の側に置く。
+ * 制約は指示としても伝えるが、守られる保証はプロンプトではなく
+ * 「候補の外の文は使えない」という形の側に置く。
  */
 export function buildNarrativeRequest(
   skeleton: ReportSkeleton
 ): NarrativeRequest {
   return {
     instructions: [
-      "渡した数値と見出しだけを材料にして、節ごとに1文だけ書く。",
-      "数を書かない。数値はアプリが埋めるので、文の中に数を出さない。",
-      "本人の状態や記録の量を評価しない。良い・悪い・順調といった言い方をしない。",
-      "次の行動をすすめない。助言や指示をしない。",
-      "体調の見立て、治し方、危ないかどうかの判断を書かない。",
-      "記録がない日を、抜けた日・できなかった日として書かない。",
-      "渡していない事実を足さない。推測で補わない。",
-      "改行を入れず、1文で終える。",
+      "節ごとに、渡した候補の中から最もあてはまる1つを選び、その id を返す。",
+      "文を書かない。候補にない文は使えない。",
+      "渡した数値と見出しだけを材料にして選ぶ。推測で補わない。",
+      "本人の状態や記録の量を評価しない。",
+      "記録がない日を、抜けた日・できなかった日として扱わない。",
+      "迷ったときは、いちばん最初の候補を選ぶ。",
     ],
     range: skeleton.range,
     sections: skeleton.sections.map((section) => ({
@@ -155,20 +173,21 @@ export function buildNarrativeRequest(
       id: section.slot.id,
       purpose: section.slot.purpose,
       maxLength: section.slot.maxLength,
+      candidates: section.slot.candidates.map((candidate) => ({ ...candidate })),
     })),
   };
 }
 
-/** filler の戻り値を、穴ごとの文字列へ畳む。同じ穴が複数返ったら最初を使う */
+/** filler の戻り値を、穴ごとの候補 id へ畳む。同じ穴が複数返ったら最初を使う */
 function indexFills(fills: unknown): Map<string, string> | null {
   if (!Array.isArray(fills)) return null;
   const byId = new Map<string, string>();
   for (const fill of fills) {
     if (typeof fill !== "object" || fill === null) continue;
-    const { slotId, text } = fill as Partial<NarrativeFill>;
-    if (typeof slotId !== "string" || typeof text !== "string") continue;
+    const { slotId, candidateId } = fill as Partial<NarrativeFill>;
+    if (typeof slotId !== "string" || typeof candidateId !== "string") continue;
     if (byId.has(slotId)) continue;
-    byId.set(slotId, text);
+    byId.set(slotId, candidateId);
   }
   return byId;
 }
@@ -176,9 +195,10 @@ function indexFills(fills: unknown): Map<string, string> | null {
 /**
  * 骨格の穴を埋めて報告書を作る。
  *
- * filler を渡さなければ、外部通信は起きず、すべての穴が定型文になる。
- * filler が返した文は1つずつ検証し、通らなかった穴だけ定型文へ差し替える。
- * 節ごとに独立して判定するので、1つ落ちても他の節の文は残る。
+ * filler を渡さなければ、外部通信は起きず、すべての穴が既定の文になる。
+ * filler が返すのは候補の id だけで、候補に無い id と、検証に落ちた候補は
+ * 既定の文へ差し替える。節ごとに独立して判定するので、
+ * 1つ落ちても他の節の選択は残る。
  */
 export async function fillReport(
   skeleton: ReportSkeleton,
@@ -206,8 +226,8 @@ export async function fillReport(
 
   const outcomes: NarrativeOutcome[] = [];
   const sections = base.sections.map((section) => {
-    const raw = byId?.get(section.slot.id);
-    if (raw === undefined) {
+    const chosenId = byId?.get(section.slot.id);
+    if (chosenId === undefined) {
       outcomes.push({
         slotId: section.id,
         source: "fallback",
@@ -216,7 +236,23 @@ export async function fillReport(
       return section;
     }
 
-    const verdict = verifyNarrative(raw, section.slot.maxLength);
+    // 候補にない id は使わない。ここが「アプリが書いた文しか出ない」の要
+    const chosen = section.slot.candidates.find(
+      (candidate) => candidate.id === chosenId
+    );
+    if (chosen === undefined) {
+      outcomes.push({
+        slotId: section.id,
+        source: "fallback",
+        reason: "unknownCandidate",
+        detail: chosenId,
+      });
+      return section;
+    }
+
+    // 候補は `report.test.ts` で検証済みだが、増やした人がテストを
+    // 通していない場合に備えて実行時にももう一度掛ける
+    const verdict = verifyNarrative(chosen.text, section.slot.maxLength);
     if (!verdict.ok) {
       outcomes.push({
         slotId: section.id,

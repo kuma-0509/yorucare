@@ -104,6 +104,16 @@ describe("verifyNarrative", () => {
     }
   });
 
+  it("禁止語に無い言い回しは通ってしまう（この層は保証ではない）", () => {
+    // 挙げていない語で書かれた診断・助言は、この判定を素通りする。
+    // だからこそ穴は自由文ではなく、アプリが書いた候補からの選択にしてある
+    // （`report-narrative.ts`）。この事実をテストとして残し、
+    // 後から「検証層があるから自由文でも安全」と読まれないようにする。
+    for (const text of ["肺炎です。", "薬を増やすと良いでしょう。"]) {
+      expect(verifyNarrative(text).ok, text).toBe(true);
+    }
+  });
+
   it("文字列でない値を空として扱う", () => {
     expect(verifyNarrative(undefined as unknown as string)).toEqual({
       ok: false,

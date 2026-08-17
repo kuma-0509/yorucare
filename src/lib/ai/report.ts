@@ -42,15 +42,32 @@ export type ReportFact = {
   note?: string;
 };
 
-/** 文章の穴。LLM が埋められなければ fallback をそのまま使う */
+/** 穴に入れてよい文。文面はアプリが書き、`COPY` から取る */
+export type ReportNarrativeCandidate = {
+  id: string;
+  text: string;
+};
+
+/**
+ * 文章の穴。
+ *
+ * LLM は `candidates` から1つ選ぶだけで、文そのものは書かない。
+ * 出せる文がアプリの書いたものに限られるので、
+ * 渡していない主張（診断・治療・助言）が報告書へ入る経路が無い。
+ */
 export type ReportSlot = {
   id: ReportSlotId;
   /** LLM へ渡す指示。画面には出さない */
   purpose: string;
   maxLength: number;
-  /** 定型のフォールバック文。画面に出るので `COPY` から取る */
-  fallback: string;
+  /** 選べる文。先頭が既定 */
+  candidates: ReportNarrativeCandidate[];
 };
+
+/** 選ばれなかったときに使う文 */
+export function fallbackNarrative(slot: ReportSlot): string {
+  return slot.candidates[0].text;
+}
 
 export type ReportSection = {
   id: ReportSlotId;
@@ -132,8 +149,20 @@ function buildHeadline(recordedDays: number, daysInRange: number): string {
   return `この${daysInRange}日間で、${recordedDays}日分の記録が残りました。`;
 }
 
-function slot(id: ReportSlotId, purpose: string, fallback: string): ReportSlot {
-  return { id, purpose, maxLength: NARRATIVE_MAX_LENGTH, fallback };
+function slot(
+  id: ReportSlotId,
+  purpose: string,
+  candidates: readonly string[]
+): ReportSlot {
+  return {
+    id,
+    purpose,
+    maxLength: NARRATIVE_MAX_LENGTH,
+    candidates: candidates.map((text, index) => ({
+      id: `${id}-${index + 1}`,
+      text,
+    })),
+  };
 }
 
 /**
@@ -171,7 +200,7 @@ export function buildReportSkeleton(
       slot: slot(
         "overview",
         "対象期間と記録の量を、評価せずに一文で述べる",
-        COPY.report.fallbackOverview
+        COPY.report.narrativeOverview
       ),
     },
   ];
@@ -201,7 +230,7 @@ export function buildReportSkeleton(
       slot: slot(
         "mood",
         "気分の数値の読み方を、評価せずに一文で述べる",
-        COPY.report.fallbackMood
+        COPY.report.narrativeMood
       ),
     });
   }
@@ -230,7 +259,7 @@ export function buildReportSkeleton(
       slot: slot(
         "sleep",
         "睡眠時間の数値の読み方を、評価せずに一文で述べる",
-        COPY.report.fallbackSleep
+        COPY.report.narrativeSleep
       ),
     });
   }
@@ -252,7 +281,7 @@ export function buildReportSkeleton(
       slot: slot(
         "selfCare",
         "できたことがあった日数の読み方を、評価せずに一文で述べる",
-        COPY.report.fallbackSelfCare
+        COPY.report.narrativeSelfCare
       ),
     });
   }
@@ -278,7 +307,7 @@ export function buildReport(skeleton: ReportSkeleton): Report {
     ...skeleton,
     sections: skeleton.sections.map((section) => ({
       ...section,
-      narrative: section.slot.fallback,
+      narrative: fallbackNarrative(section.slot),
       narrativeSource: "fallback" as const,
     })),
   };

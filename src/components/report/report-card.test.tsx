@@ -103,7 +103,7 @@ describe("ReportCard", () => {
     await waitFor(() => {
       expect(screen.getByText(COPY.report.sectionMood)).toBeTruthy();
     });
-    expect(screen.getByText(COPY.report.fallbackMood)).toBeTruthy();
+    expect(screen.getByText(COPY.report.narrativeMood[0])).toBeTruthy();
     expect(screen.getByText("3（5段階）")).toBeTruthy();
     expect(screen.getAllByText("記録した2日分").length).toBeGreaterThan(0);
   });
