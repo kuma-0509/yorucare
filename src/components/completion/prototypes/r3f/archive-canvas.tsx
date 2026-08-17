@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import { ArchiveScene } from "./archive-scene";
+import { detectSceneQuality } from "./quality";
 
 interface ArchiveCanvasProps {
   lines: string[];
@@ -18,14 +19,25 @@ export function ArchiveCanvas({
   soundEnabled = false,
   onDone,
 }: ArchiveCanvasProps) {
+  // 端末の段階は再生中に変わらない。最初に1回だけ決める
+  const quality = useMemo(() => detectSceneQuality(), []);
+
   return (
     <Canvas
       shadows
-      dpr={[1, 1.75]}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      dpr={quality.dpr}
+      gl={{
+        // 低い段階では、解像度を落としたぶんのジャギーを
+        // アンチエイリアスで埋めずに済ませる（塗る回数を増やさない）
+        antialias: quality.tier === "high",
+        powerPreference:
+          quality.tier === "high" ? "high-performance" : "default",
+      }}
       onCreated={({ gl }) => {
         gl.shadowMap.enabled = true;
-        gl.shadowMap.type = THREE.PCFSoftShadowMap;
+        gl.shadowMap.type = quality.softShadows
+          ? THREE.PCFSoftShadowMap
+          : THREE.PCFShadowMap;
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.08;
       }}
@@ -36,6 +48,7 @@ export function ArchiveCanvas({
           lines={lines}
           heading={heading}
           soundEnabled={soundEnabled}
+          quality={quality}
           onDone={onDone}
         />
       </Suspense>
