@@ -44,30 +44,6 @@
 
 /* 記録後の締めくくり演出。やさしく・短く・怖さを出さないことを優先する。 */
 @layer utilities {
-  /* 本を閉じる：開いた表紙が左からゆっくり閉じてくる */
-  @keyframes yc-book-close {
-    0% {
-      transform: rotateY(-180deg);
-    }
-    100% {
-      transform: rotateY(0deg);
-    }
-  }
-  /* 本棚にすっと収まる */
-  @keyframes yc-book-shelve {
-    0% {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-    }
-    60% {
-      transform: translateY(-6px) scale(0.86);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(14px) scale(0.42);
-      opacity: 0;
-    }
-  }
   /* 紙をクシャッと丸める（破壊感を出さない、やわらかい縮み） */
   @keyframes yc-paper-crumple {
     0% {
@@ -102,13 +78,6 @@
     }
   }
 
-  .yc-anim-book-close {
-    transform-origin: left center;
-    animation: yc-book-close 700ms ease-in-out forwards;
-  }
-  .yc-anim-book-shelve {
-    animation: yc-book-shelve 900ms ease-in 400ms forwards;
-  }
   .yc-anim-paper-crumple {
     animation: yc-paper-crumple 600ms ease-in forwards;
   }
@@ -592,8 +561,6 @@
 
 /* アニメーションを控える設定の端末では、動きを止めて静かに完了させる */
 @media (prefers-reduced-motion: reduce) {
-  .yc-anim-book-close,
-  .yc-anim-book-shelve,
   .yc-anim-paper-crumple,
   .yc-anim-paper-drop,
   .yc-anim-soft-rise,

@@ -11,6 +11,7 @@ import {
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 import { COPY } from "@/lib/copy";
+import { prefersReducedMotion } from "@/lib/motion";
 import { BookShelfMagic } from "./book-shelf-magic";
 
 const ArchiveCanvas = dynamic(
@@ -58,8 +59,8 @@ class R3fErrorBoundary extends Component<
 export function BookShelfCinematic({
   lines,
   heading,
-  title = COPY.completion.bookDone,
-  subtitle = COPY.completion.bookDoneSub,
+  title = COPY.completion.shelfDone,
+  subtitle = COPY.completion.shelfDoneSub,
   soundEnabled = false,
   onDone,
 }: BookShelfCinematicProps) {
@@ -68,8 +69,7 @@ export function BookShelfCinematic({
   const completedRef = useRef(false);
 
   useEffect(() => {
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
+    if (prefersReducedMotion()) {
       setMode("css");
       return;
     }

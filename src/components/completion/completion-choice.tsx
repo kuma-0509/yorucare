@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { BookMarked, CheckCircle2, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { COPY } from "@/lib/copy";
+import { prefersReducedMotion } from "@/lib/motion";
 import {
   getActivePaperDates,
   recordCompletion,
   type CompletionStyle,
 } from "@/lib/completion-log";
-import { BookArchiveAnimation } from "./book-archive-animation";
+import { BookShelfCinematic } from "./prototypes/book-shelf-cinematic";
 import { PaperTrashAnimation } from "./paper-trash-animation";
 import {
   WeeklyBurnAnimation,
@@ -37,6 +39,19 @@ const DONE_MESSAGE: Record<DoneKind, string> = {
   burn: COPY.completion.burnDone,
 };
 
+/**
+ * 「書庫にしまう」演出が終わってから、完了画面へ切り替えるまでの余韻。
+ * 演出の最後に出る一文が読める長さにする（R3F版はここでフェードインする）。
+ */
+const SHELF_AFTERGLOW_MS = 2200;
+
+/** 背表紙と書き込みページに出す日付。長い表記だと背表紙に収まらない */
+function shortHeading(date: string): string {
+  const [, month, day] = date.split("-").map(Number);
+  if (!month || !day) return "";
+  return `${month}月${day}日`;
+}
+
 export function CompletionChoice({
   date,
   lines,
@@ -46,32 +61,111 @@ export function CompletionChoice({
   const [phase, setPhase] = useState<Phase>("choosing");
   const [doneKind, setDoneKind] = useState<DoneKind>("skip");
   const [burnPaperDates, setBurnPaperDates] = useState<string[]>([]);
+  const [shelfEnded, setShelfEnded] = useState(false);
+  const afterglowRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const finish = (kind: DoneKind) => {
-    setDoneKind(kind);
-    setPhase("done");
-    onLiveMessage?.(DONE_MESSAGE[kind]);
+  const clearAfterglow = () => {
+    if (afterglowRef.current !== null) {
+      clearTimeout(afterglowRef.current);
+      afterglowRef.current = null;
+    }
   };
+
+  useEffect(() => clearAfterglow, []);
+
+  const finish = useCallback(
+    (kind: DoneKind) => {
+      clearAfterglow();
+      setDoneKind(kind);
+      setPhase("done");
+      onLiveMessage?.(DONE_MESSAGE[kind]);
+    },
+    [onLiveMessage]
+  );
+
+  /**
+   * 演出は終わっているが、最後の一文はまだ画面に出たばかりなので、
+   * すぐには完了画面へ切り替えない。途中で「このまま終える」を押されたら
+   * この待ち時間も取り消す。
+   *
+   * 余韻の間は「このまま終える」を消す。終える対象がもう無いうえ、
+   * CSS版の完了文言は画面下（bottom-4%）に出るため、ボタンが重なって読めなくなる。
+   */
+  const handleShelfDone = useCallback(() => {
+    setShelfEnded(true);
+    clearAfterglow();
+    afterglowRef.current = setTimeout(
+      () => finish("shelf"),
+      SHELF_AFTERGLOW_MS
+    );
+  }, [finish]);
 
   const handleSelect = (style: CompletionStyle) => {
     recordCompletion(date, style);
     setDoneKind(style);
+    setShelfEnded(false);
+    // 動きを控える設定のときは全画面の演出を出さず、完了の一文だけを出す
+    if (style === "shelf" && prefersReducedMotion()) {
+      finish("shelf");
+      return;
+    }
     setPhase(style);
   };
 
-  if (phase === "shelf" || phase === "paper") {
+  if (phase === "shelf") {
+    return (
+      // 演出中は下の記録画面へ触れさせない。焦点の閉じ込めと背面の無効化は
+      // 自前で組まず、同意ダイアログと同じ Radix のダイアログに任せる
+      <DialogPrimitive.Root open modal>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Content
+            className="fixed inset-0 z-50 touch-none overscroll-contain bg-[#1a1510] focus-visible:outline-none"
+            aria-describedby={undefined}
+            onEscapeKeyDown={(event) => {
+              // Escape は「このまま終える」と同じ扱いにする
+              event.preventDefault();
+              finish("shelf");
+            }}
+            onInteractOutside={(event) => event.preventDefault()}
+            onPointerDownOutside={(event) => event.preventDefault()}
+          >
+            <DialogPrimitive.Title className="sr-only">
+              {COPY.completion.shelfRunning}
+            </DialogPrimitive.Title>
+
+            <BookShelfCinematic
+              lines={lines}
+              heading={shortHeading(date)}
+              onDone={handleShelfDone}
+            />
+
+            {!shelfEnded && (
+              <div className="absolute inset-x-0 bottom-0 z-30 flex justify-center px-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[#f0e6d0]/80 hover:bg-white/10 hover:text-[#f0e6d0]"
+                  onClick={() => finish("shelf")}
+                >
+                  {COPY.completion.skipAction}
+                </Button>
+              </div>
+            )}
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
+    );
+  }
+
+  if (phase === "paper") {
     return (
       <div className="flex flex-col gap-2">
-        {phase === "shelf" ? (
-          <BookArchiveAnimation lines={lines} onDone={() => finish("shelf")} />
-        ) : (
-          <PaperTrashAnimation lines={lines} onDone={() => finish("paper")} />
-        )}
+        <PaperTrashAnimation lines={lines} onDone={() => finish("paper")} />
         <Button
           variant="ghost"
           size="sm"
           className="self-center text-muted-foreground"
-          onClick={() => finish(phase)}
+          onClick={() => finish("paper")}
         >
           {COPY.completion.skipAction}
         </Button>
@@ -96,7 +190,15 @@ export function CompletionChoice({
           <p className="text-base font-medium text-secondary-foreground">
             {DONE_MESSAGE[doneKind]}
           </p>
+          {doneKind === "shelf" && (
+            <p className="text-sm leading-relaxed text-secondary-foreground/90">
+              {COPY.completion.shelfDoneSub}
+            </p>
+          )}
         </div>
+        <p className="px-1 text-sm leading-relaxed text-muted-foreground">
+          {COPY.completion.doneGuide}
+        </p>
         {footer}
       </div>
     );
