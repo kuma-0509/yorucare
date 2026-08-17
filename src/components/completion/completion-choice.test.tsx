@@ -86,6 +86,60 @@ describe("記録完了の締めくくり", () => {
     expect(localStorage.getItem("yorucare_completion_log")).toContain("shelf");
   });
 
+  it("演出中は「このまま終える」に焦点を当て、背面のボタンへ移らせない", async () => {
+    render(
+      <>
+        <button type="button">背面のボタン</button>
+        <CompletionChoice
+          date="2026-08-17"
+          lines={LINES}
+          footer={<button type="button">これまでの記録を見る</button>}
+        />
+      </>
+    );
+
+    fireEvent.click(screen.getByText(COPY.completion.shelf));
+
+    // 選んだボタンは消えるので、演出の中のボタンへ焦点を移す
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe(
+        COPY.completion.skipAction
+      );
+    });
+    // 背面は読み上げからも外す
+    expect(
+      screen.getByText("背面のボタン").closest("[aria-hidden='true']")
+    ).not.toBe(null);
+  });
+
+  it("演出が終わったら「このまま終える」を消し、完了の一文に重ねない", async () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <CompletionChoice
+          date="2026-08-17"
+          lines={LINES}
+          footer={<button type="button">これまでの記録を見る</button>}
+        />
+      );
+      fireEvent.click(screen.getByText(COPY.completion.shelf));
+
+      // 演出（CSS版）が終わるまで進める
+      await vi.advanceTimersByTimeAsync(8000);
+      expect(screen.queryByText(COPY.completion.skipAction)).toBe(null);
+      // 余韻の間はまだ演出の画面のまま
+      expect(screen.getByRole("dialog")).toBeTruthy();
+
+      // 余韻ぶん進めたあと、状態の反映を1手進める
+      await vi.advanceTimersByTimeAsync(2500);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(screen.queryByRole("dialog")).toBe(null);
+      expect(screen.getByText(COPY.completion.doneGuide)).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("演出の途中で終えても、完了の案内へ進める", async () => {
     renderChoice();
 

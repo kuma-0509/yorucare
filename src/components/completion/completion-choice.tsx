@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { BookMarked, CheckCircle2, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { COPY } from "@/lib/copy";
@@ -60,6 +61,7 @@ export function CompletionChoice({
   const [phase, setPhase] = useState<Phase>("choosing");
   const [doneKind, setDoneKind] = useState<DoneKind>("skip");
   const [burnPaperDates, setBurnPaperDates] = useState<string[]>([]);
+  const [shelfEnded, setShelfEnded] = useState(false);
   const afterglowRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearAfterglow = () => {
@@ -85,8 +87,12 @@ export function CompletionChoice({
    * 演出は終わっているが、最後の一文はまだ画面に出たばかりなので、
    * すぐには完了画面へ切り替えない。途中で「このまま終える」を押されたら
    * この待ち時間も取り消す。
+   *
+   * 余韻の間は「このまま終える」を消す。終える対象がもう無いうえ、
+   * CSS版の完了文言は画面下（bottom-4%）に出るため、ボタンが重なって読めなくなる。
    */
   const handleShelfDone = useCallback(() => {
+    setShelfEnded(true);
     clearAfterglow();
     afterglowRef.current = setTimeout(
       () => finish("shelf"),
@@ -97,6 +103,7 @@ export function CompletionChoice({
   const handleSelect = (style: CompletionStyle) => {
     recordCompletion(date, style);
     setDoneKind(style);
+    setShelfEnded(false);
     // 動きを控える設定のときは全画面の演出を出さず、完了の一文だけを出す
     if (style === "shelf" && prefersReducedMotion()) {
       finish("shelf");
@@ -107,29 +114,46 @@ export function CompletionChoice({
 
   if (phase === "shelf") {
     return (
-      <div
-        // 演出中は下の記録画面へ触れさせない（誤タップと背面スクロールを防ぐ）
-        className="fixed inset-0 z-50 touch-none overscroll-contain bg-[#1a1510]"
-        role="dialog"
-        aria-modal="true"
-        aria-label={COPY.completion.shelfRunning}
-      >
-        <BookShelfCinematic
-          lines={lines}
-          heading={shortHeading(date)}
-          onDone={handleShelfDone}
-        />
-        <div className="absolute inset-x-0 bottom-0 z-30 flex justify-center px-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-[#f0e6d0]/80 hover:bg-white/10 hover:text-[#f0e6d0]"
-            onClick={() => finish("shelf")}
+      // 演出中は下の記録画面へ触れさせない。焦点の閉じ込めと背面の無効化は
+      // 自前で組まず、同意ダイアログと同じ Radix のダイアログに任せる
+      <DialogPrimitive.Root open modal>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Content
+            className="fixed inset-0 z-50 touch-none overscroll-contain bg-[#1a1510] focus-visible:outline-none"
+            aria-describedby={undefined}
+            onEscapeKeyDown={(event) => {
+              // Escape は「このまま終える」と同じ扱いにする
+              event.preventDefault();
+              finish("shelf");
+            }}
+            onInteractOutside={(event) => event.preventDefault()}
+            onPointerDownOutside={(event) => event.preventDefault()}
           >
-            {COPY.completion.skipAction}
-          </Button>
-        </div>
-      </div>
+            <DialogPrimitive.Title className="sr-only">
+              {COPY.completion.shelfRunning}
+            </DialogPrimitive.Title>
+
+            <BookShelfCinematic
+              lines={lines}
+              heading={shortHeading(date)}
+              onDone={handleShelfDone}
+            />
+
+            {!shelfEnded && (
+              <div className="absolute inset-x-0 bottom-0 z-30 flex justify-center px-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-[#f0e6d0]/80 hover:bg-white/10 hover:text-[#f0e6d0]"
+                  onClick={() => finish("shelf")}
+                >
+                  {COPY.completion.skipAction}
+                </Button>
+              </div>
+            )}
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     );
   }
 
