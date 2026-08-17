@@ -113,6 +113,40 @@ export const COPY = {
     medicalNotice:
       "お薬の内容や飲み方については、主治医や薬剤師へご相談ください。",
   },
+  /**
+   * お薬の書類（PDF）。処方の控えやお薬手帳の写しを端末内に置く。
+   * 2枚目以降を足すときは、新しく増やすか、どれを差し替えるかを本人が選ぶ。
+   * 書き出しファイルには含めない（中身がファイルであり、最も個人を特定しやすいため）。
+   */
+  medicationDocument: {
+    heading: "お薬の書類",
+    description:
+      "処方の控えやお薬手帳の写しをPDFで置いておけます。必要なときにこの画面から開けます。",
+    addAction: "PDFを選ぶ",
+    empty: "まだ追加していません。",
+    titleLabel: "名前（任意）",
+    titlePlaceholder: "例：8月の処方",
+    chooseHeading: "この書類をどうしますか？",
+    chooseDescription:
+      "新しく増やすか、すでにある書類のどれかと差し替えるかを選べます。差し替えると、前の書類は消えます。",
+    addAsNew: "新しく追加する",
+    replacePrefix: "差し替える：",
+    confirmAdd: "追加する",
+    confirmReplace: "差し替える",
+    openAction: "開く",
+    added: "書類を追加しました。",
+    replaced: "書類を差し替えました。",
+    removed: "書類を消しました。",
+    removeConfirm: "この書類を消しますか？この操作は元に戻せません。",
+    updatedAtPrefix: "更新",
+    addedAtPrefix: "追加",
+    notice:
+      "書類はこの端末にだけ保存され、どこへも送信しません。記録のまとめや生成AIなどへ共有する内容にも入りません。",
+    backupNotice:
+      "記録をファイルに保存しても、書類は含まれません。元のPDFはご自身でも保管してください。",
+    sharedDeviceNotice:
+      "他の人も使う端末では、書類を置いたままにしないでください。「これまで」タブの全削除で消せます。",
+  },
   notEntered: "まだ入力していません",
   sleepNotEntered: "まだ入力していません",
   chartWarningDescription: "なし／少しあり／あり の3段階で表示します",

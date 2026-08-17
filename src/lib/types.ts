@@ -74,3 +74,21 @@ export interface SelfCareItem {
 }
 
 export type AppTab = "today" | "records" | "selfcare" | "reflection";
+
+/**
+ * お薬の書類（PDF）の見出し。中身のファイルとは別に持つ。
+ *
+ * 一覧の表示や差し替えの判断はこの型だけで足りるため、
+ * 画面へファイルの中身を読み込まずに済ませる。
+ */
+export interface MedicationDocument {
+  id: string;
+  /** 本人がつける名前。未入力ならファイル名を使う */
+  title: string;
+  fileName: string;
+  byteSize: number;
+  /** 最初に追加した日時。差し替えても引き継ぐ */
+  addedAt: string;
+  /** 最後に差し替えた日時。追加しただけなら addedAt と同じ */
+  updatedAt: string;
+}

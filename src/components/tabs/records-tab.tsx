@@ -35,6 +35,7 @@ import {
 import { formatMoodLabelsDisplay } from "@/lib/mood-labels";
 import { COPY } from "@/lib/copy";
 import { storageErrorMessage } from "@/lib/result";
+import { indexedDbMedicationDocumentStore as medicationDocumentStore } from "@/lib/medication-document-store";
 import {
   deleteAllRecords,
   deleteRecord,
@@ -120,9 +121,16 @@ export function RecordsTab({
     if (deleting) return;
     setDeleting(true);
     const result = await deleteAllRecords();
-    setDeleting(false);
     if (!result.ok) {
+      setDeleting(false);
       setMessage(storageErrorMessage(result.error));
+      return;
+    }
+    // 共有端末で使い終わったときの操作なので、お薬の書類も一緒に消す
+    const documentsResult = await medicationDocumentStore.removeAll();
+    setDeleting(false);
+    if (!documentsResult.ok) {
+      setMessage(storageErrorMessage(documentsResult.error));
       return;
     }
     setDetailRecord(null);

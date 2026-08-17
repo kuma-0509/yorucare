@@ -14,6 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LiveRegion } from "@/components/shared/live-region";
+import { MedicationDocumentSection } from "@/components/shared/medication-document-section";
 import { COPY } from "@/lib/copy";
 import { repository } from "@/lib/repository";
 import { storageErrorMessage } from "@/lib/result";
@@ -172,6 +173,9 @@ export function MedicationNoteDialog({
               </Button>
             </>
           )}
+
+          {/* 書いた覚え書きと、PDFの書類を同じ画面にまとめる */}
+          <MedicationDocumentSection onLiveMessage={setMessage} />
 
           <div className="space-y-1 rounded-xl bg-muted px-3 py-2">
             <p className="text-xs leading-relaxed text-muted-foreground">
