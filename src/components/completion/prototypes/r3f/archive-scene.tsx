@@ -8,6 +8,7 @@ import { AntiqueBook } from "./antique-book";
 import { Bookshelf } from "./bookshelf";
 import { SparkleParticles } from "./sparkle-particles";
 import {
+  isAudioReady,
   playBookClose,
   playPageFlip,
   playPenScratch,
@@ -16,7 +17,10 @@ import {
   playSparkleChime,
 } from "./completion-sounds";
 import { createWoodMaterial } from "./materials";
+import { useArchiveEnvironment } from "./environment";
+import { GlowSprite } from "./glow-sprite";
 import { getSlotWorldCenter } from "./shelf-layout";
+import { qualityFor, type SceneQuality } from "./quality";
 import {
   TIMELINE,
   useCinematicTimeline,
@@ -27,6 +31,7 @@ interface ArchiveSceneProps {
   lines: string[];
   heading?: string;
   soundEnabled?: boolean;
+  quality?: SceneQuality;
   onDone?: () => void;
 }
 
@@ -74,9 +79,12 @@ export function ArchiveScene({
   lines,
   heading,
   soundEnabled = false,
+  quality,
   onDone,
 }: ArchiveSceneProps) {
+  const settings = useMemo(() => quality ?? qualityFor("low", 1), [quality]);
   const { phase, phaseProgress } = useCinematicTimeline(onDone);
+  useArchiveEnvironment();
   const camRef = useRef<THREE.PerspectiveCamera>(null);
   const lookAt = useRef(new THREE.Vector3(0, 0.05, 0));
   const keyLightRef = useRef<THREE.SpotLight>(null);
@@ -112,6 +120,9 @@ export function ArchiveScene({
 
   useEffect(() => {
     if (!soundEnabled) return;
+    // まだ鳴らせない状態なら、その合図を「鳴らした」扱いにしない。
+    // 途中で音を入にしたときに、以降の合図がそのまま鳴るようにする
+    if (!isAudioReady()) return;
     const mark = (key: string, fn: () => void) => {
       if (played.current.has(key)) return;
       played.current.add(key);
@@ -193,10 +204,21 @@ export function ArchiveScene({
   const bookSparkles = phase === "writing";
   const shelfSparkles = (phase === "afterglow" || phase === "done") && spineGlow > 0.15;
 
+  /** 本を閉じた瞬間、表紙の金がひと呼吸だけ強く光る */
+  const closeGlow = phase === "closing" ? impactPulse(phaseProgress) : 0;
+  const particles = (base: number) =>
+    Math.max(4, Math.round(base * settings.particleScale));
+
   return (
     <>
       <color attach="background" args={["#1a1510"]} />
-      <fog attach="fog" args={["#1a1510", 4.5, 9.5]} />
+      {/*
+        霧は奥行きを出すためのもの。被写界深度（DOF）は入れない。
+        深度を取り直して2回ぼかす処理を毎フレーム全画面に掛けることになり、
+        スマートフォンでの発熱を上げずに入れる方法が無い。
+        代わりに、霧の立ち上がりを手前へ寄せて、棚の奥だけを沈ませる。
+      */}
+      <fog attach="fog" args={["#1a1510", 3.6, 8.6]} />
 
       <PerspectiveCamera
         ref={camRef}
@@ -217,7 +239,7 @@ export function ArchiveScene({
         intensity={2.05}
         color="#ffd89a"
         castShadow
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={[settings.shadowMapSize, settings.shadowMapSize]}
       />
       <pointLight position={[-1.4, 1.15, 0.95]} intensity={0.3} color="#c9a227" />
       <pointLight position={[0, -0.45, 1.45]} intensity={0.18} color="#8b6914" />
@@ -240,17 +262,26 @@ export function ArchiveScene({
         scale={8}
         blur={2.6}
         far={4}
+        resolution={settings.contactShadowResolution}
         color="#000000"
       />
 
-      <ContactShadows
-        position={[slotWorld.x, slotWorld.y - 0.34, slotWorld.z]}
-        opacity={filled && shelfT > 0.75 ? 0.38 : 0}
-        scale={0.55}
-        blur={2.2}
-        far={0.8}
-        color="#000000"
-      />
+      {/*
+        棚側の接地影は、本が収まりかけてから初めて要る。
+        ContactShadows は置いてあるだけで毎フレーム影用の描画を1回増やすので、
+        透明度0のまま置きっぱなしにせず、要る間だけ出す。
+      */}
+      {filled && shelfT > 0.75 && (
+        <ContactShadows
+          position={[slotWorld.x, slotWorld.y - 0.34, slotWorld.z]}
+          opacity={0.38}
+          scale={0.55}
+          blur={2.2}
+          far={0.8}
+          resolution={Math.round(settings.contactShadowResolution / 2)}
+          color="#000000"
+        />
+      )}
 
       <group position={[0, -0.05, 0]}>
         <AntiqueBook
@@ -271,16 +302,42 @@ export function ArchiveScene({
 
       <SparkleParticles
         active={bookSparkles}
-        count={10}
+        count={particles(10)}
         position={[0, 0.1, 0.22]}
         spread={[1.1, 0.7, 0.5]}
       />
       <SparkleParticles
         active={shelfSparkles}
-        count={12}
+        count={particles(12)}
         position={[slotWorld.x, slotWorld.y + 0.15, slotWorld.z + 0.08]}
         spread={[0.35, 0.45, 0.22]}
       />
+
+      {settings.glow && (
+        <>
+          {/* 卓上ランプのにじみ。ずっと薄く出しておく */}
+          <GlowSprite
+            position={[0.95, 1.35, 0.9]}
+            intensity={0.3 + shelfGlow * 0.1}
+            size={2.4}
+            color="#ffcf8a"
+          />
+          {/* 閉じた瞬間の金の照り返し */}
+          <GlowSprite
+            position={[0, -0.02, 0.42]}
+            intensity={closeGlow * 0.55}
+            size={1.5}
+            color="#e8bf62"
+          />
+          {/* 棚に収まったあと、背表紙の金がにじむ */}
+          <GlowSprite
+            position={[slotWorld.x, slotWorld.y + 0.02, slotWorld.z + 0.24]}
+            intensity={shelfGlow * 0.42}
+            size={0.66}
+            color="#d4af37"
+          />
+        </>
+      )}
 
       <mesh position={[0, 0.5, -2.2]} receiveShadow>
         <planeGeometry args={[8, 5]} />

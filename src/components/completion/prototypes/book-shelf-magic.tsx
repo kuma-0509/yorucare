@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { COPY } from "@/lib/copy";
 import { Sparkles } from "./sparkles";
 import { FountainPen } from "./fountain-pen";
+import { CinematicVignette } from "./cinematic-vignette";
 
 interface BookShelfMagicProps {
   lines: string[];
@@ -200,8 +201,11 @@ export function BookShelfMagic({
         </div>
       </div>
 
+      {/* 3D版と同じビネット。どちらが出ても明るさの落ち方を揃える */}
+      <CinematicVignette />
+
       {/* 完了メッセージ */}
-      <div className="absolute inset-x-0 bottom-[4%] flex justify-center px-6 pb-[env(safe-area-inset-bottom)]">
+      <div className="absolute inset-x-0 bottom-[4%] z-20 flex justify-center px-6 pb-[env(safe-area-inset-bottom)]">
         <div
           className={cn(
             "max-w-sm text-center opacity-0",

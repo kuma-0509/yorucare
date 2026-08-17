@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { COPY } from "@/lib/copy";
 import { prefersReducedMotion } from "@/lib/motion";
 import { BookShelfMagic } from "./book-shelf-magic";
+import { CinematicVignette } from "./cinematic-vignette";
 
 const ArchiveCanvas = dynamic(
   () => import("./r3f/archive-canvas").then((mod) => mod.ArchiveCanvas),
@@ -127,11 +128,7 @@ export function BookShelfCinematic({
           onDone={handleDone}
         />
 
-        {/* ビネット */}
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_42%,rgba(10,8,6,0.55)_100%)]"
-          aria-hidden="true"
-        />
+        <CinematicVignette />
 
         <div
           className={cn(

@@ -4,6 +4,10 @@ import { useState } from "react";
 import { RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BookShelfCinematic } from "@/components/completion/prototypes/book-shelf-cinematic";
+import {
+  releaseAudio,
+  unlockAudio,
+} from "@/components/completion/prototypes/r3f/completion-sounds";
 
 /**
  * 記録完了後の演出プロトタイプ（古い書庫・重厚な本・静かな光のトーン）のプレビュー画面。
@@ -25,6 +29,13 @@ export default function EffectsPreviewPage() {
   const [soundEnabled, setSoundEnabled] = useState(false);
 
   const replay = (withSound: boolean) => {
+    // 自動再生ブロックはこのクリックの中でしか解けない。
+    // 本番の「書庫にしまう」と同じ経路（unlockAudio）で確かめる
+    if (withSound) {
+      unlockAudio();
+    } else {
+      releaseAudio();
+    }
     setSoundEnabled(withSound);
     setRunId((n) => n + 1);
   };

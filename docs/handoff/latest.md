@@ -1,116 +1,139 @@
 # Handoff
 
 日付: 2026-08-17
-担当チャット: 8件目
+担当チャット: 9件目
 
 ## 今回実装したタスク
 
-管理表「記録完了演出を本番フローへ自然に統合できていない」（→ `完了` 2026-08-17）の1件だけを扱った。
+管理表「本棚演出の質感と没入感をさらに高品質にする余地がある」（→ `完了` 2026-08-17）の1件だけを扱った。
 
-`/preview/effects` にしか無かった `BookShelfCinematic` を、記録保存後の「書庫にしまう」の本番演出として `CompletionChoice` に組み込んだ。これまで本番で流れていた簡易版 `BookArchiveAnimation`（CSSのみ・約2.3秒・カード内に収まる小さな絵）は**削除して置き換えた**。
+「書庫にしまう」の3D演出について、(1) 素材の質感、(2) 光のにじみと画面の締まり、(3) スマートフォンでの描画コスト、(4) 効果音と自動再生ブロック対策の4点を直した。**`DailyRecord` と `schemas.ts` は変更していない。** 外部HDRと drei の Environment preset は使っていない。`/preview/completion` の「粒が集まる演出」は再開していない。「ゴミ箱へ捨てる」「記録が溜まったら燃える」には着手していない。
 
-### 置き換えると判断した理由
+### GLBを採用しなかった理由（管理表の指示にある「採用しない判断をした場合も理由を残す」）
 
-- **同じ「本棚にしまう」体験の実装が2つに分かれていた。** 管理表の品質改善行（R3F版の質感・カメラ・音、実機確認、質感の高品質化）はすべて `BookShelfCinematic` 側を指しているのに、利用者が実際に見るのは簡易版だった。両方を残すと、以降の改善が本番に届かない状態が続く。
-- **`BookShelfCinematic` は既にフォールバックを内蔵している。** WebGL 不可・R3F 初期化失敗のときは CSS版 `BookShelfMagic` へ落ちる（`R3fErrorBoundary` 付き）。簡易版を「軽い端末向けの版」として残す必要がない。
-- **three.js は動的 import のままなので、記録画面の初回読み込みは増えない。** ビルド結果でも `/` の First Load JS は 188 kB、`/preview/effects` は 123 kB で、3Dのチャンクはどちらの初回にも含まれない。「書庫にしまう」を選んだときに初めて読み込む。
+- **追加のダウンロードが要る。** 「書庫にしまう」を選んだ瞬間から演出が始まるので、その頭に数百KB〜数MBの取得が挟まると、待ちがそのまま体験に乗る。three.js のチャンク自体もこのタイミングで初めて読み込む（8件目からの設計）ので、そこへさらに積むことになる。
+- **弱かったのは形ではなく光の返り方だった。** 箱で組んだ本のシルエットは実物と大きく違わない一方、革も紙も金も `roughness` が一様で、面の向きが変わっても色がほとんど動かなかった。ここは法線と粗さのムラで直せる。
+- リポジトリは binary の原本を追跡対象から外す方針で運用している（管理表 2026-08-01 の行）。
 
-### reduced-motion / CSS版 / R3F版の表示ルール
+代わりに、**法線マップと粗さマップをその場で作って貼った**（`materials.ts`）。値ノイズの高さ場から、隣との差で法線を、高さから粗さを作る。素材ごとに粒の向きを変えてある（革＝不規則なシボ、紙＝細かい繊維、木＝板の長手方向へ伸ばした木目＋年輪）。**高いところは粗さを下げ、低いところは上げる**ので、光が動いたときに面が読める。生成は素材ごとに1回きり（128×128、`Map` でキャッシュ）で、取得するファイルは無い。
 
-| 端末の状態 | 出るもの | 判定場所 |
+あわせて、**64×32 のグラデーションを PMREM へ通した弱い環境光**を `scene.environment` に入れた（`environment.ts`）。金は `metalness` が高く、映り込む先が無いと暗所でほぼ黒く沈む。1枚入れるだけで背表紙の金が「暗がりで鈍く光る」ようになる。**これは外部HDRでも drei の preset でもなく、その場で作った小さな DataTexture。**
+
+### Bloom / DOF / Vignette の判断
+
+| | 採否 | 実装 | 理由 |
+|---|---|---|---|
+| Vignette | **採用** | DOMのグラデーション2枚（`cinematic-vignette.tsx`） | 合成の段で重ねるだけ。フレームあたりの負担がほぼ増えない。**3D版と平面版の両方に同じものを重ね、明るさの落ち方を揃えた** |
+| Bloom | **加算合成の板で代替** | `glow-sprite.tsx` を3か所（卓上ランプ／閉じた瞬間の金／棚の背表紙） | ポストプロセスのブルームは、明るさの抽出と複数回のぼかしを毎フレーム画面全体に掛ける。欲しいのは「光の周りがにじむ」ことだけなので、光源の位置に板を置いて加算で塗る。塗る面積は画面のごく一部 |
+| DOF | **見送り** | なし。霧の立ち上がりを 4.5→3.6 へ寄せて奥だけ沈めた | 深度を取り直して2回ぼかす処理を毎フレーム全画面に掛けることになる。`backdrop-filter` でも同じ。**スマートフォンの発熱を上げずに入れる方法が無かった** |
+
+`@react-three/postprocessing` は**入れていない**（依存を増やしていない）。
+
+### 端末に合わせて下げるもの（`quality.ts`）
+
+**見た目の作り込み（法線・粗さ・環境光・ビネット・発光板）は端末で変えない。フレームあたりのコストだけを2段階で下げる。**
+
+| | high | low |
 |---|---|---|
-| 動きを控える設定（`prefers-reduced-motion: reduce`） | **全画面演出を出さず**、選んだ直後に完了画面（「今日の記録を書庫にしまいました」＋一文）へ進む | `CompletionChoice.handleSelect` |
-| WebGL 利用可 | R3F版シネマティック（約7.4秒）→ 余韻2.2秒 → 完了画面 | `BookShelfCinematic` 内 |
-| WebGL 不可・R3F 初期化失敗 | CSS版 `BookShelfMagic`（約7.2秒）→ 同じ流れ | `BookShelfCinematic` 内 |
+| dpr 上限 | 1.75 | 1.25 |
+| 影のマップ | 1024 / PCFSoft | 512 / PCF |
+| 接地影の解像度 | 512 | 256 |
+| 粒の数 | ×1 | ×0.5 |
+| アンチエイリアス | あり | なし |
 
-**動きを控える設定のときに全画面の暗い演出を一瞬だけ出す作りにはしなかった。** `BookShelfMagic` は reduce のとき150msで done へ飛ぶが、それでも全画面が暗転してから戻ることになり、動きを減らしたい人にとってはむしろ強い変化になる。**選択の記録（`recordCompletion`）は演出の有無にかかわらず同じように行う**ので、書庫にしまったという結果は変わらない。
+**指で触る端末（`pointer: coarse`）はまとめて `low`。** 性能が足りないという判定ではなく、9秒のために筐体へ熱を持たせないという判定。マウス操作でもコア数4以下・メモリ4GB以下なら `low` に落とし、判定材料が何も取れないときも `low` に倒す。
 
-判定は `src/lib/motion.ts` の `prefersReducedMotion()` に1本化し、`BookShelfCinematic` の中の同じ判定もこれを呼ぶようにした。
+あわせて、**棚側の接地影を「要る間だけ」出すようにした。** `ContactShadows` は置いてあるだけで毎フレーム影用の描画を1回増やす。これまでは `opacity={0}` のまま演出の大半を通して置きっぱなしだった。
 
-### そのほかの設計判断
+### 音（ON/OFFの持ち方を決めた）
 
-- **フェーズ遷移は変えていない**（`choosing / shelf / paper / burn / done`、`footer` は `done` でのみ描画）。実機テストの B-4〜B-9 とリセット手順がこの前提で書かれているため、演出の差し替えだけに留めた。**選び直す手順（編集 → 再保存）は今回も有効。**
-- 演出は `fixed inset-0 z-50` の全画面オーバーレイにした。下タブ（z-40）を覆い、同意ダイアログ（z-60）には負ける。`touch-none overscroll-contain` で背面の誤タップとスクロールを止めている。**焦点の閉じ込めと背面の無効化は自前で組まず、同意ダイアログと同じ Radix のダイアログ（`DialogPrimitive`）に任せた**（自動レビュー指摘への対応。下記）。Escape は「このまま終える」と同じ扱いにしている。
-- **音は本番では鳴らさない**（`soundEnabled` を渡していない＝既定 false）。選択のタップは操作起点なので自動再生ブロックは回避できるが、音量調整と自動再生対策は管理表の別行（「本棚演出の質感と没入感をさらに高品質にする余地がある」）の範囲なので、そちらに寄せた。
-- 演出が終わってすぐ完了画面へ切り替えると、演出の最後に出る一文（R3F版は700msかけてフェードイン）が読めないまま消える。**余韻2.2秒**を挟んでから完了画面へ移す。途中で「このまま終える」を押されたらこの待ちも取り消す。**余韻の間は「このまま終える」を消す**（終える対象がもう無く、CSS版の完了文言は画面下 `bottom-4%` に出るためボタンが重なる。自動レビュー指摘への対応）。
-- 背表紙と書き込みページに出す日付は `8月17日` 形式にした（`formatDisplayDate` の「今日 · 8月17日（日）」は背表紙に収まらない）。あわせて CSS版の背表紙ラベルが `slice(0, 4)` で「8月17」と切れていたのを、6文字までならそのまま出すよう直した。
+**端末内の設定として1つ持つ。既定はOFF。毎回は選ばせない。**
 
-### 文言の最終調整
+- 記録は1日1〜2分で終える前提なので、締めくくりのたびに音の可否を尋ねると操作が増える。
+- 夜間や外出先で開くことを想定しており、黙って音が出る状態を初期値にしない。既定OFFなら自動再生ブロックへ当てにいく必要も無い。
+- 切り替えは**演出中の画面右上の1ボタン**（「音を出す」／「音を消す」、`aria-pressed` 付き）。保存キーは `STORAGE_KEYS.completionSound`（`yorucare_completion_sound`）。**`DailyRecord` にも `schemas.ts` にも入れていない**ので、バックアップの形式は変わっていない。
 
-- **「書庫にしまう」の完了文言を1つに統一した。** `bookDone`「今日の記録を、書庫にしまいました」/ `bookDoneSub` を廃止し、演出の最後・完了画面のどちらも `shelfDone`「今日の記録を書庫にしまいました」＋ `shelfDoneSub`「必要なときに、また静かに開けます。」を使う。**この統一により、チェックリスト B-6 の期待文言はそのまま使える。**
-- 完了後の案内 `doneGuide`「このあとは、これまでの記録を見る・今日の記録を書き直す・閉じる、から選べます。」を追加した。**次の行動をすすめず、押せるものを並べるだけ**にしてある。
-- 演出中の読み上げラベル `shelfRunning`「書庫にしまっています」を追加（オーバーレイの `aria-label`）。
-- 追加した文言は、すべて `src/lib/copy.ts` に置いた。コンポーネントへの直書きはしていない。
+**自動再生ブロック対策は「待つ」から「操作の中で解く」へ変えた。** これまでは `getCtx()` が呼ばれた時点で `AudioContext` を作り、`suspended` なら `resume()` を投げるだけだった。**操作から始まっていない生成・再開は端末によっては `suspended` のまま残る。** 今回は `unlockAudio()` を用意し、**「書庫にしまう」のタップと音ボタンのクリックの中から同期的に呼ぶ**ようにした。`running` でなければ音は組み立てずに即座に戻る（無音のまま処理だけ走る状態を作らない）。演出を離れるとき（`phase !== "shelf"`）に `releaseAudio()` で閉じる。
 
-### 追加したテスト
-
-- **`src/lib/completion-log.test.ts`（新規・14件）**: 管理表に「テストが無い」と書かれていたもの。空ログ、日付ごとの保存、同じ日の上書き、壊れたJSON、形の合わない項目の除去、保存失敗時に例外を投げないこと、紙の集計（古い順・しきい値7）、**まとめて手放しても `entries` を消さないこと**（記録データを消さない設計の固定）、`burnedDates` が重複しないこと。
-- **`src/components/completion/completion-choice.test.tsx`（新規・8件）**: 選択肢の画面と完了後の案内に**評価語・助言・診断に読める表現を出さないこと**、reduced-motion のとき全画面演出を出さず完了の一文を出すこと、演出中に終えられること、「今日はそのまま」では演出の記録を残さないこと、**演出中は「このまま終える」へ焦点が移り背面が読み上げから外れること**、**演出が終わったら「このまま終える」を消すこと**（後半2件は自動レビュー指摘への対応）。
-- **修正前のコードで落ちることを3件とも確認済み。** reduced-motion の分岐を無効化すると2件が、`!shelfEnded` の条件を外すと1件が、Radix のダイアログを素の `div` に戻すと1件が、それぞれその1件だけ失敗することを実行して確かめた。
+音そのものも調整した。マスターゲイン 0.5 を通し、本を閉じる音の立ち上がりを 8ms→18ms へ鈍らせ（速すぎてクリック音に聞こえていた）、ペンの帯域を 2600Hz→1900Hz へ下げ、ページめくりに 5.2kHz のローパスを足し、余韻のチャイムを 784/988Hz→523/659Hz にして減衰を伸ばした（高い純音は通知音に聞こえる）。
 
 ## 変更ファイル
 
-- `src/components/completion/completion-choice.tsx`: 「書庫にしまう」を全画面の `BookShelfCinematic` へ差し替え。reduced-motion の分岐、余韻タイマー、完了後の案内
-- `src/components/completion/book-archive-animation.tsx`: **削除**（簡易版の置き換え）
-- `src/components/completion/prototypes/book-shelf-cinematic.tsx` / `book-shelf-magic.tsx`: 完了文言を `shelfDone` / `shelfDoneSub` へ統一。reduce 判定を共通化。背表紙ラベルの切り取りを修正
-- `src/lib/motion.ts`: **新規**。`prefersReducedMotion()`
-- `src/lib/copy.ts`: `shelfDoneSub` / `shelfRunning` / `doneGuide` を追加、`bookDone` / `bookDoneSub` を廃止
-- `src/app/globals.css`: 削除した簡易演出のクラスとキーフレーム（`yc-anim-book-close` / `yc-anim-book-shelve`）を撤去
-- `src/lib/completion-log.test.ts`: **新規**（14件）
-- `src/components/completion/completion-choice.test.tsx`: **新規**（8件）
-- `docs/smartphone-test-checklist.md`: B章に3通りの表示ルールの表、B-11〜B-14 を追加、B-6 / B-10 の期待結果を差し替え、H-13 を追加、J章と「不具合ではない」表を更新。**既存の項目IDは1つも付け替えていない**
-- `docs/DEVELOPMENT_BOARD.md`: 該当行を `完了`（2026-08-17）へ。R3F版の実機確認行の改善方法を、本番フロー経由の確認手順へ書き換え
+- `src/components/completion/prototypes/r3f/materials.ts`: 法線・粗さマップの生成（値ノイズ→高さ場→法線／粗さ）、素材ごとの `envMapIntensity`、発光板用の円テクスチャ
+- `src/components/completion/prototypes/r3f/environment.ts`: **新規**。手作りのグラデーションを PMREM へ通して `scene.environment` に入れる
+- `src/components/completion/prototypes/r3f/quality.ts`: **新規**。端末の段階の判定と設定
+- `src/components/completion/prototypes/r3f/glow-sprite.tsx`: **新規**。加算合成の発光板（Bloomの代わり）
+- `src/components/completion/prototypes/r3f/archive-canvas.tsx`: dpr・アンチエイリアス・影の種類を段階から決める
+- `src/components/completion/prototypes/r3f/archive-scene.tsx`: 環境光、発光板3か所、霧の調整、影の解像度、棚側接地影の条件付き描画、粒の数、鳴らせないときは音の合図を消費しない
+- `src/components/completion/prototypes/r3f/completion-sounds.ts`: マスターゲイン、`unlockAudio` / `isAudioReady` / `releaseAudio`、音量と帯域の調整
+- `src/components/completion/prototypes/cinematic-vignette.tsx`: **新規**。3D版・平面版の共通ビネット
+- `src/components/completion/prototypes/book-shelf-cinematic.tsx` / `book-shelf-magic.tsx`: 共通ビネットを使う（平面版の完了文言は z-20 へ）
+- `src/components/completion/completion-choice.tsx`: 音の切り替えボタン、設定の読み書き、選んだタップの中での `unlockAudio`、離脱時の `releaseAudio`
+- `src/lib/completion-sound.ts`: **新規**。音の設定の読み書き（既定OFF）
+- `src/lib/constants.ts`: `STORAGE_KEYS.completionSound` を追加
+- `src/lib/copy.ts`: `soundEnable` / `soundDisable` を追加
+- `src/app/preview/effects/page.tsx`: 音ありへ切り替えるときに本番と同じ `unlockAudio` を通す
+- `src/lib/completion-sound.test.ts`: **新規**（5件）
+- `src/components/completion/prototypes/r3f/quality.test.ts`: **新規**（9件）
+- `src/components/completion/completion-choice.test.tsx`: 音の既定・保存・演出後に消えること（3件追加）
+- `docs/smartphone-test-checklist.md`: B-15〜B-17 を追加、B 章の前置きと J 章の順序、「不具合ではない」表を更新。**既存の項目IDは1つも付け替えていない**
+- `docs/DEVELOPMENT_BOARD.md`: 該当行を `完了`（2026-08-17）へ。実機確認行の手順を B-6・B-10〜B-17 に更新
 
 ## 検証結果
 
 - `pnpm lint`: 成功（ESLint の警告・エラーなし）
-- `pnpm test`: 成功（32 test files / **321 tests**。前回301から+20）
+- `pnpm test`: 成功（34 test files / **338 tests**。前回321から+17）
 - `pnpm build`: **成功**（Compiled successfully、型チェック通過、8ページ生成）。ローカルで完走できたため代替検証は不要
+  - `/` の First Load JS は 188 kB → **190 kB**。増えたのは音の設定と `unlockAudio` の分だけで、**three.js は今も初回に入っていない**（`/preview/effects` は 123 kB → 124 kB）
+- 追加したテストのうち2件は、**壊してから落ちることを確認した**。設定の保存（`setCompletionSoundEnabled`）を外すと「端末内に残る」が落ち、`!shelfEnded` の条件を外すと「演出が終わったら音の切り替えも消す」が落ちることを実行して確かめた
 
 ## 自動レビュー指摘
 
-- **PR #18（この変更）: 2件。両方とも対応した**
-  - **P2「演出のダイアログに焦点を閉じ込める」**: 指摘のとおりだった。`role="dialog" aria-modal="true"` を付けた素の `div` で組んでいたため、選択肢のボタンが消えたあと焦点が body に落ち、Tab で**演出に覆われて見えないヘッダーや下タブへ移動できた**。`aria-modal` が実態と合っていない状態だった。同意ダイアログで既に使っている Radix の `DialogPrimitive`（`open modal`）へ置き換え、焦点の初期位置・閉じ込め・背面の無効化を任せた。Escape は「このまま終える」と同じ扱いにしている
-  - **P2「CSS版の完了文言に『このまま終える』が重なる」**: 指摘のとおりだった。CSS版 `BookShelfMagic` の完了文言は `bottom-[4%]`、こちらのボタンは `bottom-0` から約56px を占めるため、スマートフォンの高さでは**余韻2.2秒の間ずっと副文が隠れる**。余韻を入れた目的そのものを潰していた。演出が終わったらボタンを消すようにした（終える対象がもう無いので、押せなくなっても失うものがない）
-  - どちらも**修正前のコードでテストが落ちることを確認してから直した**（テストを1件ずつ足し、そのテストだけが失敗することを実行して確認）
-- **未対応のまま見送った指摘はない**
-- 前のチャットから引き継いだ未対応の指摘もない（7件目で PR #13・#14・#17 をすべて処理済み）
+- **PR #19（この変更）: 1件。対応した。**
+  - **P2「生成テクスチャのノイズが繰り返しで繋がっていない」**（`materials.ts`）: **指摘のとおりだった。** 高さ場は1辺で8格子ぶんを張る前提なのに、座標を 3.1倍・4.2倍・0.6/7.5倍と**整数でない倍率**で拡げていた。折り返しの周期（24・32・8）と座標の張る範囲（24.8・33.6・4.8/60）が合わず、右端と左端が繋がっていなかった。これらは `RepeatWrapping` で3〜6回繰り返して貼るため、繰り返しの境目が格子状の筋として出る。
+  - **数値で確かめてから直した。** 0–1 の高さ場で端の食い違いを測ると、革の細部 0.661・紙 0.556・木 0.556。基準となる革の第1項（倍率1）だけは 0.000 で、**倍率を掛けた項だけが繋がっていない**ことがはっきりした。
+  - 倍率を整数にし（革 3.1→3、紙 4.2→4）、木は x と y で倍率が違うので `fbm` を**軸ごとの周期**（`periodX` / `periodY`）に変えて 1倍・8倍に揃えた。年輪の `|sin(πt)|` は t について周期1なので、倍率を 2.1→2 にして v が 0→8 の間に整数ぶん進むようにした。**直したあとは3素材とも食い違い 0.000000**、高さの範囲（0.87〜0.97）は保たれているので、質感が平坦になってはいない。
+  - なお、`get_reviews` と `get_comments` はこのセッションの権限では 404 を返す。**指摘の確認は `get_review_comments` で行うこと。**
+  - **指摘はCIが緑になったあとに付いた。** CIの完了と自動レビューの投稿はタイミングが揃わないので、緑を見た時点で0件でも、少し待って見直すこと。
+- **未対応のまま見送った指摘はない。**
+- 前のチャットから引き継いだ未対応の指摘はない（8件目で PR #18 の2件をすべて対応済み）
 
 ## 次のタスク候補
 
-- **次は「本棚演出の質感と没入感をさらに高品質にする余地がある」**（管理表 `未着手`）。GLBモデルまたは法線・roughnessテクスチャ、軽量な Bloom / DOF / Vignette、効果音の音量と質感、自動再生ブロック対策。**今回で演出が本番フローに乗ったので、質感の改善がそのまま利用者に届く。**
-  - **音を鳴らすかどうかは、この行で決めること。** 今回は本番で `soundEnabled` を渡していない（無音）。鳴らすなら、ON/OFF の持ち方（端末内の設定か、毎回の選択か）を先に決める。
-  - **この作業でも `DailyRecord` と `schemas.ts` は変更しない**（管理表「本棚演出の方向性確定前には着手しない項目がある」行、2026-08-15 確認）。外部HDRと drei の Environment preset は使わない。`/preview/completion` の「粒が集まる演出」は再開しない。「ゴミ箱へ捨てる」「記録が溜まったら燃える」の実装には着手しない。
-- 並行して **実機テストの実施**（管理表 `確認待ち` の2行）。今回の変更で **B-6・B-10〜B-14 が新しい確認対象**になった。3D版が出る端末での発熱・描画崩れは実機でしか分からない。**コーディング作業では終わらないため「実装」扱いにはできない。**
+- **実機テストの実施**（管理表 `確認待ち` の2行）。今回で **B-15〜B-17（音の切り替えと、音を出した状態の重さ）が新しい確認対象**になった。**この作業で入れた `low` 段階の効き方は実機でしか分からない。** ただしコーディング作業では終わらないため「実装」扱いにはできない。
+- **「LLM呼び出しと報告書出力が未実装」**（管理表 `未着手`）。数値はアプリが埋め、文章の穴だけをLLMが書く穴埋め方式。書き込み系の操作はLLMに渡さず、確定は本人のボタン操作に限る。**本番投入は `docs/sharing-decision.md` の Gate に従う**ので、実装しても投入は別判断になる。
 - 管理表に `未着手` の不具合行は残っていない。
-- 「LLM呼び出しと報告書出力が未実装」は実装自体は可能だが、本番投入は `docs/sharing-decision.md` の Gate に従う。
 - P2（リマインドの最小検証）は Gate 2 を満たすまで着手しない。管理表でも `保留` のまま。
 
 ## 引き継ぎ事項・注意点
 
 ### 今回の変更で前提が変わったこと
 
-- **本番の「書庫にしまう」は全画面・約9秒（演出7.4秒＋余韻2.2秒）になった。** これまでの簡易版は約2.3秒でカード内に収まっていた。**B-0a（無誘導の所要時間）の計測は「記録できました。」で止めるので影響しない**が、実施者用の B 章は所要時間が伸びる。
-- **`BookArchiveAnimation` は存在しない。** 「本棚にしまう」の実装は `BookShelfCinematic`（R3F）と `BookShelfMagic`（CSS）の2つだけになった。
-- **`COPY.completion.bookDone` / `bookDoneSub` は無い。** 参照すると型エラーになる。`shelfDone` / `shelfDoneSub` を使う。
-- **`/preview/effects` は今も生きている。** 本番と同じ `BookShelfCinematic` を音ありで再生できるので、質感の調整はこちらで速く回せる。ただし `/preview/effects` は音ありの選択肢がある一方、本番は無音であることに注意。
-- **フェーズ遷移は変えていないので、チェックリストのリセット手順（編集 → 再保存）はそのまま有効。**
+- **本番の「書庫にしまう」でも音を鳴らせるようになった。既定は無音のまま。** 演出中の画面右上に「音を出す」がある。押した状態は端末内に残るので、次からは最初から鳴る。
+- **`soundEnabled` は `CompletionChoice` から渡している。** 既定 false だった8件目までの状態は「常に無音」だったが、いまは端末内の設定次第。テストで無音を前提にする場合は `localStorage` を空にしてから開くこと。
+- **`AudioContext` は `unlockAudio()` でしか作られない。** 直接 `playBookClose()` 等を呼んでも、`unlockAudio()` を通していなければ何も鳴らない（`isAudioReady()` が false）。これは仕様。
+- **音は3D版だけが持つ。** 平面（CSS）版 `BookShelfMagic` は音の合図を持たない。動きを控える設定のときは演出自体が出ないので、当然音も出ない。
+- **`ArchiveScene` は `quality` プロパティを受け取る。** 省略すると `low` 相当で動く（安全側）。段階は `ArchiveCanvas` が最初に1回だけ決め、再生中は変わらない。
+- **フェーズ遷移（`choosing / shelf / paper / burn / done`、`footer` は `done` でのみ描画）は今回も変えていない。** チェックリストのリセット手順（編集 → 再保存）はそのまま有効。
+- **タイムライン（約7.4秒＋余韻2.2秒）も変えていない。**
 
 ### 実装の事実（次のチャットが読み直さなくて済むように）
 
-- `CompletionChoice` のフェーズは `choosing / shelf / paper / burn / done` のまま。`footer` は `done` でのみ描画される。
+- 全画面オーバーレイは Radix の `DialogPrimitive`（`open modal`、z-50）のまま。**素の `div` に戻さないこと**（PR #18 の自動レビュー指摘）。音のボタンは、演出に入ったときの焦点が「このまま終える」に載るよう、**DOM ではそのあとに置き、位置だけ `absolute` で画面上部へ出している。**
+- 演出が終わったら（`shelfEnded`）、「このまま終える」と音のボタンの両方を消す。
 - `recordCompletion` は**選んだ時点**で呼ばれる。演出を最後まで見なくても、途中で終えても、reduced-motion で演出が出なくても、同じように記録される。
-- 全画面オーバーレイの z-index は 50。下タブ 40、保存バー 30、同意ダイアログ 60。
-- three.js は `next/dynamic`（`ssr: false`）で読み込むため、記録画面の初回読み込みには入らない。「書庫にしまう」を選んだ瞬間に読み込みが始まり、その間は `SceneFallback`（「書庫を準備しています…」）が出る。
-- `weekly-summary.ts` の `buildLines` は行ごとに別の母数を使う（気分＝`mood.scoredDays`、睡眠時間＝`sleep.measuredDays`、就寝時刻＝`sleep.bedtimeDays`、服薬＝`medication.answeredDays`、サイン＝`warning.answeredDays`、目標＝`goalReview.answeredDays`）。前の3つは画面上どれも「記録した○日分」と出るが別々の数。
-- `exportPayloadSchema.returnDate` は `calendarDateSchema.nullable().default(null)`。`EXPORT_VERSION` は 1 のまま。
+- `detectQualityTier` は純関数で、判定材料は呼び出し側が `window` から集めて渡す（`quality.test.ts` はこれを直接呼ぶ）。
+- 生成テクスチャは `materials.ts` 内の `Map` にキャッシュされる。**モジュールの寿命と同じなので、演出を2回開いても作り直さない。**
+- `exportPayloadSchema.returnDate` は `calendarDateSchema.nullable().default(null)`。`EXPORT_VERSION` は 1 のまま。**音の設定はバックアップに含めない**（端末ごとの表示設定であって、記録ではないため）。
+- `weekly-summary.ts` の `buildLines` は行ごとに別の母数を使う（気分＝`mood.scoredDays`、睡眠時間＝`sleep.measuredDays`、就寝時刻＝`sleep.bedtimeDays`、服薬＝`medication.answeredDays`、サイン＝`warning.answeredDays`、目標＝`goalReview.answeredDays`）。
 
 ### 実機テストを実施するときに必ず守ること（前回から継続）
 
 - **B-0 は参加者1人につき1回しか測れない。** B-0 より先に B-1 以降を見せると、その人ぶんの Gate 1 判定根拠は作り直せない。集計に入れてよいのは B-0 の1回目だけ。
 - **参加者に実施してもらうのは B-0 だけ。** B-1 以降は実施者が1人で通す。
-- **参加者を入れ替えるときは、ブラウザの設定からサイトのデータを削除する。** `deleteAllRecords`（D-8c）は `STORAGE_KEYS.records` だけを消すので、初回バナー、できることの一覧、復職日、**演出の履歴（`yorucare_completion_log`）**が残る。
-- **B-14 は端末の設定（視差効果を減らす／アニメーションを減らす）を変えるので B 章の最後に行い、終わったら必ず戻す。** 戻さないと以降の章の見え方が変わる。
+- **参加者を入れ替えるときは、ブラウザの設定からサイトのデータを削除する。** `deleteAllRecords`（D-8c）は `STORAGE_KEYS.records` だけを消すので、初回バナー、できることの一覧、復職日、演出の履歴（`yorucare_completion_log`）、**音の設定（`yorucare_completion_sound`）**が残る。
+- **B-14 は端末の設定（視差効果を減らす／アニメーションを減らす）を変えるので B 章の最後に行い、終わったら必ず戻す。**
+- **B-15〜B-17 は音を出すので、周りに人がいない場所か、音量を下げてから行う。**
 - K章は「入力内容を書かない」前提のまま。メモ本文、目標の文面、選んだ気持ち、しんどさの自由記述、感想を書かない。
 - 公開URL（https://yorucare.vercel.app）にP1機能が反映されているかは**未確認のまま**。実機テストの前にフッターの更新日付（A-8）で最新版か必ず見ること。
 - C-10（前日の目標のふりかえり）は仕込みが要る（J章の8番）。G-7 は F-11 で復職日を設定してから行う。
@@ -121,5 +144,7 @@
 - **完了済みの行は `完了` のまま残し、見つかった不具合は別の課題行として立てる。**
 - **「実機テストの実施結果が文書化されていない」の行は `確認待ち` のまま。** 実施するまで `完了` にしない。
 - **自動レビューはPRごとに走るが、指摘は自動では解決されない。** CIが緑であることは指摘が解消したことを意味しない。マージ前に `get_review_comments` で確認し、直すか直さないかをその場で決める（`docs/cowork-task-relay-prompt.md` 手順7）。
-- 表示の文言を足すときは禁止語のテストが効く。一覧は `src/lib/self-care.test.ts`、`src/lib/ai/milestones.test.ts`、`src/components/reflection/accumulation-card.test.tsx`、**`src/components/completion/completion-choice.test.tsx`（今回追加）**。「この調子で」「続けましょう」は助言なので出さない。
+- 表示の文言を足すときは禁止語のテストが効く。一覧は `src/lib/self-care.test.ts`、`src/lib/ai/milestones.test.ts`、`src/components/reflection/accumulation-card.test.tsx`、`src/components/completion/completion-choice.test.tsx`。「この調子で」「続けましょう」は助言なので出さない。
+- 画面に出す文言は `src/lib/copy.ts` に置き、コンポーネントへ直書きしない。
 - 本人が書いた自由記述（メモ、目標の文面、セルフケアの感想）と復職日は、外部へ渡る型（`DailyView`、`PeriodSummary`）に入れない。`docs/ai-consent-decision.md` の1節・3節に従う。
+- 演出側の作業では `DailyRecord` と `schemas.ts` を変更しない（管理表「本棚演出の方向性確定前には着手しない項目がある」行、2026-08-15 確認）。

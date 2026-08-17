@@ -140,6 +140,27 @@ describe("記録完了の締めくくり", () => {
     }
   });
 
+  it("演出が終わったら音の切り替えも消す（もう鳴る音がない）", async () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <CompletionChoice
+          date="2026-08-17"
+          lines={LINES}
+          footer={<button type="button">これまでの記録を見る</button>}
+        />
+      );
+      fireEvent.click(screen.getByText(COPY.completion.shelf));
+      expect(screen.getByText(COPY.completion.soundEnable)).toBeTruthy();
+
+      await vi.advanceTimersByTimeAsync(8000);
+      expect(screen.queryByText(COPY.completion.soundEnable)).toBe(null);
+      expect(screen.queryByText(COPY.completion.soundDisable)).toBe(null);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("演出の途中で終えても、完了の案内へ進める", async () => {
     renderChoice();
 
@@ -176,6 +197,46 @@ describe("記録完了の締めくくり", () => {
     expect(screen.getByText(COPY.completion.doneGuide)).toBeTruthy();
     // 演出を選ばなかった日は、演出の記録も残さない
     expect(localStorage.getItem("yorucare_completion_log")).toBe(null);
+  });
+
+  it("音は既定で鳴らさず、演出中に出すか選べる", () => {
+    renderChoice();
+
+    fireEvent.click(screen.getByText(COPY.completion.shelf));
+
+    // 何もしていない端末では「音を出す」側から始める
+    const toggle = screen.getByRole("button", {
+      name: COPY.completion.soundEnable,
+    });
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    expect(localStorage.getItem("yorucare_completion_sound")).toBe(null);
+  });
+
+  it("音を出すにすると端末内に残り、次に選んだときは最初から音ありで始まる", () => {
+    const first = renderChoice();
+
+    fireEvent.click(screen.getByText(COPY.completion.shelf));
+    fireEvent.click(
+      screen.getByRole("button", { name: COPY.completion.soundEnable })
+    );
+
+    expect(
+      screen
+        .getByRole("button", { name: COPY.completion.soundDisable })
+        .getAttribute("aria-pressed")
+    ).toBe("true");
+    expect(localStorage.getItem("yorucare_completion_sound")).toBe("on");
+
+    // 別の日の記録として開き直しても、選び直しを求めない
+    first.unmount();
+    renderChoice();
+    fireEvent.click(screen.getByText(COPY.completion.shelf));
+
+    expect(
+      screen
+        .getByRole("button", { name: COPY.completion.soundDisable })
+        .getAttribute("aria-pressed")
+    ).toBe("true");
   });
 
   it("完了後の案内に、評価語・助言・診断に読める表現を出さない", () => {

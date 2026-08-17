@@ -2,15 +2,29 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { BookMarked, CheckCircle2, Newspaper } from "lucide-react";
+import {
+  BookMarked,
+  CheckCircle2,
+  Newspaper,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { COPY } from "@/lib/copy";
 import { prefersReducedMotion } from "@/lib/motion";
+import {
+  isCompletionSoundEnabled,
+  setCompletionSoundEnabled,
+} from "@/lib/completion-sound";
 import {
   getActivePaperDates,
   recordCompletion,
   type CompletionStyle,
 } from "@/lib/completion-log";
+import {
+  releaseAudio,
+  unlockAudio,
+} from "./prototypes/r3f/completion-sounds";
 import { BookShelfCinematic } from "./prototypes/book-shelf-cinematic";
 import { PaperTrashAnimation } from "./paper-trash-animation";
 import {
@@ -62,7 +76,19 @@ export function CompletionChoice({
   const [doneKind, setDoneKind] = useState<DoneKind>("skip");
   const [burnPaperDates, setBurnPaperDates] = useState<string[]>([]);
   const [shelfEnded, setShelfEnded] = useState(false);
+  const [soundOn, setSoundOn] = useState(false);
   const afterglowRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 音の設定は端末内に1つ持つ。サーバー側では読めないので、表示後に合わせる
+  useEffect(() => {
+    setSoundOn(isCompletionSoundEnabled());
+  }, []);
+
+  // 演出を離れたら AudioContext を閉じる。開いたまま残さない
+  useEffect(() => {
+    if (phase !== "shelf") return;
+    return () => releaseAudio();
+  }, [phase]);
 
   const clearAfterglow = () => {
     if (afterglowRef.current !== null) {
@@ -100,6 +126,17 @@ export function CompletionChoice({
     );
   }, [finish]);
 
+  /**
+   * 音の入切。押した流れの中で AudioContext を作る（`unlockAudio`）。
+   * 自動再生ブロックは、この操作起点でしか解けない。
+   */
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setCompletionSoundEnabled(next);
+    if (next) unlockAudio();
+  };
+
   const handleSelect = (style: CompletionStyle) => {
     recordCompletion(date, style);
     setDoneKind(style);
@@ -108,6 +145,12 @@ export function CompletionChoice({
     if (style === "shelf" && prefersReducedMotion()) {
       finish("shelf");
       return;
+    }
+    // 前回「音を出す」にしていた場合も、鳴らす準備はこのタップの中で済ませる
+    if (style === "shelf") {
+      const enabled = isCompletionSoundEnabled();
+      setSoundOn(enabled);
+      if (enabled) unlockAudio();
     }
     setPhase(style);
   };
@@ -136,20 +179,47 @@ export function CompletionChoice({
             <BookShelfCinematic
               lines={lines}
               heading={shortHeading(date)}
+              soundEnabled={soundOn}
               onDone={handleShelfDone}
             />
 
             {!shelfEnded && (
-              <div className="absolute inset-x-0 bottom-0 z-30 flex justify-center px-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-[#f0e6d0]/80 hover:bg-white/10 hover:text-[#f0e6d0]"
-                  onClick={() => finish("shelf")}
-                >
-                  {COPY.completion.skipAction}
-                </Button>
-              </div>
+              <>
+                <div className="absolute inset-x-0 bottom-0 z-30 flex justify-center px-6 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[#f0e6d0]/80 hover:bg-white/10 hover:text-[#f0e6d0]"
+                    onClick={() => finish("shelf")}
+                  >
+                    {COPY.completion.skipAction}
+                  </Button>
+                </div>
+
+                {/*
+                  音の切り替えは画面の上に出すが、DOM ではこの位置に置く。
+                  演出に入ったときの焦点は「このまま終える」に置きたいため、
+                  先に置けるものを増やさない
+                */}
+                <div className="absolute right-2 top-0 z-30 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[#f0e6d0]/70 hover:bg-white/10 hover:text-[#f0e6d0]"
+                    aria-pressed={soundOn}
+                    onClick={toggleSound}
+                  >
+                    {soundOn ? (
+                      <Volume2 className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                    ) : (
+                      <VolumeX className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                    )}
+                    {soundOn
+                      ? COPY.completion.soundDisable
+                      : COPY.completion.soundEnable}
+                  </Button>
+                </div>
+              </>
             )}
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>
