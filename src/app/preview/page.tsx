@@ -95,6 +95,9 @@ export default function PreviewHubPage() {
         <Button asChild className="w-full">
           <Link href="/preview/effects">書庫にしまう演出を見る</Link>
         </Button>
+        <Button asChild variant="secondary" className="w-full">
+          <Link href="/preview/report">期間の報告書を見る</Link>
+        </Button>
         <Button asChild variant="outline" className="w-full">
           <Link href="/">アプリのトップへ</Link>
         </Button>
