@@ -80,7 +80,11 @@ export function listSelfCare(
  *
  * セルフケアの提案はこの範囲内から選ばせる。
  * 範囲外の提案は、本人がまだできないことを新しく求めることになり負荷になる。
+ *
+ * 「控えたいこと」は除く。控えたい行動を提案の候補に入れないため。
  */
 export function getSelfCareDictionary(selfCareItems: SelfCareItem[]): string[] {
-  return selfCareItems.map((item) => item.title);
+  return selfCareItems
+    .filter((item) => item.kind === "care")
+    .map((item) => item.title);
 }

@@ -68,53 +68,57 @@ export function relateSelfCareToMood(
   records: DailyRecord[],
   selfCareItems: SelfCareItem[],
   from: string,
-  to: string
+  to: string,
 ): SelfCareRelationResult {
   const target = [...indexRecordsByDate(records, from, to).values()];
 
-  const relations = selfCareItems.map((item) => {
-    const doneMood: number[] = [];
-    const otherMood: number[] = [];
-    let daysDone = 0;
-    let daysNotDone = 0;
-    let warningYesOnDoneDays = 0;
-    let warningYesOnOtherDays = 0;
+  // 「控えたいこと」は実施として記録しないため、実行日が必ず0日になる。
+  // 「一度もできなかったこと」として並ぶのを避けるため、対象から外す。
+  const relations = selfCareItems
+    .filter((item) => item.kind === "care")
+    .map((item) => {
+      const doneMood: number[] = [];
+      const otherMood: number[] = [];
+      let daysDone = 0;
+      let daysNotDone = 0;
+      let warningYesOnDoneDays = 0;
+      let warningYesOnOtherDays = 0;
 
-    for (const record of target) {
-      const done = record.selfCareIds.includes(item.id);
-      if (done) {
-        daysDone += 1;
-        if (record.moodScore !== null) doneMood.push(record.moodScore);
-        if (record.warningLevel === "yes") warningYesOnDoneDays += 1;
-      } else {
-        daysNotDone += 1;
-        if (record.moodScore !== null) otherMood.push(record.moodScore);
-        if (record.warningLevel === "yes") warningYesOnOtherDays += 1;
+      for (const record of target) {
+        const done = record.selfCareIds.includes(item.id);
+        if (done) {
+          daysDone += 1;
+          if (record.moodScore !== null) doneMood.push(record.moodScore);
+          if (record.warningLevel === "yes") warningYesOnDoneDays += 1;
+        } else {
+          daysNotDone += 1;
+          if (record.moodScore !== null) otherMood.push(record.moodScore);
+          if (record.warningLevel === "yes") warningYesOnOtherDays += 1;
+        }
       }
-    }
 
-    const averageMoodOnDoneDays = average(doneMood);
-    const averageMoodOnOtherDays = average(otherMood);
-    const comparable =
-      doneMood.length >= MIN_DAYS_FOR_COMPARISON &&
-      otherMood.length >= MIN_DAYS_FOR_COMPARISON;
+      const averageMoodOnDoneDays = average(doneMood);
+      const averageMoodOnOtherDays = average(otherMood);
+      const comparable =
+        doneMood.length >= MIN_DAYS_FOR_COMPARISON &&
+        otherMood.length >= MIN_DAYS_FOR_COMPARISON;
 
-    return {
-      name: item.title,
-      daysDone,
-      daysNotDone,
-      averageMoodOnDoneDays,
-      averageMoodOnOtherDays,
-      differenceInAverage:
-        comparable &&
-        averageMoodOnDoneDays !== null &&
-        averageMoodOnOtherDays !== null
-          ? roundTo(averageMoodOnDoneDays - averageMoodOnOtherDays, 1)
-          : null,
-      warningYesOnDoneDays,
-      warningYesOnOtherDays,
-    };
-  });
+      return {
+        name: item.title,
+        daysDone,
+        daysNotDone,
+        averageMoodOnDoneDays,
+        averageMoodOnOtherDays,
+        differenceInAverage:
+          comparable &&
+          averageMoodOnDoneDays !== null &&
+          averageMoodOnOtherDays !== null
+            ? roundTo(averageMoodOnDoneDays - averageMoodOnOtherDays, 1)
+            : null,
+        warningYesOnDoneDays,
+        warningYesOnOtherDays,
+      };
+    });
 
   return {
     relations,

@@ -145,6 +145,29 @@ describe("relateSelfCareToMood", () => {
     expect(relation.differenceInAverage).toBeNull();
   });
 
+  it("控えたいことを、一度もできなかったこととして並べない", () => {
+    const withAvoid: SelfCareItem[] = [
+      ...selfCareItems,
+      {
+        id: "s9",
+        title: "大きな買いものを決める",
+        kind: "avoid",
+        stateLevels: ["good"],
+        createdAt: "2026-07-01T00:00:00.000Z",
+        updatedAt: "2026-07-01T00:00:00.000Z",
+      },
+    ];
+
+    const result = relateSelfCareToMood(
+      [makeRecord("2026-07-21", 4, ["s1"])],
+      withAvoid,
+      "2026-07-21",
+      "2026-07-21"
+    );
+
+    expect(result.relations.map((r) => r.name)).toEqual(["深呼吸"]);
+  });
+
   it("戻り値のキーに効果を意味する語を使わない", () => {
     const result = relateSelfCareToMood(
       [makeRecord("2026-07-21", 4, ["s1"])],

@@ -140,4 +140,20 @@ describe("getSelfCareDictionary", () => {
   it("登録されたタイトルを返す", () => {
     expect(getSelfCareDictionary(selfCareItems)).toEqual(["深呼吸", "散歩"]);
   });
+
+  it("控えたいことを提案の候補に入れない", () => {
+    const withAvoid: SelfCareItem[] = [
+      ...selfCareItems,
+      {
+        id: "s3",
+        title: "大きな買いものを決める",
+        kind: "avoid",
+        stateLevels: ["good"],
+        createdAt: "2026-07-01T00:00:00.000Z",
+        updatedAt: "2026-07-01T00:00:00.000Z",
+      },
+    ];
+
+    expect(getSelfCareDictionary(withAvoid)).toEqual(["深呼吸", "散歩"]);
+  });
 });
