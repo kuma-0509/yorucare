@@ -23,12 +23,19 @@ export const BOOK = {
 
 type GrainKind = "leather" | "paper" | "wood";
 
-/** 格子上のハッシュ。period で折り返して、繰り返しても継ぎ目が出ないようにする */
+/**
+ * 格子上のハッシュ。period で折り返して、繰り返しても継ぎ目が出ないようにする。
+ *
+ * 三角関数を使わない整数ハッシュにしてある。1枚のマップを作るのに
+ * 高さ場だけで数十万回呼ぶので、`Math.sin` を使うと演出の開始直前に
+ * 数十msの引っかかりが出る（マップの生成は最初のフレームより前に走る）。
+ */
 function hash2(x: number, y: number, period: number): number {
   const xi = ((x % period) + period) % period;
   const yi = ((y % period) + period) % period;
-  const s = Math.sin(xi * 127.1 + yi * 311.7) * 43758.5453;
-  return s - Math.floor(s);
+  let h = Math.imul(xi, 374761393) + Math.imul(yi, 668265263);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 }
 
 function valueNoise(x: number, y: number, period: number): number {
