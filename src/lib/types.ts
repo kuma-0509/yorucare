@@ -52,9 +52,23 @@ export interface DailyRecord {
   updatedAt: string;
 }
 
+/**
+ * 登録簿の種別。
+ * care: その日にやってみる「できること」。実施として記録に残せる。
+ * avoid: その日は控えたいこと。実施可否を記録せず、思い出すためだけに表示する。
+ */
+export type SelfCareItemKind = "care" | "avoid";
+
 export interface SelfCareItem {
   id: string;
   title: string;
+  /** 種別。既定は "care" とし、種別を持たない保存データもそのまま読める */
+  kind: SelfCareItemKind;
+  /**
+   * この項目を出す状態。本人が選ぶもので、アプリ側では推定しない。
+   * 空配列は「状態を問わず出す」を意味する。
+   */
+  stateLevels: StateLevel[];
   createdAt: string;
   updatedAt: string;
 }

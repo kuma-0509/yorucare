@@ -238,6 +238,104 @@ describe("セルフケアの感想フィールド追加後の保存データ移�
   });
 });
 
+const SELF_CARE_ITEM_BEFORE_KIND = {
+  id: "s1",
+  title: "早めに布団に入る",
+  createdAt: "2026-08-01T00:00:00.000Z",
+  updatedAt: "2026-08-01T00:00:00.000Z",
+};
+
+describe("控えたいこと追加後の登録簿の移行", () => {
+  beforeEach(() => {
+    localStorage.setItem(
+      STORAGE_KEYS.selfCare,
+      JSON.stringify([SELF_CARE_ITEM_BEFORE_KIND])
+    );
+    localStorage.setItem(STORAGE_KEYS.schemaVersion, "3");
+  });
+
+  it("版3の登録簿を移行なしでも読める", async () => {
+    const result = await typedRepository.getAllSelfCareItems();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toHaveLength(1);
+      expect(result.value[0].title).toBe("早めに布団に入る");
+    }
+  });
+
+  it("種別を持たない既存の登録は「できること」として読む", async () => {
+    const result = await typedRepository.getAllSelfCareItems();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value[0].kind).toBe("care");
+      // 状態の指定なし＝いつでも出す。既存の登録の見え方を変えない
+      expect(result.value[0].stateLevels).toEqual([]);
+    }
+  });
+
+  it("移行で種別と状態が保存形にも書き込まれる", async () => {
+    await typedRepository.runStorageMigrations();
+
+    const raw = localStorage.getItem(STORAGE_KEYS.selfCare) ?? "[]";
+    const stored = JSON.parse(raw) as Record<string, unknown>[];
+    expect(stored[0]).toMatchObject({ kind: "care", stateLevels: [] });
+    expect(localStorage.getItem(STORAGE_KEYS.schemaVersion)).toBe(
+      String(STORAGE_SCHEMA_VERSION)
+    );
+  });
+
+  it("種別と状態を指定して登録できる", async () => {
+    const result = await typedRepository.addSelfCareItem({
+      title: "大きな買いものを決める",
+      kind: "avoid",
+      stateLevels: ["good", "hard"],
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.kind).toBe("avoid");
+      expect(result.value.stateLevels).toEqual(["good", "hard"]);
+    }
+  });
+
+  it("名前だけの更新では、種別と状態を変えない", async () => {
+    const added = await typedRepository.addSelfCareItem({
+      title: "衝動買い",
+      kind: "avoid",
+      stateLevels: ["good"],
+    });
+    expect(added.ok).toBe(true);
+    if (!added.ok) return;
+
+    const updated = await typedRepository.updateSelfCareItem(
+      added.value.id,
+      "大きな買いもの"
+    );
+
+    expect(updated.ok).toBe(true);
+    if (updated.ok) {
+      expect(updated.value.title).toBe("大きな買いもの");
+      expect(updated.value.kind).toBe("avoid");
+      expect(updated.value.stateLevels).toEqual(["good"]);
+    }
+  });
+
+  it("同じ状態を重ねて渡しても1つにまとめる", async () => {
+    const result = await typedRepository.addSelfCareItem({
+      title: "夜更かし",
+      kind: "avoid",
+      stateLevels: ["hard", "hard"],
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.stateLevels).toEqual(["hard"]);
+    }
+  });
+});
+
 describe("積み重ねの起点となる復職日", () => {
   it("未設定なら null を返す", async () => {
     await expect(typedRepository.getReturnDate()).resolves.toEqual({

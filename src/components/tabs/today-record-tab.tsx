@@ -24,6 +24,7 @@ import { SaveRecordButton } from "@/components/shared/save-record-button";
 import { MoodCategoryDialog } from "@/components/mood/mood-category-dialog";
 import { GoalReviewCard } from "@/components/goal/goal-review-card";
 import { SelfCareSuggestionCard } from "@/components/selfcare/self-care-suggestion-card";
+import { AvoidListCard } from "@/components/selfcare/avoid-list-card";
 import { CompletionChoice } from "@/components/completion/completion-choice";
 import { trackRecordSaved } from "@/lib/analytics";
 import { COPY } from "@/lib/copy";
@@ -61,6 +62,7 @@ import {
   getStateLevelFromScore,
 } from "@/lib/state-level";
 import { getGoalToReview } from "@/lib/goal";
+import { selectCareItemsForRecord } from "@/lib/self-care-list";
 import { buildRecordSummaryLines } from "@/lib/format";
 import { calculateSleepMinutes, formatSleepDuration } from "@/lib/sleep";
 import {
@@ -380,6 +382,13 @@ export function TodayRecordTab({
     .filter((item) => form.selfCareIds.includes(item.id))
     .map((item) => item.title);
 
+  // 「できたこと」の候補は、その日の状態に合うものと、すでに選んである項目だけ
+  const careItemsForRecord = selectCareItemsForRecord(
+    selfCareItems,
+    stateLevel,
+    form.selfCareIds
+  );
+
   const warningHasContent =
     (form.warningLevel !== null && form.warningLevel !== "none") ||
     form.warningTags.length > 0 ||
@@ -588,6 +597,9 @@ export function TodayRecordTab({
         selectedTitles={selectedSelfCareTitles}
         onToggle={(title) => void handleToggleSuggestion(title)}
       />
+
+      {/* 本人が「この状態の日は控えたい」と登録したことを思い出せるようにする */}
+      <AvoidListCard items={selfCareItems} stateLevel={stateLevel} />
 
       <CollapsibleSection
         title="くわしく書く（任意）"
@@ -850,13 +862,13 @@ export function TodayRecordTab({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {selfCareItems.length === 0 ? (
+          {careItemsForRecord.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               「{COPY.tab.selfCare}」タブで登録すると、ここから選べます。
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {selfCareItems.map((item) => (
+              {careItemsForRecord.map((item) => (
                 <ChipButton
                   key={item.id}
                   selected={form.selfCareIds.includes(item.id)}

@@ -2,9 +2,11 @@
  * @deprecated 直接の localStorage 操作は repository 経由に統一。
  * 既存 import 互換のための薄いラッパー。
  */
-import { repository } from "./repository";
+import { repository, type SelfCareItemInput } from "./repository";
 import type { Result } from "./result";
 import type { DailyRecord, SelfCareItem } from "./types";
+
+export type { SelfCareItemInput } from "./repository";
 
 export {
   createEmptyRecordForm,
@@ -53,16 +55,16 @@ export function initSelfCareIfEmpty(): Promise<Result<SelfCareItem[]>> {
 }
 
 export function addSelfCareItem(
-  title: string
+  input: string | SelfCareItemInput
 ): Promise<Result<SelfCareItem>> {
-  return repository.addSelfCareItem(title);
+  return repository.addSelfCareItem(input);
 }
 
 export function updateSelfCareItem(
   id: string,
-  title: string
+  input: string | SelfCareItemInput
 ): Promise<Result<SelfCareItem>> {
-  return repository.updateSelfCareItem(id, title);
+  return repository.updateSelfCareItem(id, input);
 }
 
 export function deleteSelfCareItem(id: string): Promise<Result<void>> {

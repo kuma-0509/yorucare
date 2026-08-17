@@ -31,12 +31,16 @@ const selfCareItems: SelfCareItem[] = [
   {
     id: "s1",
     title: "深呼吸",
+    kind: "care",
+    stateLevels: [],
     createdAt: "2026-07-01T00:00:00.000Z",
     updatedAt: "2026-07-01T00:00:00.000Z",
   },
   {
     id: "s2",
     title: "散歩",
+    kind: "care",
+    stateLevels: [],
     createdAt: "2026-07-01T00:00:00.000Z",
     updatedAt: "2026-07-01T00:00:00.000Z",
   },

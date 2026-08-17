@@ -11,9 +11,19 @@ import {
 } from "./schemas";
 import { calculateSleepMinutes } from "./sleep";
 import { err, ok, type Result } from "./result";
-import type { DailyRecord, SelfCareItem } from "./types";
+import type { DailyRecord, SelfCareItem, StateLevel } from "./types";
 
 const IMPORT_ROLLBACK_KEY = "yorucare_import_rollback";
+
+/**
+ * 登録簿の作成・更新で受け取る値。
+ * 種別と状態は省略でき、省略時は「できること」「状態を問わず出す」になる。
+ */
+export type SelfCareItemInput = {
+  title: string;
+  kind?: SelfCareItem["kind"];
+  stateLevels?: StateLevel[];
+};
 
 export type SaveRecordInput = Omit<
   DailyRecord,
@@ -43,8 +53,11 @@ export interface Repository {
   deleteAllRecords(): Promise<Result<void>>;
   getAllSelfCareItems(): Promise<Result<SelfCareItem[]>>;
   ensureSampleSelfCare(): Promise<Result<SelfCareItem[]>>;
-  addSelfCareItem(title: string): Promise<Result<SelfCareItem>>;
-  updateSelfCareItem(id: string, title: string): Promise<Result<SelfCareItem>>;
+  addSelfCareItem(input: string | SelfCareItemInput): Promise<Result<SelfCareItem>>;
+  updateSelfCareItem(
+    id: string,
+    input: string | SelfCareItemInput
+  ): Promise<Result<SelfCareItem>>;
   deleteSelfCareItem(id: string): Promise<Result<void>>;
   /** 積み重ねの起点として本人が設定した復職日。未設定なら null */
   getReturnDate(): Promise<Result<string | null>>;
@@ -65,6 +78,18 @@ interface LocalStorageRepository extends Repository {
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/** 文字列だけの旧い呼び出しと、種別つきの呼び出しの両方を受ける */
+function normalizeSelfCareInput(
+  input: string | SelfCareItemInput
+): Required<SelfCareItemInput> {
+  const value = typeof input === "string" ? { title: input } : input;
+  return {
+    title: value.title.trim(),
+    kind: value.kind ?? "care",
+    stateLevels: [...new Set(value.stateLevels ?? [])],
+  };
 }
 
 function isBrowser(): boolean {
@@ -247,6 +272,8 @@ const localStorageRepository: LocalStorageRepository = {
     const items: SelfCareItem[] = SAMPLE_SELF_CARE.map((title) => ({
       id: generateId(),
       title,
+      kind: "care",
+      stateLevels: [],
       createdAt: now,
       updatedAt: now,
     }));
@@ -255,14 +282,19 @@ const localStorageRepository: LocalStorageRepository = {
     return ok(items);
   },
 
-  async addSelfCareItem(title: string): Promise<Result<SelfCareItem>> {
+  async addSelfCareItem(
+    input: string | SelfCareItemInput
+  ): Promise<Result<SelfCareItem>> {
     const itemsResult = readSelfCareItems();
     if (!itemsResult.ok) return itemsResult;
 
+    const { title, kind, stateLevels } = normalizeSelfCareInput(input);
     const now = new Date().toISOString();
     const item: SelfCareItem = {
       id: generateId(),
-      title: title.trim(),
+      title,
+      kind,
+      stateLevels,
       createdAt: now,
       updatedAt: now,
     };
@@ -273,7 +305,7 @@ const localStorageRepository: LocalStorageRepository = {
 
   async updateSelfCareItem(
     id: string,
-    title: string
+    input: string | SelfCareItemInput
   ): Promise<Result<SelfCareItem>> {
     const itemsResult = readSelfCareItems();
     if (!itemsResult.ok) return itemsResult;
@@ -286,9 +318,19 @@ const localStorageRepository: LocalStorageRepository = {
       });
     }
 
+    const existing = itemsResult.value[index];
+    const { title, kind, stateLevels } = normalizeSelfCareInput(
+      typeof input === "string"
+        ? // 文字列だけの呼び出しでは、種別と状態を今の設定のまま残す
+          { title: input, kind: existing.kind, stateLevels: existing.stateLevels }
+        : input
+    );
+
     const updated: SelfCareItem = {
-      ...itemsResult.value[index],
-      title: title.trim(),
+      ...existing,
+      title,
+      kind,
+      stateLevels,
       updatedAt: new Date().toISOString(),
     };
     const items = [...itemsResult.value];

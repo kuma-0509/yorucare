@@ -4,9 +4,10 @@ import { normalizeMoodLabels } from "./mood-labels";
 /**
  * 2: `tomorrowGoal` と `goalReviewStatus` を追加。
  * 3: `selfCareFeeling` を追加。
+ * 4: 登録簿へ `kind` と `stateLevels` を追加。
  * いずれも既定値を持つため、前の版の保存データはそのまま読める。
  */
-export const STORAGE_SCHEMA_VERSION = 3;
+export const STORAGE_SCHEMA_VERSION = 4;
 /**
  * 取り込み側は `z.literal` で版を照合するため、既存の書き出しを読めなくしないよう据え置く。
  * 追加フィールドは既定値を持ち、版1の書き出しからも復元できる。
@@ -40,6 +41,8 @@ const medicationStatusSchema = z.enum(["done", "partial", "forgot", "none"]);
 const warningLevelSchema = z.enum(["none", "small", "yes"]);
 const goalReviewStatusSchema = z.enum(["done", "partial", "notDone"]);
 const selfCareFeelingSchema = z.enum(["good", "neutral", "notFit"]);
+const selfCareItemKindSchema = z.enum(["care", "avoid"]);
+const stateLevelSchema = z.enum(["good", "normal", "hard"]);
 
 const moodLabelCategorySchema = z.enum([
   "ポジティブ",
@@ -92,6 +95,15 @@ export const dailyRecordSchema = z.object({
 export const selfCareItemSchema = z.object({
   id: idSchema,
   title: z.string().trim().min(1).max(MAX_SELF_CARE_TITLE_LENGTH),
+  // 既定値を持たせ、フィールドがない版3以前の保存データも読めるようにする。
+  // 既存の登録はすべて「できること」として扱う。
+  kind: selfCareItemKindSchema.default("care"),
+  // 空配列は「状態を問わず出す」。版3以前の保存データはこの既定になる。
+  stateLevels: z
+    .array(stateLevelSchema)
+    .max(3)
+    .transform((levels) => [...new Set(levels)])
+    .default([]),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
 });
