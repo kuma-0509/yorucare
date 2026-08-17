@@ -860,6 +860,7 @@ export function TodayRecordTab({
           <CardTitle>
             {targetDate === today ? COPY.doneTodayToday : COPY.doneToday}
           </CardTitle>
+          <CardDescription>{COPY.doneTodayDescription}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {careItemsForRecord.length === 0 ? (
