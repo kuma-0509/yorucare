@@ -30,37 +30,54 @@ type GrainKind = "leather" | "paper" | "wood";
  * 高さ場だけで数十万回呼ぶので、`Math.sin` を使うと演出の開始直前に
  * 数十msの引っかかりが出る（マップの生成は最初のフレームより前に走る）。
  */
-function hash2(x: number, y: number, period: number): number {
-  const xi = ((x % period) + period) % period;
-  const yi = ((y % period) + period) % period;
+function hash2(
+  x: number,
+  y: number,
+  periodX: number,
+  periodY: number
+): number {
+  const xi = ((x % periodX) + periodX) % periodX;
+  const yi = ((y % periodY) + periodY) % periodY;
   let h = Math.imul(xi, 374761393) + Math.imul(yi, 668265263);
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 }
 
-function valueNoise(x: number, y: number, period: number): number {
+function valueNoise(
+  x: number,
+  y: number,
+  periodX: number,
+  periodY: number
+): number {
   const xi = Math.floor(x);
   const yi = Math.floor(y);
   const xf = x - xi;
   const yf = y - yi;
   const u = xf * xf * (3 - 2 * xf);
   const v = yf * yf * (3 - 2 * yf);
-  const a = hash2(xi, yi, period);
-  const b = hash2(xi + 1, yi, period);
-  const c = hash2(xi, yi + 1, period);
-  const d = hash2(xi + 1, yi + 1, period);
+  const a = hash2(xi, yi, periodX, periodY);
+  const b = hash2(xi + 1, yi, periodX, periodY);
+  const c = hash2(xi, yi + 1, periodX, periodY);
+  const d = hash2(xi + 1, yi + 1, periodX, periodY);
   return (
     a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v
   );
 }
 
-function fbm(x: number, y: number, period: number, octaves: number): number {
+function fbm(
+  x: number,
+  y: number,
+  periodX: number,
+  periodY: number,
+  octaves: number
+): number {
   let sum = 0;
   let amp = 1;
   let norm = 0;
   let freq = 1;
   for (let o = 0; o < octaves; o++) {
-    sum += valueNoise(x * freq, y * freq, period * freq) * amp;
+    sum +=
+      valueNoise(x * freq, y * freq, periodX * freq, periodY * freq) * amp;
     norm += amp;
     amp *= 0.5;
     freq *= 2;
@@ -68,27 +85,43 @@ function fbm(x: number, y: number, period: number, octaves: number): number {
   return sum / norm;
 }
 
-/** 0–1 の高さ場。素材ごとに粒の向きと細かさを変える */
+/** 高さ場の1辺が張る格子数。これが折り返しの周期になる */
+const BASE_PERIOD = 8;
+
+/**
+ * 0–1 の高さ場。素材ごとに粒の向きと細かさを変える。
+ *
+ * **座標を何倍かするときは、必ず整数倍にして、周期も同じだけ広げる。**
+ * 1辺は `BASE_PERIOD` ぶんを張るので、`k` 倍した座標は `k * BASE_PERIOD` で
+ * 折り返さないと、右端と左端（上端と下端）の値が繋がらない。
+ * これらのマップは `RepeatWrapping` で3〜6回繰り返して貼るため、
+ * 繋がっていないと繰り返しの境目が格子状の筋として出る。
+ */
 function heightField(kind: GrainKind, size: number): Float32Array {
   const out = new Float32Array(size * size);
-  const period = 8;
+  const p = BASE_PERIOD;
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const u = (x / size) * period;
-      const v = (y / size) * period;
+      const u = (x / size) * p;
+      const v = (y / size) * p;
       let h: number;
 
       if (kind === "leather") {
         // 不規則な革のシボ。粗い塊の上に細かいひび
-        h = fbm(u, v, period, 4) * 0.72 + fbm(u * 3.1, v * 3.1, period * 3, 3) * 0.28;
+        h =
+          fbm(u, v, p, p, 4) * 0.72 +
+          fbm(u * 3, v * 3, p * 3, p * 3, 3) * 0.28;
       } else if (kind === "paper") {
         // 紙の繊維。ごく浅く、細かい
-        h = fbm(u * 4.2, v * 4.2, period * 4, 3);
+        h = fbm(u * 4, v * 4, p * 4, p * 4, 3);
       } else {
-        // 木目。板の長手（x）方向へ伸ばし、年輪の縞を重ねる
-        const grain = fbm(u * 0.6, v * 7.5, period, 3);
-        const rings = Math.abs(Math.sin((v * 2.1 + grain * 1.6) * Math.PI));
+        // 木目。板の長手（x）方向へ伸ばし、年輪の縞を重ねる。
+        // x と y で倍率が違うので、折り返しの周期も軸ごとに持つ
+        const grain = fbm(u, v * 8, p, p * 8, 3);
+        // |sin(πt)| は t について周期1。v が 0→p の間に t が整数ぶん進むよう
+        // 倍率を 2 にする（2 * 8 = 16 周期）。grain 側は既に周期的
+        const rings = Math.abs(Math.sin((v * 2 + grain * 1.6) * Math.PI));
         h = grain * 0.55 + rings * 0.45;
       }
 
