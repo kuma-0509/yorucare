@@ -97,7 +97,10 @@ export const CHART_METRICS: ChartMetricConfig[] = [
   {
     id: "selfCare",
     label: COPY.selfCareAction,
-    description: "その日にできた「できること」の数",
+    // 件数そのものより、他の項目と重ねて時期を見比べるための線として説明する。
+    // 何を見る線かを書かないと、件数の多さだけを見る目安に読めてしまう。
+    description:
+      "その日にできた「できること」の数です。気分や睡眠と重ねると、増えた時期・減った時期を見比べられます",
     yAxisLabel: "件数",
     formatValue: (v) =>
       Number.isInteger(v) ? `${v}件` : `${v.toFixed(1)}件`,
