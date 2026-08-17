@@ -61,8 +61,8 @@ const PAPER_TEXTURE =
 export function BookShelfMagic({
   lines,
   heading,
-  title = COPY.completion.bookDone,
-  subtitle = COPY.completion.bookDoneSub,
+  title = COPY.completion.shelfDone,
+  subtitle = COPY.completion.shelfDoneSub,
   onDone,
   onLiveMessage,
 }: BookShelfMagicProps) {
@@ -614,8 +614,8 @@ function EmptySlot({
   filled: boolean;
   heading?: string;
 }) {
-  const spineLabel =
-    heading && heading.length <= 6 ? heading.slice(0, 4) : "今日";
+  // 6文字までなら日付をそのまま背表紙に出す。途中で切ると読めない字が残る
+  const spineLabel = heading && heading.length <= 6 ? heading : "今日";
 
   return (
     <div className="relative flex w-[14%] max-w-[1.8rem] items-end justify-center">
