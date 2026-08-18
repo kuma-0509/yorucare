@@ -125,9 +125,9 @@ export function toJapanDate(date: Date): string {
  * 日次集計から `docs/phase2-plan.md` 3.2節の主要指標5件を再計算する。
  *
  * 集計単位は人ではなく、匿名の端末・ブラウザ。`record_saved` の最初の
- * サーバ受信日を Day 0 とし、Day 0 から27日以上経過したものだけを分母にする。
- * 指標はすべて Day 0〜Day 27 の同じ窓で数えるので、集計日を後ろへずらしても
- * 同じ端末・ブラウザの値は変わらない。
+ * サーバ受信日を Day 0 とし、**Day 27 が終わったもの**（集計日が Day 28 以降）
+ * だけを分母にする。指標はすべて Day 0〜Day 27 の同じ窓で数えるので、
+ * いったん分母に入った端末・ブラウザの値は、集計日を後ろへずらしても変わらない。
  *
  * この層は数値を出すだけで、合否は判断しない。Gate 1 の判定条件（15以上）は
  * `docs/phase2-plan.md` 4節にあり、読み出し側が併記する。
@@ -155,7 +155,9 @@ export function calculateRetentionSummary(
   for (const days of daysByInstall.values()) {
     const sortedDays = [...days].sort();
     const day0 = sortedDays[0];
-    if (!day0 || dayOffset(day0, asOfDate) < OBSERVATION_DAYS - 1) continue;
+    // Day 27 が終わってから数える。集計日が Day 27 当日だと、その日のうちに
+    // 届いた保存で、報告済みの Week 4 継続率や中央値が後から変わる
+    if (!day0 || dayOffset(day0, asOfDate) < OBSERVATION_DAYS) continue;
 
     matureInstalls += 1;
     const offsets = sortedDays

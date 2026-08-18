@@ -49,7 +49,7 @@ export function formatRetentionReport(summary: RetentionSummary): string {
     "ヨルケア 匿名利用イベントの継続指標",
     `集計日（日本時間）: ${summary.asOfDate}`,
     "",
-    `対象: Day 0 から27日以上経過した端末・ブラウザ ${summary.matureInstalls}件`,
+    `対象: Day 27 まで終わった端末・ブラウザ ${summary.matureInstalls}件`,
     "（Day 0 は record_saved の最初のサーバ受信日。人ではなく端末・ブラウザ単位で数える）",
     "",
     `初週複数日記録率: ${formatRate(

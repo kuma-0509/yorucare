@@ -49,6 +49,22 @@ describe("calculateRetentionSummary", () => {
     ).toBe(0);
   });
 
+  it("Day 27 が終わるまで分母に入れない", () => {
+    const rows: RecordActivityDay[] = [
+      { installIdHash: "a", activityDate: "2026-06-01" },
+    ];
+
+    // 集計日が Day 27 当日。この日のうちに保存が届くと、報告済みの
+    // Week 4 継続率や中央値が後から変わる
+    expect(
+      calculateRetentionSummary(rows, "2026-06-28").matureInstalls
+    ).toBe(0);
+    // Day 27 が終わった翌日から数える
+    expect(
+      calculateRetentionSummary(rows, "2026-06-29").matureInstalls
+    ).toBe(1);
+  });
+
   it("returns null rates until at least one install has 4 weeks of observation", () => {
     const summary = calculateRetentionSummary(
       [{ installIdHash: "a", activityDate: "2026-07-20" }],
