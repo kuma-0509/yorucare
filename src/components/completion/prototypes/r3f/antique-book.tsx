@@ -1,10 +1,16 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
-import type { CinematicPhase } from "./use-cinematic-timeline";
+import {
+  isShelvedPhase,
+  shelfTAt,
+  spineGlowAt,
+  type CinematicPhase,
+  type CinematicProgress,
+} from "./use-cinematic-timeline";
 import {
   BOOK,
   createGoldMaterial,
@@ -24,13 +30,10 @@ import {
 
 interface AntiqueBookProps {
   phase: CinematicPhase;
-  phaseProgress: number;
+  /** 段の中の進み具合。`useFrame` の中から読む */
+  progress: CinematicProgress;
   lines: string[];
   heading?: string;
-  /** 本棚スロットへの移動（0=机、1=収納完了） */
-  shelfT: number;
-  /** 収納後の背表紙ラベル glow（0–1） */
-  spineGlow?: number;
 }
 
 function easeOutCubic(t: number) {
@@ -50,6 +53,11 @@ function easeInOutCubic(t: number) {
  */
 const SPINE_FACE_X = -BOOK.w / 2 - BOOK.t;
 
+/** 背表紙のラベルのにじみ。`useFrame` から直に書き換える */
+function spineLabelShadow(glow: number) {
+  return `0 0 ${6 + glow * 8}px rgba(201,162,39,${0.35 + glow * 0.45})`;
+}
+
 /** 収納直前のわずかな沈み込み */
 function settleEase(t: number) {
   if (t < 0.82) return easeInOutCubic(t / 0.82) * 0.82;
@@ -60,14 +68,16 @@ function settleEase(t: number) {
 
 export function AntiqueBook({
   phase,
-  phaseProgress,
+  progress,
   lines,
   heading,
-  shelfT,
-  spineGlow = 0,
 }: AntiqueBookProps) {
   const group = useRef<THREE.Group>(null);
   const coverRef = useRef<THREE.Group>(null);
+  const deskShadowRef = useRef<THREE.ShadowMaterial>(null);
+  const flipRefs = useRef<(THREE.Mesh | null)[]>([]);
+  const spineLabelRef = useRef<HTMLParagraphElement>(null);
+  const writtenSpineGlow = useRef(0);
   const shelfScale = useMemo(() => computeShelfScale(), []);
   const depthOffset = useMemo(() => shelvedDepthOffset(), []);
   const size = useThree((state) => state.size);
@@ -81,16 +91,56 @@ export function AntiqueBook({
   const paper = useMemo(() => createPaperMaterial(), []);
 
   const displayLines = lines.slice(0, 4);
+
+  /*
+    段の途中で描き直しが要るのは、書いた行が1行ずつ増えるところと、
+    本を閉じる途中で行を消すところだけ。**この2つは書き換わる回数が
+    数えられる**ので状態に置き、それ以外の進み具合は `useFrame` の中で持つ
+  */
+  const [writtenLines, setWrittenLines] = useState(1);
+  const [closingPastText, setClosingPastText] = useState(false);
+
   const visibleLineCount =
     phase === "writing"
-      ? Math.min(displayLines.length, Math.floor(phaseProgress * 4) + 1)
+      ? Math.min(displayLines.length, writtenLines)
       : displayLines.length;
-  const pageFlipT = phase === "pageFlip" ? easeInOutCubic(phaseProgress) : 0;
 
-  const isShelved =
-    phase === "shelving" || phase === "afterglow" || phase === "done";
+  const isShelved = isShelvedPhase(phase);
 
   useFrame(() => {
+    const phaseProgress = progress.value();
+
+    if (phase === "writing") {
+      const next = Math.min(displayLines.length, Math.floor(phaseProgress * 4) + 1);
+      if (next !== writtenLines) setWrittenLines(next);
+    }
+    if (phase === "closing") {
+      const past = phaseProgress >= 0.35;
+      if (past !== closingPastText) setClosingPastText(past);
+    }
+
+    if (phase === "pageFlip") {
+      const pageFlipT = easeInOutCubic(phaseProgress);
+      flipRefs.current.forEach((page, i) => {
+        if (!page) return;
+        page.position.z = 0.035 + i * 0.01 + pageFlipT * 0.035;
+        page.rotation.y = -0.22 - pageFlipT * (1.05 + i * 0.18);
+      });
+    }
+
+    const spineGlow = spineGlowAt(phase, phaseProgress);
+    const label = spineLabelRef.current;
+    // DOM の書き換えなので、目に見えて変わったときだけ触る
+    if (label && Math.abs(spineGlow - writtenSpineGlow.current) > 0.01) {
+      writtenSpineGlow.current = spineGlow;
+      label.style.textShadow = spineLabelShadow(spineGlow);
+    }
+
+    const shelfT = shelfTAt(phase, phaseProgress);
+    if (deskShadowRef.current) {
+      deskShadowRef.current.opacity = isShelved && shelfT > 0.85 ? 0.22 : 0.38;
+    }
+
     const cover = coverRef.current;
     const g = group.current;
     if (!cover || !g) return;
@@ -192,7 +242,7 @@ export function AntiqueBook({
   const showPages =
     phase === "writing" ||
     phase === "pageFlip" ||
-    (phase === "closing" && phaseProgress < 0.35);
+    (phase === "closing" && !closingPastText);
 
   const pageW = BOOK.w - BOOK.pageInset * 2;
   const pageH = BOOK.h - BOOK.pageInset * 2;
@@ -206,7 +256,7 @@ export function AntiqueBook({
         receiveShadow
       >
         <circleGeometry args={[1.35, 32]} />
-        <shadowMaterial opacity={isShelved && shelfT > 0.85 ? 0.22 : 0.38} />
+        <shadowMaterial ref={deskShadowRef} opacity={0.38} />
       </mesh>
 
       <mesh
@@ -331,12 +381,11 @@ export function AntiqueBook({
         [0, 1, 2].map((i) => (
           <mesh
             key={i}
-            position={[
-              -BOOK.w / 2 + 0.06 + i * 0.028,
-              0,
-              0.035 + i * 0.01 + pageFlipT * 0.035,
-            ]}
-            rotation={[0, -0.22 - pageFlipT * (1.05 + i * 0.18), 0]}
+            ref={(mesh) => {
+              flipRefs.current[i] = mesh;
+            }}
+            position={[-BOOK.w / 2 + 0.06 + i * 0.028, 0, 0.035 + i * 0.01]}
+            rotation={[0, -0.22, 0]}
           >
             <boxGeometry args={[pageW - 0.12, pageH - 0.08, 0.007]} />
             <primitive object={paper} attach="material" />
@@ -390,10 +439,11 @@ export function AntiqueBook({
           style={{ pointerEvents: "none" }}
         >
           <p
+            ref={spineLabelRef}
             className="font-serif text-[8px] text-[#d4af37]"
             style={{
               writingMode: "vertical-rl",
-              textShadow: `0 0 ${6 + spineGlow * 8}px rgba(201,162,39,${0.35 + spineGlow * 0.45})`,
+              textShadow: spineLabelShadow(0),
             }}
           >
             {heading ?? "記録"}
