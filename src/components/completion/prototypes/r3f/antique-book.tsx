@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { CinematicPhase } from "./use-cinematic-timeline";
@@ -12,11 +12,14 @@ import {
   createLeatherMaterial,
   createPaperMaterial,
 } from "./materials";
+import { PAGE_TEXT_WIDTH_PX, pageTextDistanceFactor } from "./framing";
 import {
   DESK_POSE,
-  SHELF_LAYOUT,
   SHELF_POSE,
+  SPINE_POSE,
+  computeShelfScale,
   getSlotLocalCenter,
+  shelvedDepthOffset,
 } from "./shelf-layout";
 
 interface AntiqueBookProps {
@@ -38,21 +41,21 @@ function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+/**
+ * 背表紙のふくらみの外側の面。
+ *
+ * ふくらみは幅 `BOOK.t` の箱を中心 `-BOOK.w/2 - BOOK.t/2` に置いたものなので、
+ * 外側の面はその半分ぶん先にある。**金線・帯・題箋をふくらみの中心を基準に置くと、
+ * 箱の内側に埋まって1本も見えない。** 面を基準にして、そこから外へ出す。
+ */
+const SPINE_FACE_X = -BOOK.w / 2 - BOOK.t;
+
 /** 収納直前のわずかな沈み込み */
 function settleEase(t: number) {
   if (t < 0.82) return easeInOutCubic(t / 0.82) * 0.82;
   const tail = (t - 0.82) / 0.18;
   const bounce = Math.sin(tail * Math.PI) * 0.045 * (1 - tail);
   return 0.82 + tail * 0.18 - bounce;
-}
-
-/** 棚姿勢での非均一スケール（背表紙幅・高さ・奥行きをスロットに合わせる） */
-function computeShelfScale(): THREE.Vector3 {
-  return new THREE.Vector3(
-    SHELF_LAYOUT.slotSpineWidth / BOOK.t,
-    SHELF_LAYOUT.slotHeight / BOOK.h,
-    SHELF_LAYOUT.slotDepth / BOOK.w
-  );
 }
 
 export function AntiqueBook({
@@ -66,6 +69,9 @@ export function AntiqueBook({
   const group = useRef<THREE.Group>(null);
   const coverRef = useRef<THREE.Group>(null);
   const shelfScale = useMemo(() => computeShelfScale(), []);
+  const depthOffset = useMemo(() => shelvedDepthOffset(), []);
+  const size = useThree((state) => state.size);
+  const textFactor = pageTextDistanceFactor(size.width / size.height);
 
   const leather = useMemo(() => createLeatherMaterial(), []);
   const leatherDark = useMemo(() => createLeatherMaterial("#3d2a20"), []);
@@ -108,8 +114,16 @@ export function AntiqueBook({
       g.scale.copy(deskScale);
     } else if (phase === "spine") {
       const spineT = easeOutCubic(phaseProgress);
-      g.rotation.y = THREE.MathUtils.lerp(DESK_POSE.rotationY, -1.05, spineT);
-      g.rotation.x = THREE.MathUtils.lerp(DESK_POSE.rotationX, 0.02, spineT);
+      g.rotation.y = THREE.MathUtils.lerp(
+        DESK_POSE.rotationY,
+        SPINE_POSE.rotationY,
+        spineT
+      );
+      g.rotation.x = THREE.MathUtils.lerp(
+        DESK_POSE.rotationX,
+        SPINE_POSE.rotationX,
+        spineT
+      );
       g.position.copy(deskPos);
       g.position.y += spineT * 0.04;
       g.scale.copy(deskScale);
@@ -117,32 +131,45 @@ export function AntiqueBook({
       const t = settleEase(shelfT);
       const moveT = easeInOutCubic(Math.min(1, t / 0.92));
 
+      // 背表紙を見せた向きから、棚に差し込む向きへ戻すだけにする。
+      // 前の段の角度を始点にしないと、収納の入りで本が一度回り直す
       g.rotation.y = THREE.MathUtils.lerp(
-        phase === "shelving" && shelfT < 0.08 ? -1.05 : SHELF_POSE.rotationY,
+        SPINE_POSE.rotationY,
         SHELF_POSE.rotationY,
         moveT
       );
       g.rotation.x = THREE.MathUtils.lerp(
-        DESK_POSE.rotationX,
+        SPINE_POSE.rotationX,
         SHELF_POSE.rotationX,
         moveT
       );
 
       g.position.x = THREE.MathUtils.lerp(deskPos.x, slotCenter.x, moveT);
       g.position.y = THREE.MathUtils.lerp(deskPos.y, slotCenter.y, moveT);
-      g.position.z = THREE.MathUtils.lerp(deskPos.z, slotCenter.z, moveT);
+      g.position.z = THREE.MathUtils.lerp(
+        deskPos.z,
+        slotCenter.z + depthOffset,
+        moveT
+      );
 
       if (shelfT > 0.78) {
         const settle = Math.sin(((shelfT - 0.78) / 0.22) * Math.PI) * 0.018;
         g.position.z -= settle;
       }
 
-      const uniformScale = THREE.MathUtils.lerp(1, shelfScale.x, moveT);
-      const depthBlend = easeInOutCubic(Math.max(0, (moveT - 0.55) / 0.45));
+      /*
+        飛んでいる間は高さの比率で一様に縮め、棚の口へ入ってから
+        背表紙の幅と奥行きを詰める。**最初から非均一に潰すと、
+        机の上の本が空中で紙のように薄くなる。**
+      */
+      const flight = THREE.MathUtils.lerp(deskScale.y, shelfScale.y, moveT);
+      const fitBlend = easeInOutCubic(
+        THREE.MathUtils.clamp((moveT - 0.55) / 0.45, 0, 1)
+      );
       g.scale.set(
-        THREE.MathUtils.lerp(uniformScale, shelfScale.x, depthBlend),
-        THREE.MathUtils.lerp(uniformScale, shelfScale.y, depthBlend),
-        THREE.MathUtils.lerp(uniformScale, shelfScale.z, depthBlend)
+        THREE.MathUtils.lerp(flight, shelfScale.x, fitBlend),
+        THREE.MathUtils.lerp(flight, shelfScale.y, fitBlend),
+        THREE.MathUtils.lerp(flight, shelfScale.z, fitBlend)
       );
     }
 
@@ -191,10 +218,10 @@ export function AntiqueBook({
         <primitive object={leatherDark} attach="material" />
       </mesh>
 
-      {[-0.52, 0, 0.52].map((y) => (
+      {[-0.52, 0.52].map((y) => (
         <mesh
           key={y}
-          position={[-BOOK.w / 2 - BOOK.t / 2 - 0.008, y * BOOK.h * 0.34, 0]}
+          position={[SPINE_FACE_X - 0.005, y * BOOK.h * 0.34, 0]}
         >
           <boxGeometry args={[0.01, BOOK.h * 0.035, BOOK.t * 0.72]} />
           <primitive object={goldBand} attach="material" />
@@ -203,21 +230,25 @@ export function AntiqueBook({
       {[-0.3, 0.3].map((y) => (
         <mesh
           key={`rib-${y}`}
-          position={[-BOOK.w / 2 - BOOK.t / 2 - 0.012, y * BOOK.h * 0.92, 0]}
+          position={[SPINE_FACE_X - 0.014, y * BOOK.h * 0.92, 0]}
         >
           <boxGeometry args={[0.028, BOOK.h * 0.05, BOOK.t * 0.9]} />
           <primitive object={leatherDark} attach="material" />
         </mesh>
       ))}
 
-      <group position={[-BOOK.w / 2 - BOOK.t / 2 - 0.014, 0, 0]}>
+      {/*
+        題箋（背表紙の札）。金を前面に置くと札全体が金の板になって
+        日付が読めないので、金は縁として後ろに、暗い革の札を前に重ねる
+      */}
+      <group position={[SPINE_FACE_X - 0.003, 0, 0]}>
         <mesh>
-          <boxGeometry args={[0.006, BOOK.h * 0.38, BOOK.t * 0.55]} />
-          <meshStandardMaterial color="#2a1e14" roughness={0.85} />
-        </mesh>
-        <mesh position={[0.004, 0, 0]}>
-          <boxGeometry args={[0.004, BOOK.h * 0.32, BOOK.t * 0.48]} />
+          <boxGeometry args={[0.005, BOOK.h * 0.38, BOOK.t * 0.55]} />
           <primitive object={goldBand} attach="material" />
+        </mesh>
+        <mesh position={[-0.004, 0, 0]}>
+          <boxGeometry args={[0.004, BOOK.h * 0.34, BOOK.t * 0.46]} />
+          <meshStandardMaterial color="#2a1e14" roughness={0.85} />
         </mesh>
       </group>
 
@@ -316,10 +347,10 @@ export function AntiqueBook({
         <Html
           transform
           occlude
-          distanceFactor={1.35}
+          distanceFactor={textFactor}
           position={[0, 0, BOOK.t / 2 + 0.02]}
           style={{
-            width: "220px",
+            width: `${PAGE_TEXT_WIDTH_PX}px`,
             pointerEvents: "none",
             userSelect: "none",
           }}
@@ -345,10 +376,17 @@ export function AntiqueBook({
       {(phase === "spine" || isShelved) && (
         <Html
           transform
-          occlude
-          distanceFactor={1.65}
-          position={[-BOOK.w / 2 - BOOK.t / 2 - 0.05, 0, 0]}
-          rotation={[0, Math.PI / 2, 0]}
+          /*
+            題箋の上に載るだけで、間に入るものが無い。遮蔽の判定は
+            毎フレームの ray を1本増やすだけになるので付けない
+          */
+          distanceFactor={3.2}
+          position={[SPINE_FACE_X - 0.03, 0, 0]}
+          /*
+            背表紙は本のローカル -X 側にある。棚姿勢（Y軸 +90°）で
+            ラベルが手前を向くよう、ここで -90° 戻しておく
+          */
+          rotation={[0, -Math.PI / 2, 0]}
           style={{ pointerEvents: "none" }}
         >
           <p

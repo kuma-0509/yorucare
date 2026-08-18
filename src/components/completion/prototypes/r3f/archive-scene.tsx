@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import { AntiqueBook } from "./antique-book";
@@ -17,6 +17,7 @@ import {
   playSparkleChime,
 } from "./completion-sounds";
 import { createWoodMaterial } from "./materials";
+import { spineCameraDistance } from "./framing";
 import { useArchiveEnvironment } from "./environment";
 import { GlowSprite } from "./glow-sprite";
 import { getSlotWorldCenter } from "./shelf-layout";
@@ -92,6 +93,8 @@ export function ArchiveScene({
   const played = useRef(new Set<string>());
   const wood = useMemo(() => createWoodMaterial(), []);
   const slotWorld = useMemo(() => getSlotWorldCenter(), []);
+  const size = useThree((state) => state.size);
+  const aspect = size.width / size.height;
 
   const shelfT =
     phase === "shelving"
@@ -159,8 +162,21 @@ export function ArchiveScene({
     if (!cam) return;
 
     const key = CAMERA_KEYS[phase];
-    let targetPos = key.pos.clone();
-    let targetLook = key.target.clone();
+    const targetPos = key.pos.clone();
+    const targetLook = key.target.clone();
+
+    if (phase === "spine") {
+      // 縦長の画面では、書いた位置のままだと表紙が画面を覆う。
+      // 向きは変えず、背表紙が入るところまで下がる
+      const offset = targetPos.clone().sub(targetLook);
+      targetPos.copy(
+        targetLook
+          .clone()
+          .add(
+            offset.setLength(spineCameraDistance(aspect, offset.length()))
+          )
+      );
+    }
 
     if (phase === "shelving") {
       const follow = easeInOut(Math.min(1, phaseProgress * 1.15));
@@ -194,10 +210,27 @@ export function ArchiveScene({
       keyLightRef.current.intensity =
         2.05 +
         (phase === "closing" ? impactPulse(phaseProgress) * 0.28 : 0) +
+        // 背表紙は主光源から斜めを向くため、この段だけ少し足して
+        // 革と金の起伏が残るようにする
+        (phase === "spine" ? 0.75 : 0) +
         shelfGlow * 0.18;
+
+      /*
+        背表紙を見せる段では、本が回って背表紙が右手前へ出る。
+        そこは既定の光の輪（angle 0.42）の外側で、強さを足しても届かない。
+        輪の側を広げる。切り替えはカメラが動いている間に少しずつ行う
+      */
+      keyLightRef.current.angle = THREE.MathUtils.lerp(
+        keyLightRef.current.angle,
+        phase === "spine" ? 0.62 : 0.42,
+        Math.min(1, delta * 3)
+      );
     }
     if (shelfLightRef.current) {
-      shelfLightRef.current.intensity = 0.12 + shelfGlow * 0.95;
+      // 棚の灯りは、収まった本を隣の本より少しだけ明るく見せるためのもの。
+      // 背表紙のすぐ手前（0.35）に置いてあるので、強くすると革の色が飛んで
+      // 白っぽい板になる
+      shelfLightRef.current.intensity = 0.1 + shelfGlow * 0.4;
     }
   });
 
