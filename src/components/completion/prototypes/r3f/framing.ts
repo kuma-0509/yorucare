@@ -1,3 +1,6 @@
+import { BOOK } from "./materials";
+import { DESK_POSE } from "./shelf-layout";
+
 /**
  * 画面の縦横比に合わせて、演出の中で読ませる文字の大きさを決める。
  *
@@ -12,6 +15,19 @@
 
 /** 筆記の段のカメラ距離（`archive-scene.tsx` の writing キー） */
 const WRITING_CAMERA_DISTANCE = 2.06;
+
+/**
+ * 筆記面までの保守的な距離。
+ *
+ * `Html` は本の原点ではなく、表紙より手前（`BOOK.t / 2 + 0.02`）にある。
+ * さらに本がわずかに傾いているため、ページ上端はその分だけカメラへ近づく。
+ * 原点までの距離で可視幅を求めると、390×844 では実際の文字が計算より約15%大きく
+ * 投影され、行頭が数px切れる。最も近い側までの距離で縮尺を決める。
+ */
+export const WRITING_TEXT_DISTANCE =
+  WRITING_CAMERA_DISTANCE -
+  (BOOK.t / 2 + 0.02) -
+  (BOOK.h / 2) * Math.sin(DESK_POSE.rotationX);
 
 /** カメラの画角（度）。`archive-canvas.tsx` の PerspectiveCamera と揃える */
 const CAMERA_FOV_DEG = 40;
@@ -79,7 +95,7 @@ export function pageTextWorldWidth(distanceFactor: number): number {
  */
 export function pageTextDistanceFactor(aspect: number): number {
   const fits =
-    (visibleWidthAt(aspect) * SAFE_RATIO) /
+    (visibleWidthAt(aspect, WRITING_TEXT_DISTANCE) * SAFE_RATIO) /
     (PAGE_TEXT_WIDTH_PX * HTML_WORLD_RATIO);
   return Math.min(PAGE_TEXT_BASE_FACTOR, fits);
 }

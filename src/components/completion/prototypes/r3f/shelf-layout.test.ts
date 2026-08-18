@@ -4,6 +4,7 @@ import {
   SHELF_LAYOUT,
   SHELF_POSE,
   SPINE_POSE,
+  SPINE_BULGE,
   computeShelfScale,
   shelvedBookFit,
   shelvedDepthOffset,
@@ -16,6 +17,12 @@ import {
  * 棚から飛び出していても気づけないので、寸法と向きをここで固定する。
  */
 describe("棚に収まった本の収まり", () => {
+  it("背表紙の張り出しは、実際の箱のローカルX幅を使う", () => {
+    // antique-book.tsx の箱は boxGeometry args={[BOOK.t, ...]}。
+    // ローカルZ幅の 0.92 を取り違えると、テスト内の境界だけが実装より小さくなる。
+    expect(SPINE_BULGE).toBe(BOOK.t);
+  });
+
   it("背表紙の幅・高さ・奥行きが空きスロットの寸法になる", () => {
     const fit = shelvedBookFit();
 
