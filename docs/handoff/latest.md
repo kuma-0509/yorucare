@@ -60,7 +60,11 @@
 
 - `pnpm lint`: 成功（警告・エラーなし）
 - `pnpm test`: 成功（こちらの変更で 43 test files / 436 tests。枝を切った時点の 430 から +6。PR #29 取り込み後の合計は下記「取り込み後」を参照）
-- `pnpm build`: 成功（Compiled successfully、型チェック通過、9ページ生成）。**ローカルで完走したため代替検証は不要**
+- `pnpm build`: 成功（Compiled successfully、型チェック通過）。**ローカルで完走したため代替検証は不要**
+
+**取り込み後（PR #29 を取り込んだ状態）で再実行した結果**
+
+- `pnpm lint`: 成功 / `pnpm test`: 成功（45 test files / 453 tests） / `pnpm build`: 成功
 - `node_modules` が無い状態だったため `pnpm install --frozen-lockfile` を先に実行した
 
 ## 次のタスク候補
