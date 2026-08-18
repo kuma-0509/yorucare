@@ -127,3 +127,15 @@ export function burnActivePapers(): CompletionLog {
 export function getCompletionLog(): CompletionLog {
   return readLog();
 }
+
+/**
+ * 演出の記録を端末から消す。
+ *
+ * 「すべての記録を削除」は共有端末で使い終わったときのための機能なので、
+ * 記録本体だけを消すと、どの日に記録したかが演出のログとして端末に残る。
+ * 記録を消すときはこちらも一緒に消す。
+ */
+export function clearCompletionLog(): void {
+  if (!isBrowser()) return;
+  localStorage.removeItem(STORAGE_KEYS.completionLog);
+}

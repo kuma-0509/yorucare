@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { recordCompletion } from "./completion-log";
 import { STORAGE_KEYS } from "./constants";
 import {
   createEmptyRecordForm,
@@ -419,6 +420,41 @@ describe("暦に実在しない復職日", () => {
     await expect(typedRepository.getReturnDate()).resolves.toEqual({
       ok: true,
       value: "2024-02-29",
+    });
+  });
+});
+
+describe("すべての記録を削除", () => {
+  it("記録を消す", async () => {
+    const date = "2026-08-18";
+    const { date: _date, ...emptyForm } = createEmptyRecordForm(date);
+    await typedRepository.saveRecord(date, { ...emptyForm, moodScore: 3 });
+
+    const result = await typedRepository.deleteAllRecords();
+
+    expect(result.ok).toBe(true);
+    await expect(typedRepository.getAllRecords()).resolves.toEqual({
+      ok: true,
+      value: [],
+    });
+  });
+
+  it("締めくくり演出の記録も一緒に消す", async () => {
+    // 共有端末で使い終わったときに、どの日に記録したかが
+    // 演出のログとして端末へ残らないようにする
+    recordCompletion("2026-08-18", "shelf");
+    recordCompletion("2026-08-17", "paper");
+    expect(localStorage.getItem(STORAGE_KEYS.completionLog)).not.toBeNull();
+
+    await typedRepository.deleteAllRecords();
+
+    expect(localStorage.getItem(STORAGE_KEYS.completionLog)).toBeNull();
+  });
+
+  it("演出の記録が無くても失敗しない", async () => {
+    await expect(typedRepository.deleteAllRecords()).resolves.toEqual({
+      ok: true,
+      value: undefined,
     });
   });
 });

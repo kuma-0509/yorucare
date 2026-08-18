@@ -5,6 +5,7 @@ import {
   WEEKLY_BURN_THRESHOLD,
   burnActivePapers,
   canBurnWeekly,
+  clearCompletionLog,
   getActivePaperCount,
   getActivePaperDates,
   getCompletionForDate,
@@ -148,5 +149,31 @@ describe("手放していない紙の集計", () => {
     recordCompletion("2026-08-18", "paper");
 
     expect(getActivePaperDates()).toEqual(["2026-08-18"]);
+  });
+});
+
+describe("演出の記録を消す", () => {
+  it("端末から演出の記録を消す", () => {
+    recordCompletion("2026-08-18", "shelf");
+    recordCompletion("2026-08-17", "paper");
+
+    clearCompletionLog();
+
+    expect(localStorage.getItem(STORAGE_KEYS.completionLog)).toBeNull();
+    expect(getCompletionLog()).toEqual({ entries: [], burnedDates: [] });
+    expect(getCompletionForDate("2026-08-18")).toBeNull();
+  });
+
+  it("手放し済みの日付も残さない", () => {
+    recordCompletion("2026-08-17", "paper");
+    burnActivePapers();
+
+    clearCompletionLog();
+
+    expect(getCompletionLog().burnedDates).toEqual([]);
+  });
+
+  it("何も保存していなくても失敗しない", () => {
+    expect(() => clearCompletionLog()).not.toThrow();
   });
 });
