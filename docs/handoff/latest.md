@@ -1,7 +1,14 @@
 # Handoff
 
 日付: 2026-08-18
-担当チャット: 14件目
+担当チャット: 15件目
+
+## 作業中に main が進んだ（PR #29）
+
+**この作業の途中で、別のチャットが PR #29（`claude/yorucare-task-14-selection`）を main へマージした。** そちらが「14件目」を名乗っているため、こちらを15件目とした。内容は継続指標の集計で、**週あたり記録日数の中央値と中断後再開率を足し、`scripts/analytics-summary.mjs` から読み出せるようにしたもの**（`Day 27` が終わってから分母に入れる修正込み）。
+
+- 触った範囲は `analytics-*` と `docs/anonymous-analytics.md`、`package.json`、`scripts/`。**こちらの変更（完了演出・全削除）とは重なっていない。**
+- 取り込みで衝突したのは `docs/handoff/latest.md` だけ。管理表は両方の行が自動で残った。
 
 ## 依頼された作業は既に完了済みだった（重要）
 
@@ -52,7 +59,7 @@
 ## 検証結果
 
 - `pnpm lint`: 成功（警告・エラーなし）
-- `pnpm test`: 成功（43 test files / 436 tests。取り込み時点の 430 から +6）
+- `pnpm test`: 成功（こちらの変更で 43 test files / 436 tests。枝を切った時点の 430 から +6。PR #29 取り込み後の合計は下記「取り込み後」を参照）
 - `pnpm build`: 成功（Compiled successfully、型チェック通過、9ページ生成）。**ローカルで完走したため代替検証は不要**
 - `node_modules` が無い状態だったため `pnpm install --frozen-lockfile` を先に実行した
 

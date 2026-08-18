@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from "./constants";
-import { getTodayString } from "./dates";
+import { getLast7Days, getTodayString } from "./dates";
 import { hasAnalyticsConsent } from "./analytics-consent";
 import type { AnalyticsEventName, AnalyticsTab } from "./analytics-events";
 
@@ -174,16 +174,22 @@ export function getAnalyticsMetrics(): AnalyticsSnapshot["metrics"] {
   return readSnapshot().metrics;
 }
 
-/** 直近7日で記録した日数（パイロット確認用） */
+/**
+ * 直近7日（今日を含む）で記録した日数（パイロット確認用）。
+ *
+ * 端末内の記録日から数えるだけで、どこへも送らない。
+ * 「続いた日数」ではなく「記録した日数」を返す。中断で0に戻る数を出すと、
+ * 書けなかった日が失敗として見えるため。
+ */
 export function getRecentSaveStreakHint(): {
   daysRecorded: number;
   savedToday: boolean;
 } {
   const metrics = getAnalyticsMetrics();
   const today = getTodayString();
-  const recent = new Set(metrics.uniqueRecordDays);
+  const recorded = new Set(metrics.uniqueRecordDays);
   return {
-    daysRecorded: recent.size,
-    savedToday: recent.has(today),
+    daysRecorded: getLast7Days().filter((date) => recorded.has(date)).length,
+    savedToday: recorded.has(today),
   };
 }
