@@ -14,6 +14,12 @@ export const COPY = {
     selfCare: "できること",
     reflection: "ふりかえり",
   },
+  reflection: {
+    description: "記録を重ねた分だけ、自分の体調の波が見えてきます。",
+    futureTitle: "これから追加予定",
+    futureDescription:
+      "ふりかえりを、面談や通院前の準備にも使えるようにしていきます。",
+  },
   warningSign: "しんどさのサイン",
   memo: "メモ",
   memoOptional: "メモ（任意）",

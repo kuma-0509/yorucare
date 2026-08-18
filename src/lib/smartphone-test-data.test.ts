@@ -6,7 +6,8 @@ import { describe, expect, it } from "vitest";
 import { getGoalToReview } from "./goal";
 import { parseExportPayload } from "./schemas";
 import { summarizePeriod } from "./ai/period-summary";
-import type { DailyRecord } from "./types";
+import { buildWeeklySummary } from "./ai/weekly-summary";
+import type { DailyRecord, SelfCareItem } from "./types";
 
 /**
  * `scripts/make-test-data.mjs` が作る実機テスト用の見本データを固定する。
@@ -64,21 +65,21 @@ describe("実機テスト用の見本データ", () => {
   });
 
   it("F-7: 続けて書けた日が2日以上ある（連続の行が出る）", () => {
-    const dates = parsedRecords(current)
-      .map((record) => record.date)
-      .sort();
-    let longest = 1;
-    let current_ = 1;
-    for (let i = 1; i < dates.length; i += 1) {
-      const previous = new Date(`${dates[i - 1]}T00:00:00`);
-      previous.setDate(previous.getDate() + 1);
-      const isNextDay = previous.toISOString().slice(0, 10) === dates[i];
-      current_ = isNextDay ? current_ + 1 : 1;
-      longest = Math.max(longest, current_);
-    }
-    expect(longest).toBeGreaterThanOrEqual(2);
+    // 製品と同じ集計経路で、F-7 に表示する行まで確かめる。
+    // 日付をローカル時刻で作って UTC 文字列へ戻すと、UTC より進んだ環境では
+    // 前日になり、見本が正しくてもテストだけが失敗するため、自前では数えない。
+    const summary = buildWeeklySummary(
+      parsedRecords(current),
+      current.selfCareItems as SelfCareItem[],
+      "2026-08-11",
+      TODAY
+    );
+    expect(summary.lines.find((line) => line.id === "streak")).toMatchObject({
+      label: "続けて記録できた日",
+      value: "最長 3日",
+    });
     // 途切れた日がないと、記録できなかった日の見え方（F-5）を確かめられない
-    expect(dates.length).toBeLessThan(6);
+    expect(summary.recordedDays).toBeLessThan(summary.daysInRange);
   });
 
   it("F-6: できたことがあった日が1日以上あり、登録簿にある項目だけを指す", () => {
