@@ -24,7 +24,7 @@ export const SHELF_LAYOUT = {
  * 背表紙のふくらみ（`antique-book.tsx` が本体の左に置く箱）のローカルX方向の張り出し。
  * 棚では奥行きの一部になるので、収まりを見るときは本体の幅だけでは足りない。
  */
-export const SPINE_BULGE = BOOK.t * 0.96;
+export const SPINE_BULGE = BOOK.t;
 
 /** 棚では奥行きへ回る、ローカルX方向の全長 */
 const BOOK_DEPTH_LOCAL = BOOK.w + SPINE_BULGE;
