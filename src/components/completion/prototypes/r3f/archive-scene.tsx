@@ -148,7 +148,7 @@ export function ArchiveScene({
     const cam = camRef.current;
     if (!cam) return;
 
-    const phaseProgress = progress.value();
+    const phaseProgress = progress.value(phase);
     const shelfGlow = shelfGlowAt(phase, phaseProgress);
 
     if (phase === "shelving") {
@@ -342,7 +342,9 @@ export function ArchiveScene({
           {/* 卓上ランプのにじみ。ずっと薄く出しておく */}
           <GlowSprite
             position={[0.95, 1.35, 0.9]}
-            intensity={() => 0.3 + shelfGlowAt(phase, progress.value()) * 0.1}
+            intensity={() =>
+              0.3 + shelfGlowAt(phase, progress.value(phase)) * 0.1
+            }
             size={2.4}
             color="#ffcf8a"
           />
@@ -350,7 +352,9 @@ export function ArchiveScene({
           <GlowSprite
             position={[0, -0.02, 0.42]}
             intensity={() =>
-              phase === "closing" ? impactPulse(progress.value()) * 0.55 : 0
+              phase === "closing"
+                ? impactPulse(progress.value(phase)) * 0.55
+                : 0
             }
             size={1.5}
             color="#e8bf62"
@@ -358,7 +362,9 @@ export function ArchiveScene({
           {/* 棚に収まったあと、背表紙の金がにじむ */}
           <GlowSprite
             position={[slotWorld.x, slotWorld.y + 0.02, slotWorld.z + 0.24]}
-            intensity={() => shelfGlowAt(phase, progress.value()) * 0.42}
+            intensity={() =>
+              shelfGlowAt(phase, progress.value(phase)) * 0.42
+            }
             size={0.66}
             color="#d4af37"
           />

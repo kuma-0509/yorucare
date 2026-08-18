@@ -3,6 +3,7 @@ import {
   SOUND_CUES,
   SOUND_CUE_GRACE_MS,
   TIMELINE,
+  createCinematicProgress,
   isShelvedPhase,
   phaseProgressAt,
   phaseTimeMs,
@@ -62,6 +63,16 @@ describe("段の中の進み具合", () => {
         );
       }
     }
+  });
+
+  it("React が描画中の段を基準に進み具合を返す", () => {
+    const elapsed = TIMELINE.pageFlip + 120;
+    const progress = createCinematicProgress(() => 1000, () => 1000 + elapsed);
+
+    // タイマーが次段へ入っていても、React のコミット前に描画している旧段は
+    // 終端を保つ。次段の進み具合を旧段へ誤って適用しない。
+    expect(progress.value("writing")).toBe(1);
+    expect(progress.value("pageFlip")).toBeCloseTo(0.2, 6);
   });
 });
 

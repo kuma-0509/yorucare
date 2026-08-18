@@ -108,7 +108,7 @@ export function AntiqueBook({
   const isShelved = isShelvedPhase(phase);
 
   useFrame(() => {
-    const phaseProgress = progress.value();
+    const phaseProgress = progress.value(phase);
 
     if (phase === "writing") {
       const next = Math.min(displayLines.length, Math.floor(phaseProgress * 4) + 1);
