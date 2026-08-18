@@ -7,7 +7,6 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { StorageHealthBanner } from "@/components/shared/storage-health-banner";
 import { StorageNoticeBanner } from "@/components/shared/storage-notice-banner";
 import { BackupReminderBanner } from "@/components/shared/backup-reminder-banner";
-import { ReviewConsentDialog } from "@/components/shared/review-consent-dialog";
 import { repository } from "@/lib/repository";
 import { TodayRecordTab } from "@/components/tabs/today-record-tab";
 import { RecordsTab } from "@/components/tabs/records-tab";
@@ -109,7 +108,6 @@ export function AppShell() {
           setActiveTab(tab);
         }}
       />
-      <ReviewConsentDialog />
     </div>
   );
 }

@@ -26,7 +26,6 @@ const STORAGE_KEYS = {
   schemaVersion: "yorucare_schema_version",
   returnDate: "yorucare_return_date",
   lastBackupAt: "yorucare_last_backup_at",
-  reviewConsent: "yorucare_review_consent",
 };
 
 /** 架空のセルフケア項目 */
@@ -129,7 +128,6 @@ async function seed(page) {
       localStorage.setItem(keys.storageNoticeDismissed, "1");
       localStorage.setItem(keys.returnDate, returnDate);
       localStorage.setItem(keys.lastBackupAt, new Date().toISOString());
-      localStorage.setItem(keys.reviewConsent, "1");
     },
     [
       STORAGE_KEYS,
@@ -151,9 +149,7 @@ async function dismissDialogs(page) {
   for (let i = 0; i < 3; i += 1) {
     const dialog = page.locator('[role="dialog"]');
     if ((await dialog.count()) === 0) return;
-    const ack = dialog.getByRole("button", {
-      name: /わかりました|同意してレビューを始める/,
-    });
+    const ack = dialog.getByRole("button", { name: "わかりました" });
     if ((await ack.count()) > 0) {
       await ack.first().click();
     } else {
