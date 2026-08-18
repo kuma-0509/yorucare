@@ -46,5 +46,9 @@ next-env.d.ts
 /.tmp-ads-deploy/
 /outputs/
 
+# 実機テスト用に生成する見本データ（実行した日ごとに作り直す）
+/testdata/
+yorucare-testdata*.json
+
 # 別リポジトリとして管理している静的サイト
 /sites/

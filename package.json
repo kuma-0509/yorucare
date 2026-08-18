@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:checklist": "node scripts/run-phase1-checklist.mjs",
+    "testdata": "node scripts/make-test-data.mjs",
     "db:analytics:setup": "node scripts/setup-analytics-db.mjs"
   },
   "dependencies": {
