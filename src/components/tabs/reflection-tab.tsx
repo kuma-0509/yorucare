@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { REFLECTION_USER_FEATURES } from "@/lib/constants";
+import { COPY } from "@/lib/copy";
 
 interface ReflectionTabProps {
   refreshKey?: number;
@@ -20,9 +21,9 @@ export function ReflectionTab({ refreshKey = 0 }: ReflectionTabProps) {
   return (
     <div className="space-y-4 pb-4">
       <header>
-        <h1 className="text-xl font-bold">ふりかえり</h1>
+        <h1 className="text-xl font-bold">{COPY.tab.reflection}</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          記録を重ねた分だけ、自分の体調の波が見えてきます。
+          {COPY.reflection.description}
         </p>
       </header>
 
@@ -34,9 +35,11 @@ export function ReflectionTab({ refreshKey = 0 }: ReflectionTabProps) {
 
       <Card className="border-dashed">
         <CardHeader>
-          <CardTitle className="text-base">これから追加予定</CardTitle>
+          <CardTitle className="text-base">
+            {COPY.reflection.futureTitle}
+          </CardTitle>
           <CardDescription className="text-sm leading-relaxed">
-            週のまとめや、相談前の整理など、さらにふりかえりしやすくしていきます。
+            {COPY.reflection.futureDescription}
           </CardDescription>
         </CardHeader>
         <CardContent>
