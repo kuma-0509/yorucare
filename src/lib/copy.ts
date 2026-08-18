@@ -192,5 +192,15 @@ export const COPY = {
     // 「整える」全画面演出の完了文言（静かで自然に）
     flowTitle: "少し、整いました",
     flowSubtitle: "今日の記録をしまいました。また明日、見にきてください。",
+    // まとめて手放す導線。枚数は前後の語で挟んで組み立てる
+    burnCountPrefix: "紙が",
+    burnCountSuffix: "枚たまっています",
+    burnBannerHint: "まとめて手放すことができます",
+    burnBannerAction: "手放す",
+    burnReadyLead: "今週分のモヤモヤを、まとめて手放しませんか。",
+    burnReadyKeep: "記録はそのまま残ります。",
+    burnReadyAction: "今週のモヤモヤを手放す",
+    burnReadyNote: "記録は消えません。演出上だけ手放します。",
+    skipDuringEffect: "スキップ",
   },
 } as const;

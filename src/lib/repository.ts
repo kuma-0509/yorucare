@@ -1,3 +1,4 @@
+import { clearCompletionLog } from "./completion-log";
 import { SAMPLE_SELF_CARE, STORAGE_KEYS } from "./constants";
 import { getTodayString } from "./dates";
 import {
@@ -225,6 +226,10 @@ const localStorageRepository: LocalStorageRepository = {
     if (!isBrowser()) return err({ code: "BROWSER_ONLY" });
     try {
       localStorage.removeItem(STORAGE_KEYS.records);
+      // 締めくくり演出の記録には、どの日に記録したかの日付が残る。
+      // 共有端末で使い終わったときに記録だけ消えても意味がないため、
+      // 「すべての記録を削除」ではこちらも一緒に消す。
+      clearCompletionLog();
       return ok(undefined);
     } catch {
       return err({

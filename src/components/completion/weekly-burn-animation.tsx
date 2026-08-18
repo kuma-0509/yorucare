@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { burnActivePapers, getActivePaperDates } from "@/lib/completion-log";
+import { COPY } from "@/lib/copy";
+import {
+  burnActivePapers,
+  canBurnWeekly,
+  getActivePaperCount,
+} from "@/lib/completion-log";
 
 interface WeeklyBurnAnimationProps {
   /** 「紙」としてためた日付の一覧（手放す前の枚数確認用） */
@@ -66,12 +71,14 @@ export function WeeklyBurnAnimation({
       <div className="flex flex-col items-center gap-5 py-4">
         <div className="text-center">
           <p className="text-base font-medium text-foreground">
-            {count}枚の紙がたまっています
+            {COPY.completion.burnCountPrefix}
+            {count}
+            {COPY.completion.burnCountSuffix}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            今週分のモヤモヤを、まとめて手放しませんか。
+            {COPY.completion.burnReadyLead}
             <br />
-            記録はそのまま残ります。
+            {COPY.completion.burnReadyKeep}
           </p>
         </div>
 
@@ -98,11 +105,11 @@ export function WeeklyBurnAnimation({
           className="flex items-center gap-2 rounded-xl bg-amber-50 px-5 py-3 text-base font-medium text-amber-800 transition-colors hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
         >
           <Flame className="h-5 w-5 text-amber-500" />
-          今週のモヤモヤを手放す
+          {COPY.completion.burnReadyAction}
         </button>
 
         <p className="text-xs text-muted-foreground">
-          記録は消えません。演出上だけ手放します。
+          {COPY.completion.burnReadyNote}
         </p>
       </div>
     );
@@ -201,14 +208,15 @@ function SkipButton({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="text-sm text-muted-foreground underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
-      スキップ
+      {COPY.completion.skipDuringEffect}
     </button>
   );
 }
 
 /**
- * 演出なしで getActivePaperDates を確認し、7枚以上あれば燃やす導線を
- * 1行だけ表示するミニバナー。CompletionChoice の "done" フェーズに差し込む。
+ * 演出なしで枚数を確認し、しきい値に届いていれば燃やす導線を1行だけ
+ * 表示するミニバナー。CompletionChoice の "done" フェーズに差し込む。
+ * しきい値の判定は completion-log 側（WEEKLY_BURN_THRESHOLD）に任せる。
  */
 export function WeeklyBurnBanner({
   onBurnStart,
@@ -219,11 +227,9 @@ export function WeeklyBurnBanner({
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const dates = getActivePaperDates();
-    if (dates.length >= 7) {
-      setCount(dates.length);
-      setShow(true);
-    }
+    if (!canBurnWeekly()) return;
+    setCount(getActivePaperCount());
+    setShow(true);
   }, []);
 
   if (!show) return null;
@@ -232,10 +238,12 @@ export function WeeklyBurnBanner({
     <div className="yc-anim-soft-rise flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3">
       <div className="min-w-0">
         <p className="text-sm font-medium text-amber-900">
-          紙が{count}枚たまっています
+          {COPY.completion.burnCountPrefix}
+          {count}
+          {COPY.completion.burnCountSuffix}
         </p>
         <p className="mt-0.5 text-xs text-amber-700">
-          まとめて手放すことができます
+          {COPY.completion.burnBannerHint}
         </p>
       </div>
       <button
@@ -244,7 +252,7 @@ export function WeeklyBurnBanner({
         className="ml-3 shrink-0 flex items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-1"
       >
         <Flame className="h-4 w-4 text-amber-500" />
-        手放す
+        {COPY.completion.burnBannerAction}
       </button>
     </div>
   );
