@@ -26,6 +26,8 @@ interface BookShelfCinematicProps {
   title?: string;
   subtitle?: string;
   soundEnabled?: boolean;
+  /** 3D版だけが音を持つため、音の操作を出せる状態を親へ伝える */
+  onSoundAvailabilityChange?: (available: boolean) => void;
   onDone?: () => void;
 }
 
@@ -38,13 +40,17 @@ function SceneFallback() {
 }
 
 class R3fErrorBoundary extends Component<
-  { fallback: ReactNode; children: ReactNode },
+  { fallback: ReactNode; children: ReactNode; onError?: () => void },
   { failed: boolean }
 > {
   state = { failed: false };
 
   static getDerivedStateFromError() {
     return { failed: true };
+  }
+
+  componentDidCatch() {
+    this.props.onError?.();
   }
 
   render() {
@@ -63,6 +69,7 @@ export function BookShelfCinematic({
   title = COPY.completion.shelfDone,
   subtitle = COPY.completion.shelfDoneSub,
   soundEnabled = false,
+  onSoundAvailabilityChange,
   onDone,
 }: BookShelfCinematicProps) {
   const [mode, setMode] = useState<"loading" | "r3f" | "css">("loading");
@@ -84,6 +91,10 @@ export function BookShelfCinematic({
       setMode("css");
     }
   }, []);
+
+  useEffect(() => {
+    onSoundAvailabilityChange?.(mode === "r3f");
+  }, [mode, onSoundAvailabilityChange]);
 
   const handleDone = useCallback(() => {
     if (completedRef.current) return;
@@ -110,6 +121,7 @@ export function BookShelfCinematic({
 
   return (
     <R3fErrorBoundary
+      onError={() => setMode("css")}
       fallback={
         <BookShelfMagic
           lines={lines}

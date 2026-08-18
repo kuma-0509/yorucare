@@ -4,6 +4,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { CompletionChoice } from "./completion-choice";
 import { COPY } from "@/lib/copy";
 
+// 3D Canvas 自体はこのコンポーネントの契約テストに不要。WebGL の可否だけを
+// canvas.getContext の戻り値で切り替え、重い描画は読み込まない。
+vi.mock("next/dynamic", () => ({
+  default: () => () => <div data-testid="archive-canvas" />,
+}));
+
 /** 評価語・助言・診断に読める表現。画面に出てはいけない */
 const FORBIDDEN_WORDS = [
   "すごい",
@@ -56,6 +62,7 @@ function renderChoice() {
 beforeEach(() => {
   localStorage.clear();
   setReducedMotion(false);
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
 });
 
 afterEach(() => {
@@ -140,25 +147,13 @@ describe("記録完了の締めくくり", () => {
     }
   });
 
-  it("演出が終わったら音の切り替えも消す（もう鳴る音がない）", async () => {
-    vi.useFakeTimers();
-    try {
-      render(
-        <CompletionChoice
-          date="2026-08-17"
-          lines={LINES}
-          footer={<button type="button">これまでの記録を見る</button>}
-        />
-      );
-      fireEvent.click(screen.getByText(COPY.completion.shelf));
-      expect(screen.getByText(COPY.completion.soundEnable)).toBeTruthy();
+  it("平面版では、押しても鳴らない音の切り替えを出さない", () => {
+    renderChoice();
 
-      await vi.advanceTimersByTimeAsync(8000);
-      expect(screen.queryByText(COPY.completion.soundEnable)).toBe(null);
-      expect(screen.queryByText(COPY.completion.soundDisable)).toBe(null);
-    } finally {
-      vi.useRealTimers();
-    }
+    fireEvent.click(screen.getByText(COPY.completion.shelf));
+
+    expect(screen.queryByText(COPY.completion.soundEnable)).toBe(null);
+    expect(screen.queryByText(COPY.completion.soundDisable)).toBe(null);
   });
 
   it("演出の途中で終えても、完了の案内へ進める", async () => {
@@ -199,32 +194,40 @@ describe("記録完了の締めくくり", () => {
     expect(localStorage.getItem("yorucare_completion_log")).toBe(null);
   });
 
-  it("音は既定で鳴らさず、演出中に出すか選べる", () => {
+  it("3D版の音は既定で鳴らさず、演出中に出すか選べる", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+      {} as WebGLRenderingContext
+    );
     renderChoice();
 
     fireEvent.click(screen.getByText(COPY.completion.shelf));
 
     // 何もしていない端末では「音を出す」側から始める
-    const toggle = screen.getByRole("button", {
+    const toggle = await screen.findByRole("button", {
       name: COPY.completion.soundEnable,
     });
     expect(toggle.getAttribute("aria-pressed")).toBe("false");
     expect(localStorage.getItem("yorucare_completion_sound")).toBe(null);
   });
 
-  it("音を出すにすると端末内に残り、次に選んだときは最初から音ありで始まる", () => {
+  it("音を出すにすると端末内に残り、次に選んだときは最初から音ありで始まる", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+      {} as WebGLRenderingContext
+    );
     const first = renderChoice();
 
     fireEvent.click(screen.getByText(COPY.completion.shelf));
     fireEvent.click(
-      screen.getByRole("button", { name: COPY.completion.soundEnable })
+      await screen.findByRole("button", { name: COPY.completion.soundEnable })
     );
 
-    expect(
-      screen
-        .getByRole("button", { name: COPY.completion.soundDisable })
-        .getAttribute("aria-pressed")
-    ).toBe("true");
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("button", { name: COPY.completion.soundDisable })
+          .getAttribute("aria-pressed")
+      ).toBe("true");
+    });
     expect(localStorage.getItem("yorucare_completion_sound")).toBe("on");
 
     // 別の日の記録として開き直しても、選び直しを求めない
@@ -232,11 +235,13 @@ describe("記録完了の締めくくり", () => {
     renderChoice();
     fireEvent.click(screen.getByText(COPY.completion.shelf));
 
-    expect(
-      screen
-        .getByRole("button", { name: COPY.completion.soundDisable })
-        .getAttribute("aria-pressed")
-    ).toBe("true");
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole("button", { name: COPY.completion.soundDisable })
+          .getAttribute("aria-pressed")
+      ).toBe("true");
+    });
   });
 
   it("完了後の案内に、評価語・助言・診断に読める表現を出さない", () => {
