@@ -77,6 +77,7 @@ export function CompletionChoice({
   const [burnPaperDates, setBurnPaperDates] = useState<string[]>([]);
   const [shelfEnded, setShelfEnded] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
+  const [shelfSupportsSound, setShelfSupportsSound] = useState(false);
   const afterglowRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 音の設定は端末内に1つ持つ。サーバー側では読めないので、表示後に合わせる
@@ -141,6 +142,7 @@ export function CompletionChoice({
     recordCompletion(date, style);
     setDoneKind(style);
     setShelfEnded(false);
+    setShelfSupportsSound(false);
     // 動きを控える設定のときは全画面の演出を出さず、完了の一文だけを出す
     if (style === "shelf" && prefersReducedMotion()) {
       finish("shelf");
@@ -180,6 +182,7 @@ export function CompletionChoice({
               lines={lines}
               heading={shortHeading(date)}
               soundEnabled={soundOn}
+              onSoundAvailabilityChange={setShelfSupportsSound}
               onDone={handleShelfDone}
             />
 
@@ -201,24 +204,26 @@ export function CompletionChoice({
                   演出に入ったときの焦点は「このまま終える」に置きたいため、
                   先に置けるものを増やさない
                 */}
-                <div className="absolute right-2 top-0 z-30 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-[#f0e6d0]/70 hover:bg-white/10 hover:text-[#f0e6d0]"
-                    aria-pressed={soundOn}
-                    onClick={toggleSound}
-                  >
-                    {soundOn ? (
-                      <Volume2 className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                    ) : (
-                      <VolumeX className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                    )}
-                    {soundOn
-                      ? COPY.completion.soundDisable
-                      : COPY.completion.soundEnable}
-                  </Button>
-                </div>
+                {shelfSupportsSound && (
+                  <div className="absolute right-2 top-0 z-30 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[#f0e6d0]/70 hover:bg-white/10 hover:text-[#f0e6d0]"
+                      aria-pressed={soundOn}
+                      onClick={toggleSound}
+                    >
+                      {soundOn ? (
+                        <Volume2 className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <VolumeX className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                      )}
+                      {soundOn
+                        ? COPY.completion.soundDisable
+                        : COPY.completion.soundEnable}
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </DialogPrimitive.Content>
