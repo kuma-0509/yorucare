@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
@@ -23,9 +23,16 @@ import { GlowSprite } from "./glow-sprite";
 import { getSlotWorldCenter } from "./shelf-layout";
 import { qualityFor, type SceneQuality } from "./quality";
 import {
+  SOUND_CUES,
   TIMELINE,
+  isShelvedPhase,
+  phaseTimeMs,
+  prefersReducedMotion,
+  shelfGlowAt,
+  shelfTAt,
   useCinematicTimeline,
   type CinematicPhase,
+  type SoundCueKey,
 } from "./use-cinematic-timeline";
 
 interface ArchiveSceneProps {
@@ -76,6 +83,18 @@ function impactPulse(t: number) {
   return Math.sin(local * Math.PI);
 }
 
+/** 合図ごとに鳴らすもの。鳴らす位置は `SOUND_CUES` が持つ */
+const SOUND_PLAYERS: Record<SoundCueKey, () => void> = {
+  pen1: () => playPenScratch(),
+  pen2: () => playPenScratch(0.06),
+  pen3: () => playPenScratch(0.05),
+  flip: () => playPageFlip(),
+  close: playBookClose,
+  slide: playShelfSlide,
+  settle: playShelfSettle,
+  chime: () => playSparkleChime(),
+};
+
 export function ArchiveScene({
   lines,
   heading,
@@ -84,82 +103,53 @@ export function ArchiveScene({
   onDone,
 }: ArchiveSceneProps) {
   const settings = useMemo(() => quality ?? qualityFor("low", 1), [quality]);
-  const { phase, phaseProgress } = useCinematicTimeline(onDone);
+  const { phase, progress } = useCinematicTimeline(onDone);
   useArchiveEnvironment();
   const camRef = useRef<THREE.PerspectiveCamera>(null);
   const lookAt = useRef(new THREE.Vector3(0, 0.05, 0));
   const keyLightRef = useRef<THREE.SpotLight>(null);
   const shelfLightRef = useRef<THREE.PointLight>(null);
-  const played = useRef(new Set<string>());
   const wood = useMemo(() => createWoodMaterial(), []);
   const slotWorld = useMemo(() => getSlotWorldCenter(), []);
   const size = useThree((state) => state.size);
   const aspect = size.width / size.height;
+  const soundRef = useRef(soundEnabled);
+  soundRef.current = soundEnabled;
 
-  const shelfT =
-    phase === "shelving"
-      ? phaseProgress
-      : phase === "afterglow" || phase === "done"
-        ? 1
-        : 0;
+  const filled = isShelvedPhase(phase);
 
-  const shelfGlow =
-    phase === "afterglow"
-      ? 1 - phaseProgress * 0.4
-      : phase === "done"
-        ? 0.55
-        : phase === "shelving" && phaseProgress > 0.82
-          ? (phaseProgress - 0.82) / 0.18
-          : 0;
-
-  const spineGlow =
-    phase === "afterglow"
-      ? Math.max(0, 1 - phaseProgress * 0.85)
-      : phase === "done"
-        ? 0.35
-        : 0;
-
-  const filled = phase === "shelving" || phase === "afterglow" || phase === "done";
+  /*
+    棚側の接地影を出し始める境目（収納の 0.75）。
+    段の途中で1回だけ変わるものは、その1回のためだけに状態を持つ。
+    段が進んだ後は境目を見ない
+  */
+  const [shelvingPastShadow, setShelvingPastShadow] = useState(false);
+  const showShelfShadow = filled && (phase === "shelving" ? shelvingPastShadow : true);
 
   useEffect(() => {
-    if (!soundEnabled) return;
-    // まだ鳴らせない状態なら、その合図を「鳴らした」扱いにしない。
-    // 途中で音を入にしたときに、以降の合図がそのまま鳴るようにする
-    if (!isAudioReady()) return;
-    const mark = (key: string, fn: () => void) => {
-      if (played.current.has(key)) return;
-      played.current.add(key);
-      fn();
-    };
-    if (phase === "writing" && phaseProgress > 0.18 && phaseProgress < 0.24) {
-      mark("pen1", () => playPenScratch());
-    }
-    if (phase === "writing" && phaseProgress > 0.48 && phaseProgress < 0.54) {
-      mark("pen2", () => playPenScratch(0.06));
-    }
-    if (phase === "writing" && phaseProgress > 0.74 && phaseProgress < 0.8) {
-      mark("pen3", () => playPenScratch(0.05));
-    }
-    if (phase === "pageFlip" && phaseProgress > 0.08 && phaseProgress < 0.14) {
-      mark("flip", () => playPageFlip());
-    }
-    if (phase === "closing" && phaseProgress > 0.9 && phaseProgress < 0.98) {
-      mark("close", playBookClose);
-    }
-    if (phase === "shelving" && phaseProgress > 0.04 && phaseProgress < 0.12) {
-      mark("slide", playShelfSlide);
-    }
-    if (phase === "shelving" && phaseProgress > 0.86 && phaseProgress < 0.94) {
-      mark("settle", playShelfSettle);
-    }
-    if (phase === "afterglow" && phaseProgress > 0.42 && phaseProgress < 0.5) {
-      mark("chime", () => playSparkleChime());
-    }
-  }, [phase, phaseProgress, soundEnabled]);
+    if (prefersReducedMotion()) return;
+    const timers = SOUND_CUES.map((cue) =>
+      setTimeout(() => {
+        // まだ鳴らせない状態なら、その合図は鳴らさずに過ぎる。
+        // 途中で音を入にしたときに、以降の合図がそのまま鳴るようにする
+        if (!soundRef.current || !isAudioReady()) return;
+        SOUND_PLAYERS[cue.key]();
+      }, phaseTimeMs(cue.phase, cue.at))
+    );
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
   useFrame(({ clock }, delta) => {
     const cam = camRef.current;
     if (!cam) return;
+
+    const phaseProgress = progress.value();
+    const shelfGlow = shelfGlowAt(phase, phaseProgress);
+
+    if (phase === "shelving") {
+      const past = shelfTAt(phase, phaseProgress) > 0.75;
+      if (past !== shelvingPastShadow) setShelvingPastShadow(past);
+    }
 
     const key = CAMERA_KEYS[phase];
     const targetPos = key.pos.clone();
@@ -235,10 +225,12 @@ export function ArchiveScene({
   });
 
   const bookSparkles = phase === "writing";
-  const shelfSparkles = (phase === "afterglow" || phase === "done") && spineGlow > 0.15;
+  /*
+    背表紙のにじみは、余韻の段では最後の一瞬まで 0.15 を上回り、
+    その後の段では 0.35 で一定になる。段だけで決まる
+  */
+  const shelfSparkles = phase === "afterglow" || phase === "done";
 
-  /** 本を閉じた瞬間、表紙の金がひと呼吸だけ強く光る */
-  const closeGlow = phase === "closing" ? impactPulse(phaseProgress) : 0;
   const particles = (base: number) =>
     Math.max(4, Math.round(base * settings.particleScale));
 
@@ -304,7 +296,7 @@ export function ArchiveScene({
         ContactShadows は置いてあるだけで毎フレーム影用の描画を1回増やすので、
         透明度0のまま置きっぱなしにせず、要る間だけ出す。
       */}
-      {filled && shelfT > 0.75 && (
+      {showShelfShadow && (
         <ContactShadows
           position={[slotWorld.x, slotWorld.y - 0.34, slotWorld.z]}
           opacity={0.38}
@@ -319,19 +311,13 @@ export function ArchiveScene({
       <group position={[0, -0.05, 0]}>
         <AntiqueBook
           phase={phase}
-          phaseProgress={phaseProgress}
+          progress={progress}
           lines={lines}
           heading={heading}
-          shelfT={shelfT}
-          spineGlow={spineGlow}
         />
       </group>
 
-      <Bookshelf
-        shelfGlow={shelfGlow}
-        filled={filled && shelfT > 0.88}
-        shelfT={shelfT}
-      />
+      <Bookshelf phase={phase} progress={progress} />
 
       <SparkleParticles
         active={bookSparkles}
@@ -351,21 +337,23 @@ export function ArchiveScene({
           {/* 卓上ランプのにじみ。ずっと薄く出しておく */}
           <GlowSprite
             position={[0.95, 1.35, 0.9]}
-            intensity={0.3 + shelfGlow * 0.1}
+            intensity={() => 0.3 + shelfGlowAt(phase, progress.value()) * 0.1}
             size={2.4}
             color="#ffcf8a"
           />
           {/* 閉じた瞬間の金の照り返し */}
           <GlowSprite
             position={[0, -0.02, 0.42]}
-            intensity={closeGlow * 0.55}
+            intensity={() =>
+              phase === "closing" ? impactPulse(progress.value()) * 0.55 : 0
+            }
             size={1.5}
             color="#e8bf62"
           />
           {/* 棚に収まったあと、背表紙の金がにじむ */}
           <GlowSprite
             position={[slotWorld.x, slotWorld.y + 0.02, slotWorld.z + 0.24]}
-            intensity={shelfGlow * 0.42}
+            intensity={() => shelfGlowAt(phase, progress.value()) * 0.42}
             size={0.66}
             color="#d4af37"
           />

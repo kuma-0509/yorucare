@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import {
@@ -9,6 +9,13 @@ import {
   createWoodMaterial,
 } from "./materials";
 import { SHELF_LAYOUT, getSlotRowPosition } from "./shelf-layout";
+import {
+  isShelvedPhase,
+  shelfGlowAt,
+  shelfTAt,
+  type CinematicPhase,
+  type CinematicProgress,
+} from "./use-cinematic-timeline";
 
 const SHELF_BOOKS = [
   { color: "#3d2a20", h: 0.72, label: "記" },
@@ -21,12 +28,12 @@ const SHELF_BOOKS = [
 ] as const;
 
 interface BookshelfProps {
-  shelfGlow: number;
-  filled: boolean;
-  shelfT?: number;
+  phase: CinematicPhase;
+  /** 段の中の進み具合。`useFrame` の中から読む */
+  progress: CinematicProgress;
 }
 
-export function Bookshelf({ shelfGlow, filled, shelfT = 0 }: BookshelfProps) {
+export function Bookshelf({ phase, progress }: BookshelfProps) {
   const rowRef = useRef<THREE.Group>(null);
   const glowRef = useRef<THREE.Mesh>(null);
   const slotGlowRef = useRef<THREE.Mesh>(null);
@@ -35,7 +42,27 @@ export function Bookshelf({ shelfGlow, filled, shelfT = 0 }: BookshelfProps) {
   const gold = useMemo(() => createGoldMaterial(), []);
   const slotPos = useMemo(() => getSlotRowPosition(), []);
 
+  /*
+    棚に収まった本を出す境目（収納の 0.88）。ここは棚のメッシュが
+    増減するので描き直しが要るが、演出全体で1回しか変わらない
+  */
+  const [shelvingPastPlaced, setShelvingPastPlaced] = useState(false);
+  const showPlacedBook =
+    isShelvedPhase(phase) && (phase === "shelving" ? shelvingPastPlaced : true);
+
   useFrame(() => {
+    const phaseProgress = progress.value();
+    const shelfT = shelfTAt(phase, phaseProgress);
+    const shelfGlow = shelfGlowAt(phase, phaseProgress);
+
+    if (phase === "shelving") {
+      const past = shelfT > 0.88;
+      if (past !== shelvingPastPlaced) setShelvingPastPlaced(past);
+    }
+
+    // 本が収まって初めて、棚まわりの灯りが点く
+    const filled = showPlacedBook;
+
     if (rowRef.current && filled) {
       const wobble = Math.sin(shelfGlow * Math.PI * 2.2) * 0.006 * (1 - shelfGlow * 0.6);
       rowRef.current.rotation.z = wobble;
@@ -52,8 +79,6 @@ export function Bookshelf({ shelfGlow, filled, shelfT = 0 }: BookshelfProps) {
       gold.emissiveIntensity = 0.08 + shelfGlow * 0.28;
     }
   });
-
-  const showPlacedBook = filled && shelfT > 0.88;
 
   return (
     <group position={[0, SHELF_LAYOUT.groupY, SHELF_LAYOUT.groupZ]}>
