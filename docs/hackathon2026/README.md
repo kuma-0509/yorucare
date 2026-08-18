@@ -12,7 +12,7 @@
 | ファイル | 中身 |
 |---|---|
 | `submission-form.md` | フォーム全項目の記入内容。コードブロックをそのまま貼れます |
-| `open-data.md` | 4-1に書くオープンデータの候補・用途・確認手順 |
+| `open-data.md` | 4-1に書くオープンデータの候補・用途・確認手順。CSV取得用の Cowork 指示プロンプト付き |
 | `presentation-script.md` | 2分プレゼンの原稿と秒配分、収録の注意 |
 | `slides/index.html` | プレゼン資料の中身（画像は `outputs/` を相対参照） |
 
@@ -73,7 +73,8 @@ node scripts/measure-presentation-script.mjs # 原稿の読み上げ時間の見
 審査で「オープンデータの利活用」を見られる以上、実際に取り込めているほうが強くなります。
 
 取り込むには、東京都オープンデータカタログからCSVを1つダウンロードして `data/opendata/` に置くところだけ、
-手作業が必要です（開発環境から都のカタログへ接続できないため）。置いていただければ、
-`src/lib/consultation-resources.ts` の相談導線をオープンデータ由来の窓口一覧へ広げる実装まで進められます。
+手作業が必要です（開発環境から都のカタログへ接続できないため）。
+データセットURLを確認したら、`docs/hackathon2026/open-data.md` の Cowork 指示プロンプトへ差し込んで取得を依頼してください。
+置いていただければ、`src/lib/consultation-resources.ts` の相談導線をオープンデータ由来の窓口一覧へ広げる実装まで進められます。
 
 その場合は `docs/DEVELOPMENT_BOARD.md` に課題行を追加し、完了時に進捗と完了日を更新してください（`AGENTS.md`）。
