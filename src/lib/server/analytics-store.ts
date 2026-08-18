@@ -1,16 +1,14 @@
 import { createHmac } from "node:crypto";
-import {
-  neon,
-  type NeonQueryFunction,
-  type QueryResultRow,
-} from "@neondatabase/serverless";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import type { AcceptedAnalyticsEvent } from "@/lib/analytics-events";
-import {
-  calculateRetentionSummary,
-  toJapanDate,
-  type RecordActivityDay,
-  type RetentionSummary,
-} from "@/lib/analytics-retention";
+import { toJapanDate } from "@/lib/analytics-retention";
+
+/**
+ * このファイルは書き込みと削除だけを担う。
+ * 継続指標の読み出しは `pnpm analytics:summary`（`scripts/analytics-summary.mjs`）
+ * に置き、アプリ側からは公開しない。読み出す口を2つ持つと、同じ表に対して
+ * 別々のクエリと数え方ができてしまう。
+ */
 
 const RETENTION_DAYS = 365;
 const MINIMUM_SALT_LENGTH = 32;
@@ -176,28 +174,4 @@ export async function purgeExpiredAnonymousAnalytics(
       )
     `,
   ]);
-}
-
-type RecordActivityRow = QueryResultRow & {
-  install_id_hash: string;
-  activity_date: string;
-};
-
-export async function getAnonymousRetentionSummary(
-  asOf = new Date()
-): Promise<RetentionSummary> {
-  const { databaseUrl } = getConfig();
-  const sql = getSql(databaseUrl);
-  const rows = (await sql`
-    SELECT install_id_hash, activity_date::text
-    FROM anonymous_analytics_record_days
-    ORDER BY install_id_hash, activity_date
-  `) as RecordActivityRow[];
-
-  const activityDays: RecordActivityDay[] = rows.map((row) => ({
-    installIdHash: row.install_id_hash,
-    activityDate: row.activity_date,
-  }));
-
-  return calculateRetentionSummary(activityDays, toJapanDate(asOf));
 }
