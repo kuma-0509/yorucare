@@ -30,6 +30,7 @@ import {
   prefersReducedMotion,
   shelfGlowAt,
   shelfTAt,
+  shouldPlaySoundCue,
   useCinematicTimeline,
   type CinematicPhase,
   type SoundCueKey,
@@ -128,16 +129,20 @@ export function ArchiveScene({
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    const timers = SOUND_CUES.map((cue) =>
-      setTimeout(() => {
+    const timers = SOUND_CUES.map((cue) => {
+      const at = phaseTimeMs(cue.phase, cue.at);
+      return setTimeout(() => {
         // まだ鳴らせない状態なら、その合図は鳴らさずに過ぎる。
         // 途中で音を入にしたときに、以降の合図がそのまま鳴るようにする
         if (!soundRef.current || !isAudioReady()) return;
+        // 溜まったタイマーがまとめて発火したとき、演出の時刻から離れた合図は
+        // 鳴らさずに捨てる。鳴らす時点の音声時計に載るため、重ねると束になる
+        if (!shouldPlaySoundCue(at, progress.elapsed())) return;
         SOUND_PLAYERS[cue.key]();
-      }, phaseTimeMs(cue.phase, cue.at))
-    );
+      }, at);
+    });
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [progress]);
 
   useFrame(({ clock }, delta) => {
     const cam = camRef.current;

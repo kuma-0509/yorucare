@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   SOUND_CUES,
+  SOUND_CUE_GRACE_MS,
   TIMELINE,
   isShelvedPhase,
   phaseProgressAt,
   phaseTimeMs,
   shelfGlowAt,
   shelfTAt,
+  shouldPlaySoundCue,
   spineGlowAt,
   type CinematicPhase,
 } from "./use-cinematic-timeline";
@@ -118,5 +120,44 @@ describe("効果音の合図", () => {
 
       expect(phaseProgressAt(cue.phase, elapsed)).toBeCloseTo(cue.at, 6);
     }
+  });
+});
+
+describe("遅れて発火した合図", () => {
+  const times = SOUND_CUES.map((cue) => phaseTimeMs(cue.phase, cue.at));
+
+  it("時刻どおりなら鳴らす", () => {
+    for (const at of times) {
+      expect(shouldPlaySoundCue(at, at)).toBe(true);
+    }
+  });
+
+  it("少しの遅れなら鳴らす", () => {
+    for (const at of times) {
+      expect(shouldPlaySoundCue(at, at + SOUND_CUE_GRACE_MS)).toBe(true);
+    }
+  });
+
+  /*
+    タイマーが溜まってまとめて発火した場合、鳴らす時点の音声時計に載るため
+    そのまま鳴らすと束になる。**次の合図の時刻まで進んでいたら、
+    前の合図はもう鳴らさない**ことで、2つ以上が重ならないようにする
+  */
+  it("次の合図の時刻まで進んでいたら鳴らさない", () => {
+    for (let i = 0; i < times.length - 1; i++) {
+      expect(shouldPlaySoundCue(times[i], times[i + 1])).toBe(false);
+    }
+  });
+
+  it("最後の合図も、演出が終わる時刻まで進んでいたら鳴らさない", () => {
+    expect(shouldPlaySoundCue(times[times.length - 1], TIMELINE.done)).toBe(
+      false
+    );
+  });
+
+  it("捨てる幅は、合図どうしの最小の間隔より小さい", () => {
+    const gaps = times.slice(1).map((t, i) => t - times[i]);
+
+    expect(Math.min(...gaps)).toBeGreaterThan(SOUND_CUE_GRACE_MS);
   });
 });

@@ -109,6 +109,22 @@ export const SOUND_CUES: {
   { key: "chime", phase: "afterglow", at: 0.42 },
 ];
 
+/**
+ * 合図を鳴らしてよい遅れの上限。
+ *
+ * **予約したタイマーは、主スレッドが詰まったときや画面が裏へ回ったときに
+ * 溜まってからまとめて発火する。** 音は鳴らす時点の音声時計へ載るので、
+ * そのまま鳴らすと本来7.4秒に散っている合図が一度に重なる。
+ * **合図どうしの最小間隔（0.65秒）より小さくしてあるので、
+ * 2つ以上がまとめて鳴ることはない。**
+ */
+export const SOUND_CUE_GRACE_MS = 400;
+
+/** 遅れて発火した合図を、まだ鳴らしてよいか */
+export function shouldPlaySoundCue(scheduledAt: number, elapsed: number) {
+  return elapsed <= scheduledAt + SOUND_CUE_GRACE_MS;
+}
+
 export function prefersReducedMotion() {
   return (
     typeof window !== "undefined" &&
