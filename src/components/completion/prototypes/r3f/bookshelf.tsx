@@ -51,7 +51,7 @@ export function Bookshelf({ phase, progress }: BookshelfProps) {
     isShelvedPhase(phase) && (phase === "shelving" ? shelvingPastPlaced : true);
 
   useFrame(() => {
-    const phaseProgress = progress.value();
+    const phaseProgress = progress.value(phase);
     const shelfT = shelfTAt(phase, phaseProgress);
     const shelfGlow = shelfGlowAt(phase, phaseProgress);
 

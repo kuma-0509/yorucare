@@ -142,8 +142,27 @@ export function prefersReducedMotion() {
 export interface CinematicProgress {
   /** 演出開始からの経過ミリ秒 */
   elapsed(): number;
-  /** いまの段の中の進み具合（0–1） */
-  value(): number;
+  /** React がいま描画している段の中の進み具合（0–1） */
+  value(phase: CinematicPhase): number;
+}
+
+/** 共通の時計から進捗を読む口を作る。`now` はテストでだけ差し替える */
+export function createCinematicProgress(
+  startedAt: () => number | null,
+  now: () => number = () => performance.now()
+): CinematicProgress {
+  const elapsed = () => {
+    const start = startedAt();
+    return start === null ? 0 : now() - start;
+  };
+
+  return {
+    elapsed,
+    // タイマーの発火と React のコミットには短いずれがあり得る。
+    // 呼び出し側が描画中の段を渡せば、旧段の見た目へ次段の進捗を
+    // 一時的に適用して姿勢が戻ることを避けられる。
+    value: (renderedPhase) => phaseProgressAt(renderedPhase, elapsed()),
+  };
 }
 
 export interface CinematicTimeline {
@@ -154,7 +173,6 @@ export interface CinematicTimeline {
 
 export function useCinematicTimeline(onDone?: () => void): CinematicTimeline {
   const [phase, setPhase] = useState<CinematicPhase>("writing");
-  const phaseRef = useRef<CinematicPhase>("writing");
   const startRef = useRef<number | null>(null);
   const onDoneRef = useRef(onDone);
   const doneCalledRef = useRef(false);
@@ -162,12 +180,7 @@ export function useCinematicTimeline(onDone?: () => void): CinematicTimeline {
 
   const progressRef = useRef<CinematicProgress | null>(null);
   if (progressRef.current === null) {
-    const elapsed = () =>
-      startRef.current === null ? 0 : performance.now() - startRef.current;
-    progressRef.current = {
-      elapsed,
-      value: () => phaseProgressAt(phaseRef.current, elapsed()),
-    };
+    progressRef.current = createCinematicProgress(() => startRef.current);
   }
 
   useEffect(() => {
@@ -177,10 +190,7 @@ export function useCinematicTimeline(onDone?: () => void): CinematicTimeline {
       onDoneRef.current?.();
     };
 
-    // 段の切り替えは、読む側が `useFrame` から見る値でもあるので
-    // 状態と ref の両方へ入れる
     const enter = (next: CinematicPhase) => {
-      phaseRef.current = next;
       setPhase(next);
     };
 
