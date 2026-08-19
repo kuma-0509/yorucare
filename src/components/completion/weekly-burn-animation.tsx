@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COPY } from "@/lib/copy";
@@ -34,9 +34,23 @@ export function WeeklyBurnAnimation({
 }: WeeklyBurnAnimationProps) {
   const [phase, setPhase] = useState<Phase>("ready");
   const onDoneRef = useRef(onDone);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   onDoneRef.current = onDone;
 
   const count = paperDates.length;
+
+  const clearScheduledTimers = useCallback(() => {
+    for (const timer of timersRef.current) clearTimeout(timer);
+    timersRef.current = [];
+  }, []);
+
+  useEffect(() => clearScheduledTimers, [clearScheduledTimers]);
+
+  const finishBurn = useCallback(() => {
+    clearScheduledTimers();
+    setPhase("done");
+    onDoneRef.current();
+  }, [clearScheduledTimers]);
 
   const startBurn = () => {
     const reduce =
@@ -46,22 +60,16 @@ export function WeeklyBurnAnimation({
     burnActivePapers();
 
     if (reduce) {
-      onDoneRef.current();
+      finishBurn();
       return;
     }
 
     setPhase("burning");
-    const t1 = setTimeout(() => setPhase("fading"), 1200);
-    const t2 = setTimeout(() => setPhase("embers"), 1900);
-    const t3 = setTimeout(() => {
-      setPhase("done");
-      onDoneRef.current();
-    }, 3000);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
+    timersRef.current = [
+      setTimeout(() => setPhase("fading"), 1200),
+      setTimeout(() => setPhase("embers"), 1900),
+      setTimeout(finishBurn, 3000),
+    ];
   };
 
   const paperStack = Math.min(count, 7);
@@ -117,7 +125,7 @@ export function WeeklyBurnAnimation({
 
   if (phase === "burning" || phase === "fading") {
     return (
-      <div className="flex flex-col items-center gap-4 py-4" aria-hidden="true">
+      <div className="flex flex-col items-center gap-4 py-4">
         {/* 紙の束が燃える */}
         <div className="relative flex h-32 w-40 items-end justify-center">
           {Array.from({ length: paperStack }).map((_, i) => (
@@ -143,16 +151,16 @@ export function WeeklyBurnAnimation({
           )}
         </div>
 
-        <SkipButton onClick={onDone} />
+        <SkipButton onClick={finishBurn} />
       </div>
     );
   }
 
   if (phase === "embers") {
     return (
-      <div className="flex flex-col items-center gap-4 py-4" aria-hidden="true">
+      <div className="flex flex-col items-center gap-4 py-4">
         <EmbersGroup />
-        <SkipButton onClick={onDone} />
+        <SkipButton onClick={finishBurn} />
       </div>
     );
   }
@@ -215,7 +223,7 @@ function SkipButton({ onClick }: { onClick: () => void }) {
 
 /**
  * 演出なしで枚数を確認し、しきい値に届いていれば燃やす導線を1行だけ
- * 表示するミニバナー。CompletionChoice の "done" フェーズに差し込む。
+ * 表示するミニバナー。CompletionChoice の選択画面に差し込む。
  * しきい値の判定は completion-log 側（WEEKLY_BURN_THRESHOLD）に任せる。
  */
 export function WeeklyBurnBanner({

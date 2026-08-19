@@ -128,6 +128,23 @@ export function getCompletionLog(): CompletionLog {
   return readLog();
 }
 
+/** 指定した日の演出の記録だけを端末から消す。 */
+export function clearCompletionForDate(date: string): void {
+  if (!isBrowser()) return;
+
+  const log = readLog();
+  const next: CompletionLog = {
+    entries: log.entries.filter((entry) => entry.date !== date),
+    burnedDates: log.burnedDates.filter((burnedDate) => burnedDate !== date),
+  };
+
+  if (next.entries.length === 0 && next.burnedDates.length === 0) {
+    localStorage.removeItem(STORAGE_KEYS.completionLog);
+    return;
+  }
+  localStorage.setItem(STORAGE_KEYS.completionLog, JSON.stringify(next));
+}
+
 /**
  * 演出の記録を端末から消す。
  *
