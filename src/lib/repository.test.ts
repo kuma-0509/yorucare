@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { recordCompletion } from "./completion-log";
+import {
+  burnActivePapers,
+  getCompletionForDate,
+  recordCompletion,
+} from "./completion-log";
 import { STORAGE_KEYS } from "./constants";
 import {
   createEmptyRecordForm,
@@ -421,6 +425,27 @@ describe("暦に実在しない復職日", () => {
       ok: true,
       value: "2024-02-29",
     });
+  });
+});
+
+describe("記録を削除", () => {
+  it("1件を削除したときは同日の演出ログだけを消す", async () => {
+    for (const date of ["2026-08-17", "2026-08-18"]) {
+      const { date: _date, ...emptyForm } = createEmptyRecordForm(date);
+      await typedRepository.saveRecord(date, { ...emptyForm, moodScore: 3 });
+      recordCompletion(date, "paper");
+    }
+    burnActivePapers();
+
+    const result = await typedRepository.deleteRecord("2026-08-17");
+
+    expect(result).toEqual({ ok: true, value: undefined });
+    await expect(typedRepository.getRecordByDate("2026-08-17")).resolves.toEqual({
+      ok: true,
+      value: null,
+    });
+    expect(getCompletionForDate("2026-08-17")).toBeNull();
+    expect(getCompletionForDate("2026-08-18")?.style).toBe("paper");
   });
 });
 

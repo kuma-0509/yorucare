@@ -1,4 +1,7 @@
-import { clearCompletionLog } from "./completion-log";
+import {
+  clearCompletionForDate,
+  clearCompletionLog,
+} from "./completion-log";
 import { SAMPLE_SELF_CARE, STORAGE_KEYS } from "./constants";
 import { getTodayString } from "./dates";
 import {
@@ -219,6 +222,17 @@ const localStorageRepository: LocalStorageRepository = {
   async deleteRecord(date: string): Promise<Result<void>> {
     const recordsResult = readRecords();
     if (!recordsResult.ok) return recordsResult;
+
+    try {
+      // 記録本体より先に同日の演出ログを消す。後続の書き込みに失敗しても
+      // 記録本体は残るため、削除済みの日付だけが演出ログへ残る状態を作らない。
+      clearCompletionForDate(date);
+    } catch {
+      return err({
+        code: "WRITE_FAILED",
+        message: "記録の削除に失敗しました。",
+      });
+    }
     return writeRecords(recordsResult.value.filter((r) => r.date !== date));
   },
 
