@@ -62,7 +62,14 @@ import {
 } from "@/lib/state-level";
 import { getGoalToReview } from "@/lib/goal";
 import { buildRecordSummaryLines } from "@/lib/format";
-import { calculateSleepMinutes, formatSleepDuration } from "@/lib/sleep";
+import {
+  SLEEP_ADJUST_STEP_MINUTES,
+  SLEEP_END_QUICK_OPTIONS,
+  SLEEP_START_QUICK_OPTIONS,
+  calculateSleepMinutes,
+  formatSleepDuration,
+  shiftTime,
+} from "@/lib/sleep";
 import {
   createCustomMoodLabel,
   createPredefinedMoodLabel,
@@ -702,43 +709,32 @@ export function TodayRecordTab({
 
         <div className="space-y-4 border-t border-border pt-4">
           <div>
-            <p className="text-base font-semibold">睡眠</p>
+            <p className="text-base font-semibold">{COPY.sleep.sectionTitle}</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              おおよその時間で構いません。書ける範囲で入力してください。
+              {COPY.sleep.sectionDescription}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {COPY.sleep.quickSelectHint}
             </p>
           </div>
-          <div>
-            <Label htmlFor="sleep-start">寝た時間</Label>
-            <Input
-              id="sleep-start"
-              type="time"
-              className="mt-2"
-              value={form.sleepStart ?? ""}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  sleepStart: e.target.value || null,
-                }))
-              }
-            />
-          </div>
-          <div>
-            <Label htmlFor="sleep-end">起きた時間</Label>
-            <Input
-              id="sleep-end"
-              type="time"
-              className="mt-2"
-              value={form.sleepEnd ?? ""}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  sleepEnd: e.target.value || null,
-                }))
-              }
-            />
-          </div>
+          <SleepTimeField
+            id="sleep-start"
+            label={COPY.sleep.fieldStart}
+            value={form.sleepStart}
+            options={SLEEP_START_QUICK_OPTIONS}
+            onChange={(next) =>
+              setForm((prev) => ({ ...prev, sleepStart: next }))
+            }
+          />
+          <SleepTimeField
+            id="sleep-end"
+            label={COPY.sleep.fieldEnd}
+            value={form.sleepEnd}
+            options={SLEEP_END_QUICK_OPTIONS}
+            onChange={(next) => setForm((prev) => ({ ...prev, sleepEnd: next }))}
+          />
           <p className="rounded-xl bg-muted px-4 py-3 text-sm">
-            睡眠時間：
+            {COPY.sleep.durationLabel}
             <span className="font-medium">
               {form.sleepStart && form.sleepEnd
                 ? formatSleepDuration(sleepMinutes)
@@ -1054,6 +1050,89 @@ export function TodayRecordTab({
       onSelect={handleCategorySelect}
     />
     </>
+  );
+}
+
+/**
+ * 時刻の入力欄。ネイティブの時刻入力を残したまま（PCでは直接打てる）、
+ * よく使う時刻の候補と5分ずつの微調整を併設し、スマホでもホイール操作なしで選べるようにする。
+ * 候補は保存される値と同じ HH:mm 文字列で、選び直すと未入力へ戻せる。
+ */
+function SleepTimeField({
+  id,
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string | null;
+  options: readonly string[];
+  onChange: (value: string | null) => void;
+}) {
+  // 見出しの直後なので画面には短く出し、読み上げ用の名前にだけ項目名を含める
+  const quickSelectLabel = `${label}：${COPY.sleep.quickSelectLegend}`;
+  const adjust = (delta: number) => {
+    const next = shiftTime(value, delta);
+    if (next) onChange(next);
+  };
+
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type="time"
+        className="mt-2"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value || null)}
+      />
+      <fieldset className="mt-3">
+        <legend className="mb-2 block text-sm text-muted-foreground">
+          {COPY.sleep.quickSelectLegend}
+        </legend>
+        <div
+          role="radiogroup"
+          aria-label={quickSelectLabel}
+          className="flex flex-wrap gap-2"
+        >
+          {options.map((option) => (
+            <SelectionControl
+              key={option}
+              layout="chip"
+              mode="radio"
+              selected={value === option}
+              onClick={() => onChange(value === option ? null : option)}
+            >
+              {option}
+            </SelectionControl>
+          ))}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={value === null}
+            aria-label={`${label}を${COPY.sleep.adjustEarlier}`}
+            onClick={() => adjust(-SLEEP_ADJUST_STEP_MINUTES)}
+          >
+            {COPY.sleep.adjustEarlier}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={value === null}
+            aria-label={`${label}を${COPY.sleep.adjustLater}`}
+            onClick={() => adjust(SLEEP_ADJUST_STEP_MINUTES)}
+          >
+            {COPY.sleep.adjustLater}
+          </Button>
+        </div>
+      </fieldset>
+    </div>
   );
 }
 

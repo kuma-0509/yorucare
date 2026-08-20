@@ -122,6 +122,20 @@ export const COPY = {
   },
   notEntered: "まだ入力していません",
   sleepNotEntered: "まだ入力していません",
+  /** 睡眠の入力。時刻の直接入力と候補ボタンのどちらでも入れられるようにする */
+  sleep: {
+    sectionTitle: "睡眠",
+    sectionDescription: "おおよその時間で構いません。書ける範囲で入力してください。",
+    fieldStart: "寝た時間",
+    fieldEnd: "起きた時間",
+    /** 候補ボタンの並びに付ける説明。押すと入り、もう一度押すと消えることを伝える */
+    quickSelectLegend: "よく使う時間から選ぶ",
+    quickSelectHint: "候補を押すと入ります。もう一度押すと取り消せます。",
+    /** 候補の間の時刻に合わせるための微調整。押すとどうなるかを label にする */
+    adjustEarlier: "5分早める",
+    adjustLater: "5分遅くする",
+    durationLabel: "睡眠時間：",
+  },
   chartWarningDescription: "なし／少しあり／あり の3段階で表示します",
   chartWarningAxis: "しんどさ",
   // 動作ボタンは「〜する」で統一

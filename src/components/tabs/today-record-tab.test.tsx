@@ -211,3 +211,103 @@ describe("同じ名前の「できること」があるとき", () => {
     expect(addSelfCareItem).not.toHaveBeenCalled();
   });
 });
+
+describe("睡眠時刻のクイック選択", () => {
+  /** 睡眠の入力は「くわしく書く（任意）」の中にあるので、先に開く */
+  async function openDetailSection() {
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockResolvedValue(ok(null));
+    renderTab();
+    const toggle = await screen.findByRole("button", {
+      name: /くわしく書く/,
+    });
+    fireEvent.click(toggle);
+  }
+
+  it("候補を押すと時刻入力欄へ入り、睡眠時間が出る", async () => {
+    await openDetailSection();
+
+    fireEvent.click(await screen.findByRole("radio", { name: "23:00" }));
+    fireEvent.click(screen.getByRole("radio", { name: "07:00" }));
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText("寝た時間") as HTMLInputElement).value
+      ).toBe("23:00");
+    });
+    expect((screen.getByLabelText("起きた時間") as HTMLInputElement).value).toBe(
+      "07:00"
+    );
+    expect(screen.getByText("8時間")).toBeTruthy();
+  });
+
+  it("選んだ候補をもう一度押すと未入力へ戻る", async () => {
+    await openDetailSection();
+
+    const option = await screen.findByRole("radio", { name: "23:00" });
+    fireEvent.click(option);
+    await waitFor(() => {
+      expect(option.getAttribute("aria-checked")).toBe("true");
+    });
+
+    fireEvent.click(option);
+
+    await waitFor(() => {
+      expect(option.getAttribute("aria-checked")).toBe("false");
+    });
+    expect((screen.getByLabelText("寝た時間") as HTMLInputElement).value).toBe(
+      ""
+    );
+  });
+
+  it("候補の間の時刻は5分ずつの調整で入れられる", async () => {
+    await openDetailSection();
+
+    fireEvent.click(await screen.findByRole("radio", { name: "23:00" }));
+    fireEvent.click(screen.getByRole("button", { name: "寝た時間を5分早める" }));
+    fireEvent.click(screen.getByRole("button", { name: "寝た時間を5分早める" }));
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText("寝た時間") as HTMLInputElement).value
+      ).toBe("22:50");
+    });
+    // 候補と一致しなくなったら、候補側の選択は外れる
+    expect(
+      screen.getByRole("radio", { name: "23:00" }).getAttribute("aria-checked")
+    ).toBe("false");
+  });
+
+  it("未入力のときは5分ずつの調整を押せない", async () => {
+    await openDetailSection();
+
+    const earlier = await screen.findByRole("button", {
+      name: "起きた時間を5分早める",
+    });
+    expect((earlier as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(screen.getByRole("radio", { name: "07:00" }));
+
+    await waitFor(() => {
+      expect((earlier as HTMLButtonElement).disabled).toBe(false);
+    });
+  });
+
+  it("時刻を直接入力する欄は残しておく", async () => {
+    await openDetailSection();
+
+    const input = (await screen.findByLabelText("寝た時間")) as HTMLInputElement;
+    expect(input.type).toBe("time");
+
+    fireEvent.change(input, { target: { value: "22:37" } });
+
+    await waitFor(() => {
+      expect(input.value).toBe("22:37");
+    });
+    // 直接入力した時刻からでも5分刻みへ寄せられる
+    fireEvent.click(screen.getByRole("button", { name: "寝た時間を5分遅くする" }));
+    await waitFor(() => {
+      expect(input.value).toBe("22:40");
+    });
+  });
+});
