@@ -11,6 +11,7 @@ import {
 import { TodayRecordTab } from "./today-record-tab";
 import { ok } from "@/lib/result";
 import { getTodayString } from "@/lib/dates";
+import { COPY } from "@/lib/copy";
 import type { DailyRecord, SelfCareItem } from "@/lib/types";
 
 const getRecordByDate = vi.fn();
@@ -209,5 +210,121 @@ describe("同じ名前の「できること」があるとき", () => {
     });
     // 名前が同じでも、辞書へ登録し直さない
     expect(addSelfCareItem).not.toHaveBeenCalled();
+  });
+});
+
+describe("自分で追加した気持ちの区分", () => {
+  /** 「くわしく書く（任意）」を開いて、気持ちの選択肢を画面に出す */
+  async function openDetails() {
+    const toggle = await screen.findByRole("button", {
+      name: /くわしく書く/,
+    });
+    fireEvent.click(toggle);
+  }
+
+  function renderWithCustomMood() {
+    const today = getTodayString();
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(
+        ok(
+          date === today
+            ? makeRecord(today, {
+                moodLabels: [
+                  { label: "そわそわ", category: "普通", isCustom: true },
+                ],
+              })
+            : null
+        )
+      )
+    );
+    return renderTab();
+  }
+
+  it("色ドットだけでなく区分名も文字で出す", async () => {
+    renderWithCustomMood();
+    await openDetails();
+
+    const chip = await screen.findByRole("button", {
+      name: /^そわそわ/,
+    });
+    // 区分名が読み上げにも見た目にも出る
+    expect(chip.textContent).toContain("そわそわ");
+    expect(chip.textContent).toContain("普通");
+    expect(chip.textContent).toContain(COPY.moodLabel.categoryName);
+  });
+
+  it("追加したあとでも区分を選び直せる", async () => {
+    renderWithCustomMood();
+    await openDetails();
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: `「そわそわ」の${COPY.moodLabel.categoryName}を変える`,
+      })
+    );
+
+    // いま付いている区分が選択済みとして出る
+    const radios = await screen.findAllByRole("radio");
+    const current = radios.find((radio) => radio.textContent === "普通");
+    expect(current?.getAttribute("aria-checked")).toBe("true");
+
+    const next = radios.find((radio) => radio.textContent === "ややネガティブ");
+    fireEvent.click(next!);
+
+    await waitFor(() => {
+      const chip = screen.getByRole("button", { name: /^そわそわ/ });
+      expect(chip.textContent).toContain("ややネガティブ");
+    });
+    // ラベルと選択状態は変えない
+    const chip = screen.getByRole("button", { name: /^そわそわ/ });
+    expect(chip.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("追加時は区分が未選択のまま選ばせ、選んだ区分つきで並べる", async () => {
+    renderWithCustomMood();
+    await openDetails();
+
+    fireEvent.change(screen.getByLabelText("気持ちを追加"), {
+      target: { value: "もやもや" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: COPY.add }));
+
+    // どの気持ちの区分を選んでいるのかが見出しで分かる
+    expect(
+      await screen.findByText(
+        `「もやもや」の${COPY.moodLabel.categoryAddTitle}`
+      )
+    ).toBeTruthy();
+
+    const radios = screen.getAllByRole("radio");
+    const options = radios.filter((radio) =>
+      radio.closest('[role="radiogroup"]')?.getAttribute("aria-label") ===
+      COPY.moodLabel.categoryName
+    );
+    // 追加時はどれも選ばれていない
+    expect(
+      options.every((radio) => radio.getAttribute("aria-checked") === "false")
+    ).toBe(true);
+
+    fireEvent.click(
+      options.find((radio) => radio.textContent === "ややポジティブ")!
+    );
+
+    await waitFor(() => {
+      const chip = screen.getByRole("button", { name: /^もやもや/ });
+      expect(chip.textContent).toContain("ややポジティブ");
+    });
+  });
+
+  it("区分は色分け用で、状態の3段階とは別だと画面で伝える", async () => {
+    renderWithCustomMood();
+    await openDetails();
+
+    const notice = await screen.findByText(COPY.moodLabel.categoryAxisNotice);
+    expect(notice).toBeTruthy();
+    // 区分を「段階」と呼ばない（3段階の状態と同じ軸に見せない）
+    expect(COPY.moodLabel.categoryName).not.toContain("段階");
+    expect(COPY.moodLabel.categoryChangeAction).not.toContain("段階");
   });
 });

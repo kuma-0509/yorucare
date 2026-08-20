@@ -67,8 +67,10 @@ import {
   createCustomMoodLabel,
   createPredefinedMoodLabel,
   getMoodCategoryDotClass,
+  getMoodCategoryLabel,
   isDuplicateMoodLabel,
   isMoodLabelSelected,
+  updateMoodLabelCategory,
 } from "@/lib/mood-labels";
 import {
   addSelfCareItem,
@@ -115,8 +117,14 @@ export function TodayRecordTab({
   const [moodLimitMessage, setMoodLimitMessage] = useState("");
   const [customMoodInput, setCustomMoodInput] = useState("");
   const [customMoodError, setCustomMoodError] = useState("");
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [pendingCustomLabel, setPendingCustomLabel] = useState("");
+  /**
+   * 色分けの区分を選ぶダイアログの対象。
+   * `current` が null なら追加時の初回選択、区分が入っていれば選び直し。
+   */
+  const [categoryTarget, setCategoryTarget] = useState<{
+    label: string;
+    current: MoodLabelCategory | null;
+  } | null>(null);
   const [showSaved, setShowSaved] = useState(false);
   const [savedRecord, setSavedRecord] = useState<DailyRecord | null>(null);
   const [showMemo, setShowMemo] = useState(false);
@@ -156,8 +164,7 @@ export function TodayRecordTab({
     setCustomMoodInput("");
     setCustomMoodError("");
     setMoodLimitMessage("");
-    setShowCategoryModal(false);
-    setPendingCustomLabel("");
+    setCategoryTarget(null);
   }, []);
 
   useEffect(() => {
@@ -257,19 +264,33 @@ export function TodayRecordTab({
       return;
     }
 
-    setPendingCustomLabel(trimmed);
-    setShowCategoryModal(true);
+    setCategoryTarget({ label: trimmed, current: null });
   };
 
   const handleCategorySelect = (category: MoodLabelCategory) => {
-    const entry = createCustomMoodLabel(pendingCustomLabel, category);
-    setForm((prev) => ({
-      ...prev,
-      moodLabels: [...prev.moodLabels, entry],
-    }));
-    setCustomMoodInput("");
-    setPendingCustomLabel("");
-    setShowCategoryModal(false);
+    if (!categoryTarget) return;
+
+    if (categoryTarget.current === null) {
+      const entry = createCustomMoodLabel(categoryTarget.label, category);
+      setForm((prev) => ({
+        ...prev,
+        moodLabels: [...prev.moodLabels, entry],
+      }));
+      setCustomMoodInput("");
+    } else {
+      // 選び直しは色分けだけを変える。ラベルも選択状態もそのまま残す
+      setForm((prev) => ({
+        ...prev,
+        moodLabels: updateMoodLabelCategory(
+          prev.moodLabels,
+          categoryTarget.label,
+          category
+        ),
+      }));
+      setLiveMessage(COPY.moodLabel.categoryChanged);
+    }
+
+    setCategoryTarget(null);
     setCustomMoodError("");
   };
 
@@ -602,9 +623,13 @@ export function TodayRecordTab({
         description="気分の詳しさ、気持ち、睡眠、お薬の記録"
       >
         <div>
-          <Label className="mb-2 block text-sm text-muted-foreground">
-            気分をもっと詳しく（5段階）
+          <Label className="mb-1 block text-sm text-muted-foreground">
+            {COPY.stateLevel.detailTitle}
           </Label>
+          {/* 3段階と同じ軸を細かくしたものだと分かるようにする */}
+          <p className="mb-2 text-xs text-muted-foreground">
+            {COPY.stateLevel.detailDescription}
+          </p>
           <SelectionGroup legend="総合気分" mode="radio">
             {MOOD_OPTIONS.map(({ score, label }) => (
               <SelectionControl
@@ -627,7 +652,7 @@ export function TodayRecordTab({
 
         <div className="border-t border-border pt-4">
           <Label className="mb-2 block text-sm text-muted-foreground">
-            気持ち（最大3つ）
+            {COPY.moodLabel.sectionTitle}
           </Label>
           {moodLimitMessage && (
             <p className="mb-2 rounded-lg bg-caution px-3 py-2 text-sm text-caution-foreground">
@@ -658,12 +683,22 @@ export function TodayRecordTab({
               entries={customMoodEntries}
               selected={form.moodLabels}
               onToggle={toggleCustomMoodLabel}
+              onEditCategory={(entry) =>
+                setCategoryTarget({
+                  label: entry.label,
+                  current: entry.category,
+                })
+              }
             />
           )}
 
           <div className="mt-4 space-y-2 border-t border-border pt-4">
             <p className="text-xs text-muted-foreground">
-              選択肢にない気持ちは、自分の言葉で追加できます
+              {COPY.moodLabel.customHint}
+            </p>
+            {/* 追加した気持ちの色分けが、状態の3段階とは別物だと分かるようにする */}
+            <p className="text-xs text-muted-foreground">
+              {COPY.moodLabel.categoryAxisNotice}
             </p>
             <div className="flex gap-2">
               <Input
@@ -1049,8 +1084,12 @@ export function TodayRecordTab({
     </StickyActionBar>
     <LiveRegion message={liveMessage} />
     <MoodCategoryDialog
-      open={showCategoryModal}
-      onOpenChange={setShowCategoryModal}
+      open={categoryTarget !== null}
+      label={categoryTarget?.label ?? ""}
+      currentCategory={categoryTarget?.current ?? null}
+      onOpenChange={(open) => {
+        if (!open) setCategoryTarget(null);
+      }}
       onSelect={handleCategorySelect}
     />
     </>
@@ -1090,22 +1129,42 @@ function CustomMoodLabelGroup({
   entries,
   selected,
   onToggle,
+  onEditCategory,
 }: {
   entries: MoodLabelEntry[];
   selected: MoodLabelEntry[];
   onToggle: (entry: MoodLabelEntry) => void;
+  onEditCategory: (entry: MoodLabelEntry) => void;
 }) {
   return (
     <div className="mb-3">
-      <p className="mb-2 text-xs text-muted-foreground">自分で追加した気持ち</p>
-      <div className="flex flex-wrap gap-2">
+      <p className="mb-2 text-xs text-muted-foreground">
+        {COPY.moodLabel.customGroupTitle}
+      </p>
+      {/* 区分名と変更ボタンが並ぶぶん幅を取るので、気持ちごとに1行ずつ置く */}
+      <div className="flex flex-col gap-2">
         {entries.map((entry) => (
-          <CustomMoodChip
+          <div
             key={entry.label}
-            entry={entry}
-            selected={isMoodLabelSelected(selected, entry.label)}
-            onClick={() => onToggle(entry)}
-          />
+            className="flex flex-wrap items-center gap-2"
+          >
+            <CustomMoodChip
+              entry={entry}
+              selected={isMoodLabelSelected(selected, entry.label)}
+              onClick={() => onToggle(entry)}
+            />
+            {/* 設定したあとでも区分を確認・変更できる導線 */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-11 shrink-0 px-3 text-xs font-normal text-muted-foreground"
+              aria-label={`「${entry.label}」の${COPY.moodLabel.categoryName}を変える`}
+              onClick={() => onEditCategory(entry)}
+            >
+              {COPY.moodLabel.categoryChangeAction}
+            </Button>
+          </div>
         ))}
       </div>
     </div>
@@ -1127,9 +1186,17 @@ function CustomMoodChip({
       layout="chip"
       mode="checkbox"
       accentDotClass={getMoodCategoryDotClass(entry.category)}
+      className="shrink-0 whitespace-nowrap"
       onClick={onClick}
     >
-      {entry.label}
+      {/* 色ドットだけでは伝わらないため、区分名も文字で出す */}
+      <span className="flex items-baseline gap-1.5">
+        <span>{entry.label}</span>
+        <span className="text-xs text-muted-foreground">
+          <span className="sr-only">{COPY.moodLabel.categoryName}</span>
+          {getMoodCategoryLabel(entry.category)}
+        </span>
+      </span>
     </SelectionControl>
   );
 }

@@ -32,6 +32,26 @@ export function getMoodCategoryDotClass(category: MoodLabelCategory): string {
   return option?.dotClass ?? MOOD_CATEGORY_OPTIONS[2].dotClass;
 }
 
+/** 色ドットだけでは区分が伝わらないため、画面に出す区分名を返す */
+export function getMoodCategoryLabel(category: MoodLabelCategory): string {
+  const option = MOOD_CATEGORY_OPTIONS.find((item) => item.value === category);
+  return option?.label ?? MOOD_CATEGORY_OPTIONS[2].label;
+}
+
+/**
+ * 追加済みの気持ちの区分だけを選び直す。
+ * ラベル・並び順・選択状態は変えないので、色分けの見え方だけが変わる。
+ */
+export function updateMoodLabelCategory(
+  entries: MoodLabelEntry[],
+  label: string,
+  category: MoodLabelCategory
+): MoodLabelEntry[] {
+  return entries.map((entry) =>
+    entry.label === label ? { ...entry, category } : entry
+  );
+}
+
 const ALL_PREDEFINED_LABELS = [
   ...MOOD_LABEL_POSITIVE,
   ...MOOD_LABEL_NEUTRAL,

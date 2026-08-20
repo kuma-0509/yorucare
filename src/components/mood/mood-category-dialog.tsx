@@ -4,50 +4,67 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { SelectionControl } from "@/components/shared/option-button";
+import { COPY } from "@/lib/copy";
 import { MOOD_CATEGORY_OPTIONS } from "@/lib/mood-labels";
 import type { MoodLabelCategory } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 interface MoodCategoryDialogProps {
   open: boolean;
+  /** 区分を選ぶ対象の気持ち。見出しに出して、どれを操作しているかを示す */
+  label: string;
+  /** 追加時は null。選び直しのときは、いま付いている区分 */
+  currentCategory: MoodLabelCategory | null;
   onOpenChange: (open: boolean) => void;
   onSelect: (category: MoodLabelCategory) => void;
 }
 
 export function MoodCategoryDialog({
   open,
+  label,
+  currentCategory,
   onOpenChange,
   onSelect,
 }: MoodCategoryDialogProps) {
+  const isEditing = currentCategory !== null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm gap-5">
         <DialogHeader className="text-center">
-          <DialogTitle className="text-base font-semibold text-foreground">
-            どの気分で登録しますか
+          {/* 閉じるボタンが右上に重なるので、見出しの右側を空けておく */}
+          <DialogTitle className="px-6 text-base font-semibold text-foreground">
+            {label ? `「${label}」の` : ""}
+            {isEditing
+              ? COPY.moodLabel.categoryEditTitle
+              : COPY.moodLabel.categoryAddTitle}
           </DialogTitle>
+          {/* 5区分と状態の3段階が別の軸であることを、選ぶ前に伝える */}
+          <DialogDescription className="text-sm leading-relaxed">
+            {COPY.moodLabel.categoryAxisNotice}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2">
+        <div
+          role="radiogroup"
+          aria-label={COPY.moodLabel.categoryName}
+          className="space-y-2"
+        >
           {MOOD_CATEGORY_OPTIONS.map((option) => (
-            <button
+            <SelectionControl
               key={option.value}
-              type="button"
-              className={cn(
-                "flex min-h-12 w-full items-center gap-3 rounded-full border-2 border-border bg-white px-4 py-3 text-left text-base transition-colors",
-                "hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              )}
+              selected={option.value === currentCategory}
+              mode="radio"
+              layout="row"
+              accentDotClass={option.dotClass}
               onClick={() => onSelect(option.value)}
             >
-              <span
-                className={cn("h-5 w-5 shrink-0 rounded-full", option.dotClass)}
-                aria-hidden
-              />
-              <span>{option.label}</span>
-            </button>
+              {option.label}
+            </SelectionControl>
           ))}
         </div>
 
@@ -57,7 +74,7 @@ export function MoodCategoryDialog({
           className="w-full"
           onClick={() => onOpenChange(false)}
         >
-          キャンセル
+          {COPY.cancel}
         </Button>
       </DialogContent>
     </Dialog>

@@ -21,6 +21,31 @@ export const COPY = {
       "ふりかえりを、面談や通院前の準備にも使えるようにしていきます。",
   },
   warningSign: "しんどさのサイン",
+  /**
+   * 状態の軸。3段階で選び、5段階はその細分。
+   * 気持ちの色分けに使う5区分（`moodLabel.category*`）とは別の軸なので、同じ語で呼ばない。
+   */
+  stateLevel: {
+    detailTitle: "気分をもっと詳しく（5段階）",
+    detailDescription: "3段階で選んだ状態を、さらに細かく選び直せます",
+  },
+  /**
+   * 気持ちのラベルと、その色分けに使う5区分。
+   * 区分は色を決めるだけで、状態の3段階には影響しない。文言でも「段階」と呼ばない。
+   */
+  moodLabel: {
+    sectionTitle: "気持ち（最大3つ）",
+    customGroupTitle: "自分で追加した気持ち",
+    customHint: "選択肢にない気持ちは、自分の言葉で追加できます",
+    /** 区分そのものの呼び名。見出しにも読み上げにもこの語を使う */
+    categoryName: "色分けの区分",
+    categoryAxisNotice:
+      "色分けの区分は5つあります。はじめに選ぶ「よい／ふつう／しんどい」の3段階とは別のもので、どれを選んでも状態は変わりません。",
+    categoryAddTitle: "色分けの区分を選んでください",
+    categoryEditTitle: "色分けの区分を選び直せます",
+    categoryChangeAction: "区分を変える",
+    categoryChanged: "色分けの区分を変えました。",
+  },
   memo: "メモ",
   memoOptional: "メモ（任意）",
   /** セルフケアの登録簿（マスタ）。常にこの語で呼ぶ */
