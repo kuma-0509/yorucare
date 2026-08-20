@@ -76,8 +76,46 @@ describe("記録完了の締めくくり", () => {
 
     const text = container.textContent ?? "";
     expect(text).toContain(COPY.completion.prompt);
+    expect(text).toContain(COPY.completion.hint);
+    expect(text).toContain(COPY.completion.shelfNote);
+    expect(text).toContain(COPY.completion.paperNote);
     for (const word of FORBIDDEN_WORDS) {
       expect(text).not.toContain(word);
+    }
+  });
+
+  it("選択肢ごとに、記録が残ることと見せ方の違いであることを直下へ出す", () => {
+    renderChoice();
+
+    // 全体のヒントだけに頼らず、選んだ先で何が起きるかを各選択肢の下にも置く
+    const shelfCard = screen
+      .getByText(COPY.completion.shelf)
+      .closest("button");
+    const paperCard = screen
+      .getByText(COPY.completion.paper)
+      .closest("button");
+
+    expect(shelfCard?.textContent).toContain(COPY.completion.shelfDesc);
+    expect(shelfCard?.textContent).toContain(COPY.completion.shelfNote);
+    expect(paperCard?.textContent).toContain(COPY.completion.paperDesc);
+    expect(paperCard?.textContent).toContain(COPY.completion.paperNote);
+
+    // 補足は選択肢ごとに別のものを出す（取り違えると意味の差が消える）
+    expect(shelfCard?.textContent).not.toContain(COPY.completion.paperNote);
+    expect(paperCard?.textContent).not.toContain(COPY.completion.shelfNote);
+  });
+
+  it("どの選択肢でも記録が消えないことを、全体のヒントと各選択肢の両方で伝える", () => {
+    renderChoice();
+
+    expect(screen.getByText(COPY.completion.hint)).toBeTruthy();
+    for (const note of [
+      COPY.completion.hint,
+      COPY.completion.shelfNote,
+      COPY.completion.paperNote,
+    ]) {
+      // 「消えない／残る」という事実を1か所だけに置かない
+      expect(note).toMatch(/消えません|残ります/);
     }
   });
 

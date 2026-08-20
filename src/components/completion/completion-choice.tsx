@@ -292,12 +292,14 @@ export function CompletionChoice({
         icon={<BookMarked className="h-6 w-6 text-primary" />}
         title={COPY.completion.shelf}
         description={COPY.completion.shelfDesc}
+        note={COPY.completion.shelfNote}
         onClick={() => handleSelect("shelf")}
       />
       <ChoiceCard
         icon={<Newspaper className="h-6 w-6 text-accent-foreground" />}
         title={COPY.completion.paper}
         description={COPY.completion.paperDesc}
+        note={COPY.completion.paperNote}
         onClick={() => handleSelect("paper")}
       />
 
@@ -320,15 +322,22 @@ export function CompletionChoice({
   );
 }
 
+/**
+ * 選択肢は比喩で名付けてあるため、見出しと比喩の説明だけでは初見で意味が読めない。
+ * 記録がどう扱われるか（消えない）と、違いが見せ方だけであることを `note` として
+ * 各選択肢の直下にも置き、全体のヒント1か所に頼らせない。
+ */
 function ChoiceCard({
   icon,
   title,
   description,
+  note,
   onClick,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
+  note?: string;
   onClick: () => void;
 }) {
   return (
@@ -343,6 +352,11 @@ function ChoiceCard({
         <span className="block text-sm text-muted-foreground">
           {description}
         </span>
+        {note && (
+          <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+            {note}
+          </span>
+        )}
       </span>
     </button>
   );
