@@ -866,6 +866,12 @@ export function TodayRecordTab({
           <CardTitle>
             {targetDate === today ? COPY.doneTodayToday : COPY.doneToday}
           </CardTitle>
+          {/* 選ぶ元が「できること」タブの登録簿であることを、記録画面からも示す */}
+          <CardDescription>
+            {targetDate === today
+              ? COPY.selfCareRelation.recordFromRegistryToday
+              : COPY.selfCareRelation.recordFromRegistryOther}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {selfCareItems.length === 0 ? (

@@ -119,8 +119,11 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
       <header>
         <h1 className="text-xl font-bold">{COPY.selfCareAction}</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          自分に合う「{COPY.selfCareAction}」を登録しましょう。
-          よく使うものは、今日の記録で選べます。
+          {COPY.selfCareRelation.registryDescription}
+        </p>
+        {/* 登録簿と、その日の実施記録（「できたこと」）が同じ機能であることを示す */}
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          {COPY.selfCareRelation.registryToRecord}
         </p>
       </header>
 

@@ -10,7 +10,8 @@ import {
 } from "@testing-library/react";
 import { TodayRecordTab } from "./today-record-tab";
 import { ok } from "@/lib/result";
-import { getTodayString } from "@/lib/dates";
+import { COPY } from "@/lib/copy";
+import { getPreviousDateString, getTodayString } from "@/lib/dates";
 import type { DailyRecord, SelfCareItem } from "@/lib/types";
 
 const getRecordByDate = vi.fn();
@@ -73,8 +74,10 @@ function makeItem(id: string, title: string): SelfCareItem {
 /** 「眠れない」を選んだ「しんどい」日にだけ出る案 */
 const SLEEP_TAG_SUGGESTION = "布団に入る時間を15分早める";
 
-function renderTab() {
-  return render(<TodayRecordTab onNavigateTab={() => {}} />);
+function renderTab(initialDate?: string) {
+  return render(
+    <TodayRecordTab initialDate={initialDate} onNavigateTab={() => {}} />
+  );
 }
 
 afterEach(() => {
@@ -209,5 +212,38 @@ describe("同じ名前の「できること」があるとき", () => {
     });
     // 名前が同じでも、辞書へ登録し直さない
     expect(addSelfCareItem).not.toHaveBeenCalled();
+  });
+});
+
+describe("「できたこと」欄の案内文", () => {
+  it("今日の記録では、並ぶ項目が「できること」タブの登録であることを示す", async () => {
+    initSelfCareIfEmpty.mockResolvedValue(ok([makeItem("s1", "10分歩く")]));
+    getRecordByDate.mockResolvedValue(ok(null));
+
+    renderTab();
+
+    const relation = await screen.findByText(
+      COPY.selfCareRelation.recordFromRegistryToday
+    );
+    // 記録画面（実施記録）から、登録簿である「できること」タブへのつながりを示す
+    expect(relation.textContent).toContain(COPY.tab.selfCare);
+    expect(relation.textContent).toContain(COPY.doneTodayToday);
+  });
+
+  it("今日以外の日の記録では、その日の言い方で案内する", async () => {
+    const otherDate = getPreviousDateString(getTodayString());
+    initSelfCareIfEmpty.mockResolvedValue(ok([makeItem("s1", "10分歩く")]));
+    getRecordByDate.mockResolvedValue(ok(null));
+
+    renderTab(otherDate);
+
+    const relation = await screen.findByText(
+      COPY.selfCareRelation.recordFromRegistryOther
+    );
+    expect(relation.textContent).toContain(COPY.tab.selfCare);
+    expect(relation.textContent).toContain(COPY.doneToday);
+    expect(
+      screen.queryByText(COPY.selfCareRelation.recordFromRegistryToday)
+    ).toBeNull();
   });
 });
