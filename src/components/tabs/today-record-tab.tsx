@@ -60,7 +60,11 @@ import {
   getDefaultScoreForStateLevel,
   getStateLevelFromScore,
 } from "@/lib/state-level";
-import { getGoalToReview } from "@/lib/goal";
+import {
+  buildGoalSummaryLines,
+  formatSavedGoal,
+  getGoalToReview,
+} from "@/lib/goal";
 import { buildRecordSummaryLines } from "@/lib/format";
 import { calculateSleepMinutes, formatSleepDuration } from "@/lib/sleep";
 import {
@@ -123,6 +127,8 @@ export function TodayRecordTab({
   const [newSelfCareTitle, setNewSelfCareTitle] = useState("");
   const [showAddSelfCare, setShowAddSelfCare] = useState(false);
   const [goalToReview, setGoalToReview] = useState<string | null>(null);
+  /** 保存済みの目標。入力中の下書きと分けて、いつでも読み返せるようにする */
+  const [savedGoal, setSavedGoal] = useState("");
   const [formLoading, setFormLoading] = useState(true);
   const [formLoadError, setFormLoadError] = useState<string | null>(null);
   const [addingSelfCare, setAddingSelfCare] = useState(false);
@@ -147,6 +153,7 @@ export function TodayRecordTab({
       return;
     }
     setForm(recordToFormState(result.value, date));
+    setSavedGoal(result.value?.tomorrowGoal ?? "");
     // 前日を読めなくても記録自体は書けるようにし、ふりかえりだけを出さない
     setGoalToReview(
       previousResult.ok ? getGoalToReview(previousResult.value) : null
@@ -369,6 +376,7 @@ export function TodayRecordTab({
       return;
     }
     trackRecordSaved(targetDate, recordsResult.value.length === 0);
+    setSavedGoal(result.value.tomorrowGoal);
     setSavedRecord(result.value);
     setShowSaved(true);
     setLiveMessage("記録できました。");
@@ -482,6 +490,15 @@ export function TodayRecordTab({
                 </p>
               </div>
             )}
+            {/* 保存した直後にも、決めた目標をそのまま読み返せるようにする */}
+            <div className="space-y-0.5 border-t pt-1.5">
+              {buildGoalSummaryLines(savedRecord).map(({ label, value }) => (
+                <div key={label} className="text-sm leading-snug">
+                  <span className="text-muted-foreground">{label}：</span>
+                  <span>{value}</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -1013,6 +1030,20 @@ export function TodayRecordTab({
             }
             placeholder={COPY.goal.fieldPlaceholder}
           />
+          {/* 保存済みの目標は、入力欄の中身（下書き）と分けて読み返せるようにする */}
+          <div className="mt-3 space-y-1 rounded-xl bg-muted px-4 py-3 text-sm">
+            <p>
+              <span className="text-muted-foreground">
+                {COPY.goal.savedHeading}：
+              </span>
+              {formatSavedGoal(savedGoal)}
+            </p>
+            {form.tomorrowGoal.trim() !== savedGoal.trim() && (
+              <p className="text-xs text-muted-foreground">
+                {COPY.goal.draftHint}
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 

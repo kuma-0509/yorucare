@@ -33,6 +33,7 @@ import {
   isMeaningfulSummaryValue,
 } from "@/lib/format";
 import { formatMoodLabelsDisplay } from "@/lib/mood-labels";
+import { buildGoalSummaryLines } from "@/lib/goal";
 import { COPY } from "@/lib/copy";
 import { storageErrorMessage } from "@/lib/result";
 import {
@@ -256,13 +257,25 @@ export function RecordsTab({
                     保存だけした日です。気分など、あとから足せます。
                   </p>
                 ) : (
-                  previewLines.map((line) => (
-                    <RecordPreviewLine
-                      key={line.label}
-                      label={line.label}
-                      value={line.value}
-                    />
-                  ))
+                  <>
+                    {previewLines.map((line) => (
+                      <RecordPreviewLine
+                        key={line.label}
+                        label={line.label}
+                        value={line.value}
+                      />
+                    ))}
+                    {/* 目標は翌日の自動表示で流れてしまうため、一覧からも読み返せるようにする */}
+                    <div className="space-y-1 border-t border-border pt-2">
+                      {buildGoalSummaryLines(record).map((line) => (
+                        <RecordPreviewLine
+                          key={line.label}
+                          label={line.label}
+                          value={line.value}
+                        />
+                      ))}
+                    </div>
+                  </>
                 )}
                 <div className="flex flex-col gap-2 pt-3">
                   <Button
@@ -377,6 +390,12 @@ export function RecordsTab({
                   <p className="whitespace-pre-wrap">{detailRecord.note}</p>
                 </div>
               )}
+              {buildGoalSummaryLines(detailRecord).map(({ label, value }) => (
+                <div key={label}>
+                  <span className="text-muted-foreground">{label}：</span>
+                  {value}
+                </div>
+              ))}
               <div className="border-t pt-4">
                 <Button
                   type="button"

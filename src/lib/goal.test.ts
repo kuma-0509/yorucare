@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildGoalSummaryLines,
   buildSmallerGoalSuggestions,
+  formatSavedGoal,
   GOAL_HELPER_QUESTIONS,
+  getGoalReviewLabel,
   getGoalToReview,
 } from "./goal";
 import { MAX_GOAL_LENGTH } from "./schemas";
@@ -49,6 +52,70 @@ describe("getGoalToReview", () => {
     expect(
       getGoalToReview(makeRecord({ tomorrowGoal: " 昼休みに5分だけ外に出る " }))
     ).toBe("昼休みに5分だけ外に出る");
+  });
+});
+
+describe("formatSavedGoal", () => {
+  it("決めていない日は、決めていないと読める文を返す", () => {
+    expect(formatSavedGoal("")).toBe("まだ決めていません");
+    expect(formatSavedGoal("　 ")).toBe("まだ決めていません");
+  });
+
+  it("決めた目標は前後の空白を除いてそのまま返す", () => {
+    expect(formatSavedGoal(" 朝に窓を開ける ")).toBe("朝に窓を開ける");
+  });
+});
+
+describe("getGoalReviewLabel", () => {
+  it("選んでいない日はnullを返す", () => {
+    expect(getGoalReviewLabel(null)).toBeNull();
+  });
+
+  it("選んだ結果の表示名を返す", () => {
+    expect(getGoalReviewLabel("done")).toBe("できた");
+    expect(getGoalReviewLabel("partial")).toBe("一部できた");
+    expect(getGoalReviewLabel("notDone")).toBe("できなかった");
+  });
+});
+
+describe("buildGoalSummaryLines", () => {
+  it("目標を決めた日は、その文面を読み返せる行を返す", () => {
+    expect(
+      buildGoalSummaryLines({
+        tomorrowGoal: "朝に窓を開ける",
+        goalReviewStatus: null,
+      })
+    ).toEqual([{ label: "翌日の小さな目標", value: "朝に窓を開ける" }]);
+  });
+
+  it("決めていない日も行を省かず、空状態の文で埋める", () => {
+    expect(
+      buildGoalSummaryLines({ tomorrowGoal: "", goalReviewStatus: null })
+    ).toEqual([{ label: "翌日の小さな目標", value: "まだ決めていません" }]);
+  });
+
+  it("ふりかえりを選んだ日は、その結果の行も足す", () => {
+    expect(
+      buildGoalSummaryLines({
+        tomorrowGoal: "朝に窓を開ける",
+        goalReviewStatus: "partial",
+      })
+    ).toEqual([
+      { label: "翌日の小さな目標", value: "朝に窓を開ける" },
+      { label: "前日の目標のふりかえり", value: "一部できた" },
+    ]);
+  });
+
+  it("表示する文に評価や助言の言葉を混ぜない", () => {
+    const text = buildGoalSummaryLines({
+      tomorrowGoal: "",
+      goalReviewStatus: "notDone",
+    })
+      .map(({ label, value }) => `${label}${value}`)
+      .join("");
+    for (const word of ["失敗", "守れ", "サボ", "なぜ", "どうして"]) {
+      expect(text).not.toContain(word);
+    }
   });
 });
 

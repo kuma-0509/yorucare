@@ -168,6 +168,72 @@ describe("しんどさのサインと自分メンテの案", () => {
   });
 });
 
+describe("保存済みの目標の読み取り表示", () => {
+  it("保存した目標を、入力欄とは別に読み取り表示する", async () => {
+    const today = getTodayString();
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(
+        ok(
+          date === today
+            ? makeRecord(today, { tomorrowGoal: "朝に窓を開ける" })
+            : null
+        )
+      )
+    );
+
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getByText("保存した目標：")).toBeTruthy();
+    });
+    // 入力欄の値とは別に、文字として読み返せる
+    const input = screen.getByLabelText("明日の小さな目標") as HTMLInputElement;
+    expect(input.value).toBe("朝に窓を開ける");
+    expect(screen.getByText("朝に窓を開ける")).toBeTruthy();
+    expect(screen.queryByText("入力中の内容は、保存すると更新されます。")).toBeNull();
+  });
+
+  it("目標を決めていない日は、決めていないと分かる文を出す", async () => {
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockResolvedValue(ok(null));
+
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getByText("保存した目標：")).toBeTruthy();
+    });
+    expect(screen.getByText("まだ決めていません")).toBeTruthy();
+  });
+
+  it("入力を変えている間は、保存済みの内容と違うことを伝える", async () => {
+    const today = getTodayString();
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(
+        ok(
+          date === today
+            ? makeRecord(today, { tomorrowGoal: "朝に窓を開ける" })
+            : null
+        )
+      )
+    );
+
+    renderTab();
+
+    const input = await screen.findByLabelText("明日の小さな目標");
+    fireEvent.change(input, { target: { value: "夕方に5分だけ歩く" } });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("入力中の内容は、保存すると更新されます。")
+      ).toBeTruthy();
+    });
+    // 保存済みの内容は、書き換えても読み返せる
+    expect(screen.getByText("朝に窓を開ける")).toBeTruthy();
+  });
+});
+
 describe("同じ名前の「できること」があるとき", () => {
   it("選択中のものを外す。先頭を選び直して解除できなくならない", async () => {
     const today = getTodayString();
