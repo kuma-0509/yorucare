@@ -24,7 +24,6 @@ import { SaveRecordButton } from "@/components/shared/save-record-button";
 import { MoodCategoryDialog } from "@/components/mood/mood-category-dialog";
 import { GoalReviewCard } from "@/components/goal/goal-review-card";
 import { SelfCareSuggestionCard } from "@/components/selfcare/self-care-suggestion-card";
-import { CompletionChoice } from "@/components/completion/completion-choice";
 import { trackRecordSaved } from "@/lib/analytics";
 import { COPY } from "@/lib/copy";
 import { storageErrorMessage } from "@/lib/result";
@@ -423,32 +422,6 @@ export function TodayRecordTab({
 
   if (showSaved && savedRecord) {
     const lines = buildRecordSummaryLines(savedRecord, selfCareItems);
-    const summaryTextLines = [
-      ...lines.map(({ label, value }) => `${label}：${value}`),
-      ...(savedRecord.note ? [`${COPY.memo}：${savedRecord.note}`] : []),
-    ];
-
-    const navButtons = (
-      <div className="flex shrink-0 flex-col gap-2">
-        <Button
-          variant="default"
-          onClick={() => {
-            setShowSaved(false);
-            void loadForm(targetDate);
-          }}
-        >
-          {targetDate === today
-            ? "今日の記録を編集する"
-            : `${formatDisplayDate(targetDate)}の記録を編集する`}
-        </Button>
-        <Button variant="outline" onClick={() => onNavigateTab("records")}>
-          これまでの記録を見る
-        </Button>
-        <Button variant="ghost" onClick={() => setShowSaved(false)}>
-          閉じる
-        </Button>
-      </div>
-    );
 
     return (
       <div className="flex flex-col gap-3">
@@ -485,12 +458,29 @@ export function TodayRecordTab({
           </CardContent>
         </Card>
 
-        <CompletionChoice
-          date={targetDate}
-          lines={summaryTextLines}
-          footer={navButtons}
-          onLiveMessage={setLiveMessage}
-        />
+        <p className="px-1 text-sm leading-relaxed text-muted-foreground">
+          {COPY.completion.doneGuide}
+        </p>
+
+        <div className="flex shrink-0 flex-col gap-2">
+          <Button
+            variant="default"
+            onClick={() => {
+              setShowSaved(false);
+              void loadForm(targetDate);
+            }}
+          >
+            {targetDate === today
+              ? "今日の記録を編集する"
+              : `${formatDisplayDate(targetDate)}の記録を編集する`}
+          </Button>
+          <Button variant="outline" onClick={() => onNavigateTab("records")}>
+            これまでの記録を見る
+          </Button>
+          <Button variant="ghost" onClick={() => setShowSaved(false)}>
+            閉じる
+          </Button>
+        </div>
 
         <LiveRegion message={liveMessage} />
       </div>
