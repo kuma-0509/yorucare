@@ -28,8 +28,7 @@
  * 評価語・助言・診断・危機に読める語。
  *
  * 既存の禁止語テスト（`src/lib/self-care.test.ts`、`src/lib/ai/milestones.test.ts`、
- * `src/components/reflection/accumulation-card.test.tsx`、
- * `src/components/completion/completion-choice.test.tsx`）で固定している語を
+ * `src/components/reflection/accumulation-card.test.tsx`）で固定している語を
  * 1か所へまとめ、LLM が書いた文にも同じ制約を掛ける。
  */
 export const NARRATIVE_FORBIDDEN_WORDS = [

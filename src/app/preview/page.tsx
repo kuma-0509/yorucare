@@ -18,7 +18,7 @@ export default function PreviewHubPage() {
     const portPart = port ? `:${port}` : "";
 
     const buildUrl = (host: string) =>
-      `${protocol}//${host}${portPart}/preview/effects`;
+      `${protocol}//${host}${portPart}/preview/report`;
 
     const { hostname } = window.location;
     if (hostname !== "localhost" && hostname !== "127.0.0.1") {
@@ -93,9 +93,6 @@ export default function PreviewHubPage() {
 
       <div className="mt-6 flex flex-col gap-3">
         <Button asChild className="w-full">
-          <Link href="/preview/effects">書庫にしまう演出を見る</Link>
-        </Button>
-        <Button asChild variant="secondary" className="w-full">
           <Link href="/preview/report">期間の報告書を見る</Link>
         </Button>
         <Button asChild variant="outline" className="w-full">
