@@ -4,7 +4,6 @@ import {
   BriefcaseBusiness,
   ExternalLink,
   HeartHandshake,
-  LifeBuoy,
   Phone,
   ShieldAlert,
   Stethoscope,
@@ -16,17 +15,16 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   EMERGENCY_RESOURCES,
   IMMEDIATE_SUPPORT_RESOURCE,
   OFFICIAL_SUPPORT_LINKS,
 } from "@/lib/consultation-resources";
-import { cn } from "@/lib/utils";
 
 interface ConsultationLinksDialogProps {
-  compact?: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 const externalLinkProps = {
@@ -34,27 +32,13 @@ const externalLinkProps = {
   rel: "noopener noreferrer",
 } as const;
 
+/** 開く操作はヘッダーのメニュー（`AppMenu`）が持ち、ここは中身だけを受け持つ */
 export function ConsultationLinksDialog({
-  compact = false,
+  open,
+  onOpenChange,
 }: ConsultationLinksDialogProps) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className={cn(
-            "shrink-0 border-primary/40 px-3 text-primary",
-            compact && "min-h-10"
-          )}
-          aria-label="相談先を開く"
-        >
-          <LifeBuoy className="h-4 w-4" aria-hidden="true" />
-          相談先
-        </Button>
-      </DialogTrigger>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto p-0">
         <DialogHeader className="border-b px-5 pb-4 pr-14 pt-5 text-left">
           <DialogTitle className="flex items-center gap-2">

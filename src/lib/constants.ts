@@ -147,6 +147,8 @@ export const STORAGE_KEYS = {
   completionLog: "yorucare_completion_log",
   /** 記録完了演出の音を鳴らすかどうか。端末内の設定として持ち、既定はOFF */
   completionSound: "yorucare_completion_sound",
+  /** 記録画面に出す項目の選択。端末内の設定として持ち、既定はすべてOFF */
+  recordFormSections: "yorucare_record_form_sections",
   /** 積み重ねを数える起点として本人が設定した復職日。未設定なら最初の記録日を使う */
   returnDate: "yorucare_return_date",
 } as const;

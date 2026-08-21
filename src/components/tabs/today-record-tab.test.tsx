@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cleanup,
   fireEvent,
@@ -10,7 +10,12 @@ import {
 } from "@testing-library/react";
 import { TodayRecordTab } from "./today-record-tab";
 import { ok } from "@/lib/result";
+import { COPY } from "@/lib/copy";
 import { getTodayString } from "@/lib/dates";
+import {
+  toggleRecordFormSection,
+  type RecordFormSectionKey,
+} from "@/lib/record-form-sections";
 import type { DailyRecord, SelfCareItem } from "@/lib/types";
 
 const getRecordByDate = vi.fn();
@@ -77,14 +82,123 @@ function renderTab() {
   return render(<TodayRecordTab onNavigateTab={() => {}} />);
 }
 
+/** カスタム入力の既定はすべてOFF。検証したい項目だけを出す設定にする */
+function showSections(...keys: RecordFormSectionKey[]) {
+  for (const key of keys) toggleRecordFormSection(key, true);
+}
+
+beforeEach(() => {
+  localStorage.clear();
+});
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
+describe("カスタム入力による表示の切り替え", () => {
+  it("既定では、日付・気分・睡眠・メモだけを出す", async () => {
+    const today = getTodayString();
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(ok(date === today ? makeRecord(today) : null))
+    );
+
+    renderTab();
+
+    // いつも出る項目
+    expect(await screen.findByLabelText(COPY.sleep.startLabel)).toBeTruthy();
+    expect(screen.getByLabelText(COPY.sleep.endLabel)).toBeTruthy();
+    expect(screen.getByRole("radio", { name: /よい/ })).toBeTruthy();
+    expect(screen.getByLabelText(COPY.memoOptional)).toBeTruthy();
+
+    // カスタム入力でONにするまで出さない項目
+    expect(screen.queryByText(COPY.selfCareSuggestion.title)).toBeNull();
+    expect(screen.queryByText(COPY.detailSection)).toBeNull();
+    expect(screen.queryByText(`${COPY.warningSign}（任意）`)).toBeNull();
+    expect(screen.queryByText(COPY.doneTodayToday)).toBeNull();
+    expect(screen.queryByLabelText(/小さな目標/)).toBeNull();
+  });
+
+  it("ONにした項目だけを出す", async () => {
+    const today = getTodayString();
+    showSections("warningSign", "goal");
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(ok(date === today ? makeRecord(today) : null))
+    );
+
+    renderTab();
+
+    expect(
+      await screen.findByText(`${COPY.warningSign}（任意）`)
+    ).toBeTruthy();
+    expect(screen.getByLabelText(/小さな目標/)).toBeTruthy();
+    expect(screen.queryByText(COPY.selfCareSuggestion.title)).toBeNull();
+    expect(screen.queryByText(COPY.doneTodayToday)).toBeNull();
+  });
+
+  it("項目を出さなくても、保存済みの内容は消さない。出し直せばまた見える", async () => {
+    const today = getTodayString();
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(
+        ok(
+          date === today
+            ? makeRecord(today, {
+                warningLevel: "yes",
+                warningTags: ["眠れない"],
+                tomorrowGoal: "5分だけ外に出る",
+              })
+            : null
+        )
+      )
+    );
+
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.queryByText(`${COPY.warningSign}（任意）`)).toBeNull();
+    });
+
+    // 開いたままの画面でも、設定を変えた時点で表示が切り替わる
+    showSections("warningSign", "goal");
+
+    expect(
+      await screen.findByRole("radio", { name: "あり", checked: true })
+    ).toBeTruthy();
+    expect(
+      (screen.getByLabelText(/小さな目標/) as HTMLInputElement).value
+    ).toBe("5分だけ外に出る");
+  });
+
+  it("睡眠の入力は、くわしく書くを出さなくても使える", async () => {
+    const today = getTodayString();
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(
+        ok(
+          date === today
+            ? makeRecord(today, { sleepStart: "23:30", sleepEnd: "07:00" })
+            : null
+        )
+      )
+    );
+
+    renderTab();
+
+    const start = (await screen.findByLabelText(
+      COPY.sleep.startLabel
+    )) as HTMLInputElement;
+    expect(start.value).toBe("23:30");
+    expect(screen.queryByText(COPY.detailSection)).toBeNull();
+  });
+});
+
 describe("しんどさのサインと自分メンテの案", () => {
   it("サインを選び直して隠したら、その日のタグを残さない", async () => {
     const today = getTodayString();
+    showSections("selfCareSuggestion", "warningSign");
     initSelfCareIfEmpty.mockResolvedValue(ok([]));
     getRecordByDate.mockImplementation((date: string) =>
       Promise.resolve(
@@ -115,6 +229,7 @@ describe("しんどさのサインと自分メンテの案", () => {
 
   it("「なし」を選んでもタグを残さない", async () => {
     const today = getTodayString();
+    showSections("selfCareSuggestion", "warningSign");
     initSelfCareIfEmpty.mockResolvedValue(ok([]));
     getRecordByDate.mockImplementation((date: string) =>
       Promise.resolve(
@@ -145,6 +260,7 @@ describe("しんどさのサインと自分メンテの案", () => {
   it("画面に出ていないタグを持つ既存の記録でも、案に効かせない", async () => {
     // この修正より前は、サインを選び直すとタグが残ったまま保存されていた
     const today = getTodayString();
+    showSections("selfCareSuggestion", "warningSign");
     initSelfCareIfEmpty.mockResolvedValue(ok([]));
     getRecordByDate.mockImplementation((date: string) =>
       Promise.resolve(
@@ -171,6 +287,7 @@ describe("しんどさのサインと自分メンテの案", () => {
 describe("同じ名前の「できること」があるとき", () => {
   it("選択中のものを外す。先頭を選び直して解除できなくならない", async () => {
     const today = getTodayString();
+    showSections("selfCareSuggestion", "warningSign", "doneToday");
     // 案と同じ名前の「できること」が2つあり、選ばれているのは2つめだけ
     const [first, second] = [
       makeItem("s1", SLEEP_TAG_SUGGESTION),
