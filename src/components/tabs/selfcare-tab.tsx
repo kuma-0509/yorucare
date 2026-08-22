@@ -120,7 +120,7 @@ export function SelfCareTab({ onDataChange }: SelfCareTabProps) {
         <h1 className="text-xl font-bold">{COPY.selfCareAction}</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           自分に合う「{COPY.selfCareAction}」を登録しましょう。
-          よく使うものは、今日の記録で選べます。
+          {COPY.selfCareActionHint}
         </p>
       </header>
 

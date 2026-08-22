@@ -1,6 +1,6 @@
 import { COPY } from "@/lib/copy";
 import { cn } from "@/lib/utils";
-import { ConsultationLinksDialog } from "@/components/shared/consultation-links-dialog";
+import { AppMenu } from "@/components/layout/app-menu";
 
 interface AppHeaderProps {
   compact?: boolean;
@@ -28,7 +28,7 @@ export function AppHeader({ compact = false }: AppHeaderProps) {
             {COPY.tagline}
           </p>
         </div>
-        <ConsultationLinksDialog compact={compact} />
+        <AppMenu compact={compact} />
       </div>
     </header>
   );
