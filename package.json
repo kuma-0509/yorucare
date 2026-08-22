@@ -13,6 +13,7 @@
     "test:coverage": "vitest run --coverage",
     "test:checklist": "node scripts/run-phase1-checklist.mjs",
     "testdata": "node scripts/make-test-data.mjs",
+    "data:tokyo:update": "node scripts/update-tokyo-open-data.mjs",
     "db:analytics:setup": "node scripts/setup-analytics-db.mjs",
     "analytics:summary": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/analytics-summary.mjs"
   },
