@@ -1,0 +1,1306 @@
+[
+  {
+    "municipality": "千代田区",
+    "name": "千代田保健所",
+    "postalCode": "102-0073",
+    "address": "千代田区九段北１－２－１４",
+    "phone": "03-5211-8161",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "中央区",
+    "name": "中央区保健所",
+    "postalCode": "104-0044",
+    "address": "中央区明石町１２－１",
+    "phone": "03-3541-5936",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "中央区",
+    "name": "日本橋保健センター",
+    "postalCode": "103-0012",
+    "address": "中央区日本橋堀留町１－１－１",
+    "phone": "03-3661-3515",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "中央区",
+    "name": "月島保健センター",
+    "postalCode": "104-0052",
+    "address": "中央区月島２－１０－３",
+    "phone": "03-5560-0765",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "中央区",
+    "name": "晴海保健センター",
+    "postalCode": "104-0053",
+    "address": "中央区晴海４－８－１　晴海区民センター５階",
+    "phone": "03-6381-2972",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "港区",
+    "name": "みなと保健所",
+    "postalCode": "108-8315",
+    "address": "港区三田１－４－１０",
+    "phone": "03-6400-0050",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "新宿区",
+    "name": "新宿区保健所",
+    "postalCode": "160-0022",
+    "address": "新宿区新宿５－１８－２１",
+    "phone": "03-3209-1111",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "新宿区",
+    "name": "牛込保健センター",
+    "postalCode": "162-0805",
+    "address": "新宿区矢来町６",
+    "phone": "03-3260-6231",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "新宿区",
+    "name": "四谷保健センター",
+    "postalCode": "160-0008",
+    "address": "新宿区四谷三栄町１０－１６",
+    "phone": "03-3351-5161",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "新宿区",
+    "name": "東新宿保健センター",
+    "postalCode": "160-0022",
+    "address": "新宿区新宿７－２６－４",
+    "phone": "03-3200-1026",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "新宿区",
+    "name": "落合保健センター",
+    "postalCode": "161-0033",
+    "address": "新宿区下落合４－６－７",
+    "phone": "03-3952-7161",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "文京区",
+    "name": "文京保健所",
+    "postalCode": "112-8555",
+    "address": "文京区春日１－１６－２１",
+    "phone": "03-5803-1223",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "文京区",
+    "name": "保健サービスセンター",
+    "postalCode": "112-8555",
+    "address": "文京区春日１－１６－２１",
+    "phone": "03-5803-1805",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "文京区",
+    "name": "保健サービスセンター本郷支所",
+    "postalCode": "113-0022",
+    "address": "文京区千駄木５－２０－１８",
+    "phone": "03-3821-5106",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "台東区",
+    "name": "台東保健所",
+    "postalCode": "110-0015",
+    "address": "台東区東上野４－２２－８",
+    "phone": "03-3847-9401",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "台東区",
+    "name": "浅草保健相談センター",
+    "postalCode": "111-0033",
+    "address": "台東区花川戸２－１１－１０",
+    "phone": "03-3844-8171",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "墨田区",
+    "name": "墨田区保健所（保健計画課）",
+    "postalCode": "130-8628",
+    "address": "墨田区横川５－７－４",
+    "phone": "03-5608-6189",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "墨田区",
+    "name": "墨田区保健所（生活衛生課）",
+    "postalCode": "130-8628",
+    "address": "墨田区横川５－７－４",
+    "phone": "03-5608-6939",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "墨田区",
+    "name": "墨田区保健所（保健予防課）",
+    "postalCode": "130-8628",
+    "address": "墨田区横川５－７－４",
+    "phone": "03-5608-6191",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "墨田区",
+    "name": "墨田区保健所（健康推進課）",
+    "postalCode": "130-8628",
+    "address": "墨田区横川５－７－４",
+    "phone": "03-3622-9163",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江東区",
+    "name": "江東区保健所(健康推進課)",
+    "postalCode": "135-0016",
+    "address": "江東区東陽２－１－１",
+    "phone": "03-3647-9539",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江東区",
+    "name": "江東区保健所(生活衛生課)",
+    "postalCode": "135-0016",
+    "address": "江東区東陽２－１－１",
+    "phone": "03-3647-5844",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江東区",
+    "name": "江東区保健所(保健予防課)",
+    "postalCode": "135-0016",
+    "address": "江東区東陽２－１－１",
+    "phone": "03-3647-5906",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江東区",
+    "name": "城東保健相談所",
+    "postalCode": "136-0072",
+    "address": "江東区大島３－１－３",
+    "phone": "03-3637-6521",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江東区",
+    "name": "城東南部保健相談所",
+    "postalCode": "136-0076",
+    "address": "江東区南砂４－３－１０",
+    "phone": "03-5606-5001",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江東区",
+    "name": "深川保健相談所",
+    "postalCode": "135-0021",
+    "address": "江東区白河３－４－３－３０１",
+    "phone": "03-3641-1181",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江東区",
+    "name": "深川南部保健相談所",
+    "postalCode": "135-0052",
+    "address": "江東区潮見２－８－７",
+    "phone": "03-5632-2291",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "品川区",
+    "name": "品川区保健所",
+    "postalCode": "140-8715",
+    "address": "品川区広町２－１－３６",
+    "phone": "03-5742-6744",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "品川区",
+    "name": "品川保健センター",
+    "postalCode": "140-0001",
+    "address": "品川区北品川３－１１－２２",
+    "phone": "03-3474-2000",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "品川区",
+    "name": "大井保健センター",
+    "postalCode": "140-0014",
+    "address": "品川区大井２－２７－２０",
+    "phone": "03-3772-2666",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "品川区",
+    "name": "荏原保健センター",
+    "postalCode": "141-0031",
+    "address": "品川区西五反田６－６－６",
+    "phone": "03-5487-1310",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "目黒区",
+    "name": "目黒区保健所",
+    "postalCode": "153-8573",
+    "address": "目黒区上目黒２－１９－１５",
+    "phone": "03-5722-9586",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "目黒区",
+    "name": "碑文谷保健センター",
+    "postalCode": "152-0003",
+    "address": "目黒区碑文谷４－１６－１８",
+    "phone": "03-3711-6446",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "大田区",
+    "name": "大田区保健所（健康医療政策課）",
+    "postalCode": "144-8621",
+    "address": "大田区蒲田５－１３－１４",
+    "phone": "03-5744-1262",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "大田区",
+    "name": "大田区保健所(感染症対策課)",
+    "postalCode": "144-8621",
+    "address": "大田区蒲田５－１３－１４",
+    "phone": "03-5744-1263",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "大田区",
+    "name": "大田区保健所（生活衛生課）",
+    "postalCode": "143-0015",
+    "address": "大田区大森西１－１２－１",
+    "phone": "03-5764-0691",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "大田区",
+    "name": "大田区保健所（健康づくり課）",
+    "postalCode": "144-8621",
+    "address": "大田区蒲田５－１３－１４",
+    "phone": "03-5744-1661",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "大田区",
+    "name": "大田区保健所（大森地域健康課）",
+    "postalCode": "143-0015",
+    "address": "大田区大森西１－１２－１",
+    "phone": "03-5764-0661",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "大田区",
+    "name": "大田区保健所（調布地域健康課）",
+    "postalCode": "145-0067",
+    "address": "大田区雪谷大塚町４－６",
+    "phone": "03-3726-4145",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "大田区",
+    "name": "大田区保健所（蒲田地域健康課）",
+    "postalCode": "144-0053",
+    "address": "大田区蒲田本町２－１－１",
+    "phone": "03-5713-1701",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "大田区",
+    "name": "大田区保健所（糀谷・羽田地域健康課）",
+    "postalCode": "144-0033",
+    "address": "大田区東糀谷１－２１－１５",
+    "phone": "03-3743-4161",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "世田谷区",
+    "name": "世田谷保健所",
+    "postalCode": "154-0017",
+    "address": "世田谷区世田谷４－２４－１",
+    "phone": "03-5432-2432",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "世田谷区",
+    "name": "世田谷総合支所保健福祉センター（健康づくり課）",
+    "postalCode": "154-8504",
+    "address": "世田谷区世田谷４－２２－３３",
+    "phone": "03-5432-2893",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "世田谷区",
+    "name": "北沢総合支所保健福祉センター（健康づくり課）",
+    "postalCode": "155-8666",
+    "address": "世田谷区北沢２－８－１８",
+    "phone": "03-6804-9355",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "世田谷区",
+    "name": "玉川総合支所保健福祉センター（健康づくり課）",
+    "postalCode": "158-8503",
+    "address": "世田谷区等々力３－４－１",
+    "phone": "03-3702-1948",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "世田谷区",
+    "name": "砧総合支所保健福祉センター（健康づくり課）",
+    "postalCode": "157-8501",
+    "address": "世田谷区成城６－２－１",
+    "phone": "03-3483-3161",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "世田谷区",
+    "name": "烏山総合支所保健福祉センター（健康づくり課）",
+    "postalCode": "157-8555",
+    "address": "世田谷区南烏山６－２２－１４",
+    "phone": "03-3308-8228",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "渋谷区",
+    "name": "渋谷区保健所",
+    "postalCode": "150-8010",
+    "address": "渋谷区宇田川町１－１",
+    "phone": "03-3463-1211",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "渋谷区",
+    "name": "中央保健相談所",
+    "postalCode": "150-0042",
+    "address": "渋谷区宇田川町５－６",
+    "phone": "03-3463-1211",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "渋谷区",
+    "name": "恵比寿保健相談所",
+    "postalCode": "150-0013",
+    "address": "渋谷区恵比寿２－２７－１８",
+    "phone": "03-3443-6251",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "渋谷区",
+    "name": "幡ケ谷保健相談所",
+    "postalCode": "151-0072",
+    "address": "渋谷区幡ケ谷３－３９－１",
+    "phone": "03-3374-7591",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "中野区",
+    "name": "中野区保健所",
+    "postalCode": "164-0001",
+    "address": "中野区中野２－１７－４",
+    "phone": "03-3382-6661",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "中野区",
+    "name": "中部すこやか福祉センター",
+    "postalCode": "164-0011",
+    "address": "中野区中央３－１９－１",
+    "phone": "03-3367-7788",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "中野区",
+    "name": "北部すこやか福祉センター",
+    "postalCode": "165-0022",
+    "address": "中野区江古田４－３１－１０",
+    "phone": "03-3389-4321",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "中野区",
+    "name": "南部すこやか福祉センター",
+    "postalCode": "164-0013",
+    "address": "中野区弥生町５－１１－２６",
+    "phone": "03-3382-1750",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "中野区",
+    "name": "鷺宮すこやか福祉センター",
+    "postalCode": "165-0033",
+    "address": "中野区若宮３－５８－１０",
+    "phone": "03-3336-7111",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "杉並区",
+    "name": "杉並保健所（健康推進課）",
+    "postalCode": "167-0051",
+    "address": "杉並区荻窪５－２０－１",
+    "phone": "03-3391-1355",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "杉並区",
+    "name": "杉並保健所（生活衛生課）",
+    "postalCode": "167-0051",
+    "address": "杉並区荻窪５－２０－１",
+    "phone": "03-3391-1991",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "杉並区",
+    "name": "杉並保健所（保健予防課）",
+    "postalCode": "167-0051",
+    "address": "杉並区荻窪５－２０－１",
+    "phone": "03-3391-1025",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "杉並区",
+    "name": "荻窪保健センター",
+    "postalCode": "167-0051",
+    "address": "杉並区荻窪５－２０－１",
+    "phone": "03-3391-0015",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "杉並区",
+    "name": "高井戸保健センター",
+    "postalCode": "168-0072",
+    "address": "杉並区高井戸東３－２０－３",
+    "phone": "03-3334-4304",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "杉並区",
+    "name": "高円寺保健センター",
+    "postalCode": "166-0003",
+    "address": "杉並区高円寺南３－２４－１５",
+    "phone": "03-3311-0116",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "杉並区",
+    "name": "上井草保健センター",
+    "postalCode": "167-0023",
+    "address": "杉並区上井草３－８－１９",
+    "phone": "03-3394-1212",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "杉並区",
+    "name": "和泉保健センター",
+    "postalCode": "168-0063",
+    "address": "杉並区和泉４－５０－６",
+    "phone": "03-3313-9331",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "豊島区",
+    "name": "池袋保健所（地域保健課）",
+    "postalCode": "170-0013",
+    "address": "豊島区東池袋４－４２－１６",
+    "phone": "03-3987-4203",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "豊島区",
+    "name": "池袋保健所（保健予防課）",
+    "postalCode": "170-0013",
+    "address": "豊島区東池袋４－４２－１６",
+    "phone": "03-4566-4115",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "豊島区",
+    "name": "池袋保健所（生活衛生課）",
+    "postalCode": "170-0013",
+    "address": "豊島区東池袋４－４２－１６",
+    "phone": "03-3987-4175",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "豊島区",
+    "name": "池袋保健所（健康推進課）",
+    "postalCode": "170-0013",
+    "address": "豊島区東池袋４－４２－１６",
+    "phone": "03-3987-4172",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "豊島区",
+    "name": "長崎健康相談所",
+    "postalCode": "171-0051",
+    "address": "豊島区長崎３－６－２４",
+    "phone": "03-3957-1191",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "北区",
+    "name": "北区保健所（生活衛生課）",
+    "postalCode": "114-0001",
+    "address": "北区東十条２－７－３",
+    "phone": "03-3919-0376",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "北区",
+    "name": "北区保健所（保健予防課）",
+    "postalCode": "114-0001",
+    "address": "北区東十条２－７－３",
+    "phone": "03-3919-3101",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "北区",
+    "name": "王子健康支援センター",
+    "postalCode": "114-0001",
+    "address": "北区東十条２－７－３",
+    "phone": "03-3919-7588",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "北区",
+    "name": "赤羽健康支援センター",
+    "postalCode": "115-0044",
+    "address": "北区赤羽南１－１３－１　赤羽会館６階",
+    "phone": "03-3903-6481",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "北区",
+    "name": "滝野川健康支援センター",
+    "postalCode": "114-0024",
+    "address": "北区西ケ原１－１９－１２",
+    "phone": "03-3915-0184",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "荒川区",
+    "name": "荒川区保健所（生活衛生課）",
+    "postalCode": "116-8502",
+    "address": "荒川区荒川２－１１－１",
+    "phone": "03-3802-4216",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "荒川区",
+    "name": "荒川区保健所（健康推進課）",
+    "postalCode": "116-8502",
+    "address": "荒川区荒川２－１１－１",
+    "phone": "03-3802-4247",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "荒川区",
+    "name": "荒川区保健所（保健予防課）",
+    "postalCode": "116-8502",
+    "address": "荒川区荒川２－１１－１",
+    "phone": "03-3802-4243",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "板橋区",
+    "name": "板橋区保健所（健康推進課）",
+    "postalCode": "173-8501",
+    "address": "板橋区板橋２－６６－１",
+    "phone": "03-3579-2302",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "板橋区",
+    "name": "板橋区保健所（予防対策課）",
+    "postalCode": "173-0014",
+    "address": "板橋区大山東町３２－１５",
+    "phone": "03-3579-2329",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "板橋区",
+    "name": "板橋区保健所（生活衛生課）",
+    "postalCode": "173-0014",
+    "address": "板橋区大山東町３２－１５",
+    "phone": "03-3579-2332",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "板橋区",
+    "name": "板橋健康福祉センター",
+    "postalCode": "173-0014",
+    "address": "板橋区大山東町３２－１５",
+    "phone": "03-3579-2333",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "板橋区",
+    "name": "上板橋健康福祉センター",
+    "postalCode": "174-0075",
+    "address": "板橋区桜川３－１８－６",
+    "phone": "03-3937-1041",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "板橋区",
+    "name": "赤塚健康福祉センター",
+    "postalCode": "175-0092",
+    "address": "板橋区赤塚１－１０－１３",
+    "phone": "03-3979-0511",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "板橋区",
+    "name": "志村健康福祉センター",
+    "postalCode": "174-0046",
+    "address": "板橋区蓮根２－５－５",
+    "phone": "03-3969-3836",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "板橋区",
+    "name": "高島平健康福祉センター",
+    "postalCode": "175-0082",
+    "address": "板橋区高島平３－１３－２８",
+    "phone": "03-3938-8621",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "練馬区",
+    "name": "練馬区保健所（生活衛生課）",
+    "postalCode": "176-8501",
+    "address": "練馬区豊玉北６－１２－１",
+    "phone": "03-5984-2483",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "練馬区",
+    "name": "練馬区保健所（保健予防課）",
+    "postalCode": "176-8501",
+    "address": "練馬区豊玉北６－１２－１",
+    "phone": "03-5984-1017",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "練馬区",
+    "name": "豊玉保健相談所",
+    "postalCode": "176-0012",
+    "address": "練馬区豊玉北５－１５－１９",
+    "phone": "03-3992-1188",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "練馬区",
+    "name": "北保健相談所",
+    "postalCode": "179-0081",
+    "address": "練馬区北町６－３５－７",
+    "phone": "03-3931-1347",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "練馬区",
+    "name": "光が丘保健相談所",
+    "postalCode": "179-0072",
+    "address": "練馬区光が丘２－９－６",
+    "phone": "03-5997-7722",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "練馬区",
+    "name": "石神井保健相談所",
+    "postalCode": "177-0041",
+    "address": "練馬区石神井町７－３－２８",
+    "phone": "03-3996-0634",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "練馬区",
+    "name": "大泉保健相談所",
+    "postalCode": "178-0061",
+    "address": "練馬区大泉学園町５－８－８",
+    "phone": "03-3921-0217",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "練馬区",
+    "name": "関保健相談所",
+    "postalCode": "177-0052",
+    "address": "練馬区関町東１－２７－４",
+    "phone": "03-3929-5381",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "足立区",
+    "name": "足立保健所（生活衛生課）",
+    "postalCode": "120-0011",
+    "address": "足立区中央本町１－５－３",
+    "phone": "03-3880-5361",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "足立区",
+    "name": "足立保健所（感染症対策課）",
+    "postalCode": "120-0011",
+    "address": "足立区中央本町１－５－３",
+    "phone": "03-3880-5372",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "足立区",
+    "name": "足立保健所（中央本町地域・保健総合支援課）",
+    "postalCode": "120-0011",
+    "address": "足立区中央本町１－５－３",
+    "phone": "03-3880-5351",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "足立区",
+    "name": "足立保健所（衛生試験所）",
+    "postalCode": "120-0011",
+    "address": "足立区中央本町１－５－３",
+    "phone": "03-3880-5370",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "足立区",
+    "name": "竹の塚保健センター",
+    "postalCode": "121-0822",
+    "address": "足立区西竹の塚１－１１－２　エミエルタワー竹の塚２階",
+    "phone": "03-3855-5082",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "足立区",
+    "name": "江北保健センター",
+    "postalCode": "123-0845",
+    "address": "足立区西新井本町２－３０－４０",
+    "phone": "03-3896-4004",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "足立区",
+    "name": "千住保健センター",
+    "postalCode": "120-0036",
+    "address": "足立区千住仲町１９－３　千住庁舎４階",
+    "phone": "03-3888-4277",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "足立区",
+    "name": "東部保健センター",
+    "postalCode": "120-0001",
+    "address": "足立区大谷田３－１１－１３",
+    "phone": "03-3606-4171",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "葛飾区",
+    "name": "葛飾区保健所（地域保健課）",
+    "postalCode": "125-0062",
+    "address": "葛飾区青戸４－１５－１４",
+    "phone": "03-3602-1231",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "葛飾区",
+    "name": "葛飾区保健所（生活衛生課）",
+    "postalCode": "125-0062",
+    "address": "葛飾区青戸４－１５－１４",
+    "phone": "03-3602-1242",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "葛飾区",
+    "name": "葛飾区保健所（健康推進課）",
+    "postalCode": "125-0062",
+    "address": "葛飾区青戸４－１５－１４",
+    "phone": "03-3602-1268",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "葛飾区",
+    "name": "葛飾区保健所（保健予防課）",
+    "postalCode": "125-0062",
+    "address": "葛飾区青戸４－１５－１４",
+    "phone": "03-3602-1274",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "葛飾区",
+    "name": "青戸保健センター",
+    "postalCode": "125-0062",
+    "address": "葛飾区青戸４－１５－１４",
+    "phone": "03-3602-1284",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "葛飾区",
+    "name": "金町保健センター",
+    "postalCode": "125-0042",
+    "address": "葛飾区金町４－１８－１９",
+    "phone": "03-3607-4141",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "葛飾区",
+    "name": "新小岩保健センター",
+    "postalCode": "124-0025",
+    "address": "葛飾区西新小岩４－３３－２",
+    "phone": "03-3696-3781",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "葛飾区",
+    "name": "水元保健センター",
+    "postalCode": "125-0033",
+    "address": "葛飾区東水元１－７－３",
+    "phone": "03-3627-1911",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江戸川区",
+    "name": "江戸川保健所（生活衛生課）",
+    "postalCode": "133-0052",
+    "address": "江戸川区東小岩３－２３－３",
+    "phone": "03-3658-3177",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江戸川区",
+    "name": "江戸川保健所（保健予防課）",
+    "postalCode": "132-8507",
+    "address": "江戸川区中央４－２４－１９",
+    "phone": "03-5661-2464",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江戸川区",
+    "name": "中央健康サポートセンター",
+    "postalCode": "132-8507",
+    "address": "江戸川区中央４－２４－１９",
+    "phone": "03-5661-2467",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江戸川区",
+    "name": "小岩健康サポートセンター",
+    "postalCode": "133-0052",
+    "address": "江戸川区東小岩３－２３－３",
+    "phone": "03-3658-3171",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江戸川区",
+    "name": "東部健康サポートセンター",
+    "postalCode": "132-0011",
+    "address": "江戸川区瑞江２－５－７",
+    "phone": "03-3678-6441",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江戸川区",
+    "name": "清新町健康サポートセンター",
+    "postalCode": "134-0087",
+    "address": "江戸川区清新町１－３－１１",
+    "phone": "03-3878-1221",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江戸川区",
+    "name": "葛西健康サポートセンター",
+    "postalCode": "134-0083",
+    "address": "江戸川区中葛西３－１０－１",
+    "phone": "03-3688-0154",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江戸川区",
+    "name": "鹿骨健康サポートセンター",
+    "postalCode": "133-0073",
+    "address": "江戸川区鹿骨１－５５－１０",
+    "phone": "03-3678-8711",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江戸川区",
+    "name": "小松川健康サポートセンター",
+    "postalCode": "132-0034",
+    "address": "江戸川区小松川３－６－１",
+    "phone": "03-3683-5531",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "江戸川区",
+    "name": "なぎさ健康サポートセンター",
+    "postalCode": "134-0085",
+    "address": "江戸川区南葛西７－１－２７",
+    "phone": "03-5675-2515",
+    "source": "specialWards"
+  },
+  {
+    "municipality": "立川市",
+    "name": "立川市健康会館",
+    "postalCode": "190-0011",
+    "address": "立川市高松町３－２２－９",
+    "phone": "042-527-3632",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "武蔵野市",
+    "name": "武蔵野市立保健センター",
+    "postalCode": "180-0001",
+    "address": "武蔵野市吉祥寺北町４－８－１０",
+    "phone": "0422-51-7004",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "三鷹市",
+    "name": "三鷹市総合保健センター",
+    "postalCode": "181-0004",
+    "address": "三鷹市新川６－３７－１　元気創造プラザ２階",
+    "phone": "0422-24-7145",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "青梅市",
+    "name": "青梅市健康センター",
+    "postalCode": "198-0042",
+    "address": "青梅市東青梅１－１７４－１",
+    "phone": "0428-23-2191",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "府中市",
+    "name": "府中市保健センター",
+    "postalCode": "183-0055",
+    "address": "府中市府中町２－２５",
+    "phone": "042-368-5311",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "昭島市",
+    "name": "昭島市保健福祉センター「あいぽっく」",
+    "postalCode": "196-0015",
+    "address": "昭島市昭和町４－７－１",
+    "phone": "042-544-5126",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "調布市",
+    "name": "調布市保健センター",
+    "postalCode": "182-0026",
+    "address": "調布市小島町２－３３－１",
+    "phone": "042-441-6100",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "小金井市",
+    "name": "小金井市保健センター",
+    "postalCode": "184-0015",
+    "address": "小金井市貫井北町５－１８－１８",
+    "phone": "042-321-1240",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "小平市",
+    "name": "小平市健康センター",
+    "postalCode": "187-0043",
+    "address": "小平市学園東町１－１９－１２",
+    "phone": "042-346-3700",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "日野市",
+    "name": "日野市生活・保健センター",
+    "postalCode": "191-0011",
+    "address": "日野市日野本町１－６－２",
+    "phone": "042-581-4111",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "東村山市",
+    "name": "東村山市保健福祉総合センター「いきいきプラザ」",
+    "postalCode": "189-8501",
+    "address": "東村山市本町１－２－３",
+    "phone": "042-393-5111",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "国分寺市",
+    "name": "国分寺市いずみ保健センター",
+    "postalCode": "185-0024",
+    "address": "国分寺市泉町２－３－８",
+    "phone": "042-321-1801",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "国立市",
+    "name": "国立市保健センター",
+    "postalCode": "186-0003",
+    "address": "国立市富士見台３－１６－５",
+    "phone": "042-572-6111",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "福生市",
+    "name": "福生市保健センター",
+    "postalCode": "197-0011",
+    "address": "福生市大字福生２１２５－３",
+    "phone": "042-552-0061",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "狛江市",
+    "name": "狛江市保健センター（あいとぴあセンター）",
+    "postalCode": "201-0013",
+    "address": "狛江市元和泉２－３５－１",
+    "phone": "03-3488-1181",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "東大和市",
+    "name": "東大和市立保健センター",
+    "postalCode": "207-0015",
+    "address": "東大和市中央３－９１８－１",
+    "phone": "042-565-5211",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "清瀬市",
+    "name": "清瀬市しあわせ未来センター",
+    "postalCode": "204-8511",
+    "address": "清瀬市中里５－８４２",
+    "phone": "042-492-5111",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "東久留米市",
+    "name": "東久留米市わくわく健康プラザ",
+    "postalCode": "203-0033",
+    "address": "東久留米市滝山４－３－１４",
+    "phone": "042-477-0030",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "武蔵村山市",
+    "name": "武蔵村山市立保健相談センター",
+    "postalCode": "208-0004",
+    "address": "武蔵村山市本町１－２３",
+    "phone": "042-565-9315",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "多摩市",
+    "name": "多摩市立健康センター",
+    "postalCode": "206-0011",
+    "address": "多摩市関戸４－１９－５",
+    "phone": "042-376-9111",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "稲城市",
+    "name": "稲城市保健センター",
+    "postalCode": "206-0804",
+    "address": "稲城市百村１１２－１",
+    "phone": "042-378-3421",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "羽村市",
+    "name": "羽村市保健センター",
+    "postalCode": "205-0003",
+    "address": "羽村市緑ケ丘５－５－２",
+    "phone": "042-555-1111",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "あきる野市",
+    "name": "あきる野市あきる野保健相談所",
+    "postalCode": "197-0804",
+    "address": "あきる野市秋川６－１－２",
+    "phone": "042-558-5091",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "あきる野市",
+    "name": "あきる野市五日市保健センター",
+    "postalCode": "190-0164",
+    "address": "あきる野市五日市４１４－５",
+    "phone": "042-558-1111",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "西東京市",
+    "name": "西東京市田無総合福祉センター",
+    "postalCode": "188-0011",
+    "address": "西東京市田無町５－５－１２",
+    "phone": "042-466-1670",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "西東京市",
+    "name": "西東京市保谷保健福祉総合センター",
+    "postalCode": "202-8555",
+    "address": "西東京市中町１－５－１",
+    "phone": "042-464-1311",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "瑞穂町",
+    "name": "瑞穂町保健センター",
+    "postalCode": "190-1211",
+    "address": "西多摩郡瑞穂町大字石畑１９７０",
+    "phone": "042-557-5072",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "日の出町",
+    "name": "日の出町保健センター",
+    "postalCode": "190-0192",
+    "address": "西多摩郡日の出町大字平井２７８０",
+    "phone": "042-588-5426",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "檜原村",
+    "name": "檜原村やすらぎの里",
+    "postalCode": "190-0211",
+    "address": "西多摩郡檜原村２７１７",
+    "phone": "042-598-3121",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "奥多摩町",
+    "name": "奥多摩町保健福祉センター",
+    "postalCode": "198-0212",
+    "address": "西多摩郡奥多摩町氷川１１１１",
+    "phone": "0428-83-2777",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "大島町",
+    "name": "大島けんこうセンター",
+    "postalCode": "100-0102",
+    "address": "大島町岡田字沢立１１１－１",
+    "phone": "04992-2-1482（福祉けんこう課けんこう係）",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "新島村",
+    "name": "新島村さわやか健康センター",
+    "postalCode": "100-0402",
+    "address": "新島村本村３－１２－８",
+    "phone": "04992-5-1856",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "神津島村",
+    "name": "神津島村保健センター",
+    "postalCode": "100-0601",
+    "address": "神津島村１００９－１",
+    "phone": "04992-8-0010",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "八丈町",
+    "name": "八丈町保健福祉センター",
+    "postalCode": "100-1511",
+    "address": "八丈町三根２－１",
+    "phone": "04996-2-5570（福祉健康課保健係）",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "青ヶ島村",
+    "name": "青ヶ島村保健福祉センター",
+    "postalCode": "100-1701",
+    "address": "青ヶ島村無番地",
+    "phone": "04996-9-0111",
+    "source": "municipalities"
+  },
+  {
+    "municipality": "八王子市",
+    "name": "八王子市保健所",
+    "postalCode": "192-0046",
+    "address": "八王子市明神町３－１９－２",
+    "phone": "042-645-5111",
+    "source": "coreCities"
+  },
+  {
+    "municipality": "八王子市",
+    "name": "八王子市大横保健福祉センター",
+    "postalCode": "192-0062",
+    "address": "八王子市大横町１１－３５",
+    "phone": "042-625-9128",
+    "source": "coreCities"
+  },
+  {
+    "municipality": "八王子市",
+    "name": "八王子市東浅川保健福祉センター",
+    "postalCode": "193-0834",
+    "address": "八王子市東浅川町５５１－１",
+    "phone": "042-667-1331",
+    "source": "coreCities"
+  },
+  {
+    "municipality": "八王子市",
+    "name": "八王子市南大沢保健福祉センター",
+    "postalCode": "192-0364",
+    "address": "八王子市南大沢２－２７　フレスコ南大沢公共棟１階",
+    "phone": "042-679-2205",
+    "source": "coreCities"
+  },
+  {
+    "municipality": "町田市",
+    "name": "町田市保健所",
+    "postalCode": "194-8520",
+    "address": "町田市森野２－２－２２　市庁舎７階",
+    "phone": "042-724-4241",
+    "source": "coreCities"
+  },
+  {
+    "municipality": "町田市",
+    "name": "町田市保健所中町庁舎",
+    "postalCode": "194-0021",
+    "address": "町田市中町２－１３－３",
+    "phone": "042-722-0621",
+    "source": "coreCities"
+  },
+  {
+    "municipality": "町田市",
+    "name": "町田市健康福祉会館",
+    "postalCode": "194-0013",
+    "address": "町田市原町田５－８－２１",
+    "phone": "042-725-5471",
+    "source": "coreCities"
+  },
+  {
+    "municipality": "町田市",
+    "name": "町田市忠生保健センター",
+    "postalCode": "194-0035",
+    "address": "町田市忠生３－１４－２",
+    "phone": "042-791-0135",
+    "source": "coreCities"
+  },
+  {
+    "municipality": "町田市",
+    "name": "町田市鶴川保健センター",
+    "postalCode": "195-0062",
+    "address": "町田市大蔵町１９８１－４",
+    "phone": "042-736-1600",
+    "source": "coreCities"
+  }
+]
