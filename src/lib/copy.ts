@@ -41,6 +41,9 @@ export const COPY = {
     customInput: "カスタム入力",
     customInputDescription: "記録画面に出す項目を選べます",
   },
+  /** 「できること」を記録画面から選ぶには、カスタム入力で表示にしておく必要がある */
+  selfCareActionHint:
+    "登録したものは、カスタム入力で「できたこと」を表示にすると、記録画面から選べます。",
   /** 記録画面に出す項目の設定。端末内にだけ残し、記録そのものは変えない */
   customInput: {
     title: "カスタム入力",
@@ -62,6 +65,8 @@ export const COPY = {
   medicationNone: "お薬は飲んでいない",
   /** 翌日に向けた小さな目標・行動実験。達成を評価せず、次の大きさを決める材料として扱う */
   goal: {
+    /** カスタム入力に並べる項目名。カードの見出しは日付で変わるため、名前だけを1語で持つ */
+    sectionName: "小さな目標",
     fieldToday: "明日の小さな目標",
     fieldOther: "翌日の小さな目標",
     fieldDescription:

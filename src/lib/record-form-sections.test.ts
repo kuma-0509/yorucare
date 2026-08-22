@@ -74,8 +74,28 @@ describe("記録画面に出す項目の設定", () => {
       throw new Error("blocked");
     });
 
-    expect(() => toggleRecordFormSection("goal", true)).not.toThrow();
+    // 保存できていないのに画面だけ表示になることがないよう、書いたあとの状態を返す
+    expect(toggleRecordFormSection("goal", true)).toEqual(
+      DEFAULT_RECORD_FORM_SECTIONS
+    );
     expect(getRecordFormSections()).toEqual(DEFAULT_RECORD_FORM_SECTIONS);
+  });
+
+  it("ほかの書き込みでは知らせない", () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeRecordFormSections(listener);
+
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: STORAGE_KEYS.records })
+    );
+    expect(listener).not.toHaveBeenCalled();
+
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: STORAGE_KEYS.recordFormSections })
+    );
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
   });
 
   it("設定を変えると、開いたままの画面へ知らせる", () => {

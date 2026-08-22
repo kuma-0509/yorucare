@@ -27,7 +27,7 @@ const SECTION_LABELS = [
   COPY.detailSection,
   COPY.warningSign,
   COPY.doneToday,
-  "小さな目標",
+  COPY.goal.sectionName,
 ];
 
 describe("カスタム入力の設定", () => {

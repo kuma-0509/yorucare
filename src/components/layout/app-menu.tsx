@@ -22,7 +22,8 @@ interface AppMenuProps {
 
 /**
  * 全タブ共通ヘッダーのメニュー。
- * 相談先はここから1手で開ける位置に置き、記録画面の項目設定を同じ場所へまとめる。
+ * 相談先と記録画面の項目設定を、どのタブからも同じ場所で開けるようにまとめる。
+ * 相談先はメニューの先頭に置き、開いてすぐ選べる位置から動かさない。
  */
 export function AppMenu({ compact = false }: AppMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);

@@ -51,7 +51,7 @@ export const RECORD_FORM_SECTION_OPTIONS: {
   },
   {
     key: "goal",
-    label: "小さな目標",
+    label: COPY.goal.sectionName,
     description: "翌日の小さな目標と、前日の目標のふりかえり",
   },
 ];
@@ -111,14 +111,16 @@ export function saveRecordFormSections(sections: RecordFormSections): void {
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
 }
 
-/** 1項目だけ切り替えて保存し、切り替えたあとの設定を返す */
+/**
+ * 1項目だけ切り替えて保存し、保存できた設定を返す。
+ * 保存できない環境では画面の表示だけが変わらないよう、書いたあとに読み直す
+ */
 export function toggleRecordFormSection(
   key: RecordFormSectionKey,
   enabled: boolean
 ): RecordFormSections {
-  const next = { ...getRecordFormSections(), [key]: enabled };
-  saveRecordFormSections(next);
-  return next;
+  saveRecordFormSections({ ...getRecordFormSections(), [key]: enabled });
+  return getRecordFormSections();
 }
 
 /** 設定が変わったら呼び出す。戻り値を呼ぶと購読をやめる */
@@ -127,11 +129,18 @@ export function subscribeRecordFormSections(
 ): () => void {
   if (!isBrowser()) return () => {};
   const handle = () => listener(getRecordFormSections());
+  // 別のタブで変えた設定も、開いたままの画面へ反映する。
+  // 記録の保存など、ほかの書き込みでは知らせない（書く画面を作り直さない）
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key !== null && event.key !== STORAGE_KEYS.recordFormSections) {
+      return;
+    }
+    handle();
+  };
   window.addEventListener(CHANGE_EVENT, handle);
-  // 別のタブで変えた設定も、開いたままの画面へ反映する
-  window.addEventListener("storage", handle);
+  window.addEventListener("storage", handleStorage);
   return () => {
     window.removeEventListener(CHANGE_EVENT, handle);
-    window.removeEventListener("storage", handle);
+    window.removeEventListener("storage", handleStorage);
   };
 }
