@@ -1,9 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  burnActivePapers,
-  getCompletionForDate,
-  recordCompletion,
-} from "./completion-log";
 import { STORAGE_KEYS } from "./constants";
 import {
   createEmptyRecordForm,
@@ -41,6 +36,40 @@ class MemoryStorage implements Storage {
 }
 
 const typedRepository: Repository = repository;
+
+/**
+ * 締めくくり演出は削除済みで、演出ログへ書き込む経路は残っていない。
+ * 旧版を使っていた端末に残る形を直接置いて、記録の削除で消えることを見る。
+ */
+function seedCompletionLog(dates: string[]): void {
+  localStorage.setItem(
+    STORAGE_KEYS.completionLog,
+    JSON.stringify({
+      entries: dates.map((date) => ({
+        date,
+        style: "paper",
+        at: `${date}T12:00:00.000Z`,
+      })),
+      burnedDates: [...dates],
+    })
+  );
+}
+
+function readCompletionLogDates(): {
+  entries: string[];
+  burnedDates: string[];
+} {
+  const raw = localStorage.getItem(STORAGE_KEYS.completionLog);
+  if (!raw) return { entries: [], burnedDates: [] };
+  const parsed = JSON.parse(raw) as {
+    entries: { date: string }[];
+    burnedDates: string[];
+  };
+  return {
+    entries: parsed.entries.map((entry) => entry.date),
+    burnedDates: parsed.burnedDates,
+  };
+}
 
 beforeEach(() => {
   vi.stubGlobal("window", {});
@@ -433,9 +462,9 @@ describe("記録を削除", () => {
     for (const date of ["2026-08-17", "2026-08-18"]) {
       const { date: _date, ...emptyForm } = createEmptyRecordForm(date);
       await typedRepository.saveRecord(date, { ...emptyForm, moodScore: 3 });
-      recordCompletion(date, "paper");
     }
-    burnActivePapers();
+    // 演出は削除済みで書き込む経路が無いため、旧版の端末に残る形を直接置く
+    seedCompletionLog(["2026-08-17", "2026-08-18"]);
 
     const result = await typedRepository.deleteRecord("2026-08-17");
 
@@ -444,8 +473,10 @@ describe("記録を削除", () => {
       ok: true,
       value: null,
     });
-    expect(getCompletionForDate("2026-08-17")).toBeNull();
-    expect(getCompletionForDate("2026-08-18")?.style).toBe("paper");
+    expect(readCompletionLogDates()).toEqual({
+      entries: ["2026-08-18"],
+      burnedDates: ["2026-08-18"],
+    });
   });
 });
 
@@ -467,8 +498,7 @@ describe("すべての記録を削除", () => {
   it("締めくくり演出の記録も一緒に消す", async () => {
     // 共有端末で使い終わったときに、どの日に記録したかが
     // 演出のログとして端末へ残らないようにする
-    recordCompletion("2026-08-18", "shelf");
-    recordCompletion("2026-08-17", "paper");
+    seedCompletionLog(["2026-08-17", "2026-08-18"]);
     expect(localStorage.getItem(STORAGE_KEYS.completionLog)).not.toBeNull();
 
     await typedRepository.deleteAllRecords();
