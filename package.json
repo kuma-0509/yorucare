@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
+    "verify": "pnpm lint && pnpm test && pnpm build",
+    "test:e2e": "node scripts/run-e2e-smoke.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:checklist": "node scripts/run-phase1-checklist.mjs",
