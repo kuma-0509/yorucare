@@ -25,11 +25,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
+      - name: Verify
+        run: pnpm verify
 
-      - name: Unit tests
-        run: pnpm test
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
 
-      - name: Build
-        run: pnpm build
+      - name: Mobile smoke E2E
+        run: pnpm test:e2e
