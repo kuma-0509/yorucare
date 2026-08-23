@@ -2,9 +2,11 @@
 
 ## 提案・エビデンス
 
-- 提案書・提案文を書くときは、次を両方読む。
-  1. 事業内容: `docs/evidence/vha2026-entry-summary.md`（原: `VHA2026_Entry_Sheet.docx`）
+- ヨルケア（アプリ）の提案書・提案文・図解を書くときは、次を両方読む。
+  1. 事業内容: `docs/evidence/yorucare-service-summary.md`（アプリの正本）
   2. 医学根拠: `docs/evidence/guideline2025-yorucare-evidence.md`（原: `guideline2025.pdf`）
+- `docs/evidence/vha2026-entry-summary.md`（原: `VHA2026_Entry_Sheet.docx`）は、株式会社mimococo の「復職後の夜間・休日オンラインケア」の資料。ヨルケアのアプリとは**別サービス・別主体**なので、アプリの説明、動機、課題設定へ混ぜない。両方を並べて書く必要があるときだけ参照し、どちらの話かを明示する。
+- ヨルケアのアプリは、平日夜間・土日祝のためのアプリではない。夜間・休日のオンラインセッションは上記の別サービスが担う。
 - 就労者向け口頭提案の現行稿: `docs/proposal-presentation-employed-users.md`
 - ヨルケアは診断・治療の代替ではない。ガイドライン推奨を製品の医学的効能として主張しない。
 
