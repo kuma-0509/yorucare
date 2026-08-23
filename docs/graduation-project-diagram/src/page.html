@@ -311,7 +311,7 @@
         <p class="max-w-[62ch] text-[16px] leading-[2.1] text-muted">12年以上、障がい者の就労支援に携わってきました。その中で、メンタル不調により体調を崩し、就労の継続が難しくなる方と<strong class="font-bold text-ink">何人も出会ってきました。</strong></p>
         <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">そこで感じるのは、<strong class="font-bold text-ink">一人で体調管理をすることが難しい</strong>、という点です。02章のループを、本人が毎日ひとりで回している。支援者が立ち会えるのは月1回の面談で、その間の29日には立ち会えません。</p>
         <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">支える道具はあるはずでした。ところが実際に聞くのは「日々記録するツールはあるが、使いづらくて続かない」「3分診療で、整理して伝えるのが難しい」という2つです。<strong class="font-bold text-ink">続かなければ振り返る材料がなく、伝えられなければ治療や支援の判断材料になりません。</strong>ループが同じ2か所で詰まっている。</p>
-        <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">面談の回数は増やせません。だから、面談と面談のあいだ、<strong class="font-bold text-ink">本人の手元で回る道具</strong>を作ることにしました。支援者としてずっと見てきた面倒で、自分の仕事のなかで毎週感じているものだったので、卒業制作のお題にしました。</p>
+        <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">面談の回数は増やせません。だから、面談と面談のあいだ、<strong class="font-bold text-ink">本人の手元で回る道具</strong>が要る。その道具にどんな条件が必要かは、実際に企業で働いている当事者へのヒアリングではっきりしました（<a href="#how" class="text-care underline decoration-line underline-offset-4 transition hover:text-moon">04章</a>）。</p>
         <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">同時に、はっきり決めたことがあります。<strong class="font-bold text-ink">診断も治療もしない。</strong>体調を判定せず、助言もせず、良し悪しを言わない。ヨルケアは、本人が自分の状態を把握し、主治医や支援者へ伝える材料を作る道具に徹します。この線を最初に引いたことが、そのあとの実装判断のほぼすべてを決めました。</p>
       </div>
       <aside class="h-fit rounded-3xl border border-line bg-surface p-7">
@@ -332,14 +332,20 @@
     <p class="font-mono text-[11px] tracking-[0.18em] text-moon">04 ／ HOW</p>
     <div class="mt-3 h-px w-32 rule-moon"></div>
     <h2 class="mt-6 font-display text-3xl font-bold sm:text-4xl">どう作ったか</h2>
-    <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">課題で案内された4ステップの順に進めました。ここは実際に踏んだ順序なので、番号どおりです。</p>
+    <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">課題で案内された4ステップに、レビューとハッカソンの2つが挟まって6段になりました。実際に踏んだ順序なので、番号どおりです。</p>
 
     <ol class="mt-10 space-y-4">
       <li class="grid gap-4 rounded-2xl border border-line bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-7 sm:p-7">
         <span class="font-mono text-2xl font-semibold text-moon">01</span>
         <div>
-          <h3 class="font-display text-xl font-bold">毎日の面倒を書き出して、お題を決める</h3>
-          <p class="mt-2 text-[14.5px] leading-[2] text-muted">「一人で体調管理を続けられない」「記録するツールが続かない」「3分診療で伝えきれない」を分解し、いちばん手前にある“記録が続かない”をお題にした。</p>
+          <h3 class="font-display text-xl font-bold">ヒアリングと自分の経験から、お題を決める</h3>
+          <p class="mt-2 text-[14.5px] leading-[2] text-muted">ある企業で働く精神障がい者へのヒアリングと、自分がこれまで見てきた経験から、記録そのものの有用性は感じていた。その方から聞けたのは、記録の中身ではなく<strong class="text-ink">条件</strong>の話だった。</p>
+          <ul class="mt-4 space-y-2 text-[14px] leading-[1.95] text-muted">
+            <li class="border-l-2 border-rose pl-4">Excelでの管理が大変で、続けるのがつらい</li>
+            <li class="border-l-2 border-rose pl-4">会社のものだと、土日は書けない</li>
+            <li class="border-l-2 border-rose pl-4">会社の人に見られないようにしたい</li>
+          </ul>
+          <p class="mt-4 text-[14.5px] leading-[2] text-muted">つまり必要なのは、<strong class="text-ink">人に見せなくていい安全な状態で自分の振り返りのために書けて、そのうえで支援者・主治医には簡単に伝えられるよう整理してくれる</strong>アプリでした。この形を精神障がい者と支援者に話したところ共感を得られたので、作ることにした。</p>
         </div>
       </li>
       <li class="grid gap-4 rounded-2xl border border-line bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-7 sm:p-7">
@@ -356,8 +362,22 @@
           <p class="mt-2 text-[14.5px] leading-[2] text-muted">Tailwind CSS で画面のモックアップ → Next.js で動く形 → 自分のスマートフォンで毎日使う → Vercel で公開、の順。作っては使い、直しては使うを125回のコミットに分けて回した。</p>
         </div>
       </li>
-      <li class="grid gap-4 rounded-2xl border border-line bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-7 sm:p-7">
+      <li class="grid gap-4 rounded-2xl border border-moon/40 bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-7 sm:p-7">
         <span class="font-mono text-2xl font-semibold text-moon">04</span>
+        <div>
+          <h3 class="font-display text-xl font-bold">当事者・主治医・支援者にレビューしてもらう</h3>
+          <p class="mt-2 text-[14.5px] leading-[2] text-muted">作ったアプリを、精神障がい者本人と、その主治医、支援者に見てもらった。<strong class="text-ink">使う人・見る人・支える人の3方向から意見をもらえたこと</strong>が、記録項目を主治医と相談して決められる形や、渡す相手を本人が選ぶ形につながっている。</p>
+        </div>
+      </li>
+      <li class="grid gap-4 rounded-2xl border border-moon/40 bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-7 sm:p-7">
+        <span class="font-mono text-2xl font-semibold text-moon">05</span>
+        <div>
+          <h3 class="font-display text-xl font-bold">都知事杯オープンデータハッカソンでブラッシュアップする</h3>
+          <p class="mt-2 text-[14.5px] leading-[2] text-muted">参加して、さらに作り込んだ。相談先の検索は、ここで東京都のオープンデータを統合して形になった機能で、58区市町村・163か所の保健所と保健センターを、住所と電話番号つきで引けるようにした。</p>
+        </div>
+      </li>
+      <li class="grid gap-4 rounded-2xl border border-line bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-7 sm:p-7">
+        <span class="font-mono text-2xl font-semibold text-moon">06</span>
         <div>
           <h3 class="font-display text-xl font-bold">発表資料を作り、練習する</h3>
           <p class="mt-2 text-[14.5px] leading-[2] text-muted">聞き手は自分の仕事を知らない前提で、「何を作ったか」より先に「なぜ作ったか」を置いた構成にした。この図解も同じ順序で並べている。</p>
@@ -449,7 +469,7 @@
 
     <!-- 工夫 A -->
     <h3 class="mt-14 font-display text-2xl font-bold text-mint">A.　外へ出ない、を型と経路で保証する</h3>
-    <p class="mt-5 max-w-[62ch] text-[16px] leading-[2.1] text-muted">記録の本文は端末の外に出しません。これを「送らないように気をつける」で終わらせず、送る経路そのものを作らないことにしました。ブラウザの通信先は自分自身に限定してあり、外部サービスへ渡す実装が存在しません。共有したいときは、本人が全文を確認したうえで、ファイル保存かコピーで自分の手で渡します。</p>
+    <p class="mt-5 max-w-[62ch] text-[16px] leading-[2.1] text-muted">「会社の人に見られないようにしたい」。04章のヒアリングで聞いたこの一言が、この設計の出発点です。記録の本文は端末の外に出しません。これを「送らないように気をつける」で終わらせず、送る経路そのものを作らないことにしました。ブラウザの通信先は自分自身に限定してあり、外部サービスへ渡す実装が存在しません。共有したいときは、本人が全文を確認したうえで、ファイル保存かコピーで自分の手で渡します。</p>
 
     <figure class="mt-10 rounded-3xl border border-line bg-surface p-5 sm:p-8">
       <div class="fig text-muted">
@@ -633,7 +653,7 @@
       <div class="rounded-3xl border border-line bg-surface p-7">
         <p class="font-mono text-[11px] tracking-[0.14em] text-moon">F</p>
         <h3 class="mt-3 font-display text-xl font-bold">オープンデータで地域の相談先へ</h3>
-        <p class="mt-4 text-[14px] leading-[2] text-muted">東京都のオープンデータから、特別区・市町村・中核市の保健所と保健センター163か所（58区市町村）を統合しました。選んだ地域は保存も送信もせず、現在地も取得しません。電話も公式サイトも、本人が押したときだけ開きます。</p>
+        <p class="mt-4 text-[14px] leading-[2] text-muted">都知事杯オープンデータハッカソンで作り込んだ機能です。東京都のオープンデータから、特別区・市町村・中核市の保健所と保健センター163か所（58区市町村）を統合しました。選んだ地域は保存も送信もせず、現在地も取得しません。電話も公式サイトも、本人が押したときだけ開きます。</p>
       </div>
     </div>
   </section>
@@ -786,7 +806,7 @@
       <div class="rounded-3xl border border-line bg-surface p-7">
         <p class="font-mono text-[11px] tracking-[0.14em] text-moon">STEP 3</p>
         <h3 class="mt-3 font-display text-xl font-bold">診察・面談の場で使ってもらう</h3>
-        <p class="mt-4 text-[14px] leading-[2] text-muted">記録から組み立てた文章を、実際の診察と面談で使ってもらい、伝わる項目と足りない項目を確かめる。主治医と決めた記録項目が、治療方針に合っているかもここで見る。</p>
+        <p class="mt-4 text-[14px] leading-[2] text-muted">レビューでは「見てもらう」ところまで進んだ。次は、記録から組み立てた文章を実際の診察と面談で使ってもらい、伝わる項目と足りない項目を確かめる。主治医と決めた記録項目が治療方針に合っているかも、ここで見る。</p>
       </div>
     </div>
 
