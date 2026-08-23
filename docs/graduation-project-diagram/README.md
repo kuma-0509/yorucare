@@ -10,6 +10,7 @@ AI-Driven School 第1期 土曜クラス【6ヶ月目】卒業制作『自分の
 | `index.html` | ブラウザでそのまま開ける完全なHTML。CSSと画面写真を埋め込み済み |
 | `artifact.html` | `<head>` を持たない本文だけの版（外部の公開サービスへ貼る用） |
 | `screenshots/` | 図解に埋め込む画面写真の原本（すべて検証用のダミーデータ） |
+| `media/` | デモ動画（`demo.mp4` と、H.264 を再生できない環境向けの `demo.webm`）とポスター画像 |
 | `src/page.html` | 本文のソース。Tailwind のユーティリティクラスで書く |
 | `src/input.css` | Tailwind の入口と、図解だけで使う数点のスタイル |
 | `src/tailwind.config.cjs` | 図解専用の配色・書体（アプリ本体の設定とは別） |
@@ -25,6 +26,10 @@ node docs/graduation-project-diagram/src/build.mjs
 
 Tailwind CSS は生成して埋め込むため、閲覧時に外部から取りに行くのは Google Fonts だけになる。
 
+デモ動画は出力ごとに扱いを変える。1ファイルで完結させたい `artifact.html` だけ data URI として埋め込み、
+`index.html` は隣の `media/` を相対参照する（同じ中身を版管理へ二重に置かないため）。
+`index.html` を配る場合は `media/` も一緒に渡す。
+
 ## 画面写真の撮り直しかた
 
 `scripts/make-test-data.mjs` で見本データを作り、本番ビルドを起動した状態で撮る。
@@ -35,6 +40,21 @@ pnpm build && PORT=3100 pnpm start
 node scripts/make-test-data.mjs --out <一時ディレクトリ>
 # 見本データを localStorage へ入れて 390×844 で撮影し、screenshots/ を置き換える
 ```
+
+## デモ動画を差し替えるとき
+
+`media/demo.mp4` を置き換えてから、H.264 を再生できない環境向けの WebM と、
+ポスター画像を作り直して、ビルドし直す。
+
+```bash
+# ffmpeg は libx264 と libvpx-vp9 が使えるものを用意する
+ffmpeg -i media/demo.mp4 -c:v libvpx-vp9 -crf 36 -b:v 0 -an media/demo.webm -y
+ffmpeg -ss 3 -i media/demo.mp4 -frames:v 1 -q:v 6 media/demo-poster.jpg -y
+node docs/graduation-project-diagram/src/build.mjs
+```
+
+`artifact.html` は 16MB を超えると公開できない。動画は実ファイルで 10MB 以内に収める
+（data URI にすると約1.33倍になるため）。
 
 ## 記載時の制約
 

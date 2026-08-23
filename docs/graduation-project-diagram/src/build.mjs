@@ -21,6 +21,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../../..");
 const outDir = resolve(here, "..");
 const shotsDir = join(outDir, "screenshots");
+const mediaDir = join(outDir, "media");
 
 const work = mkdtempSync(join(tmpdir(), "yorucare-diagram-"));
 const cssPath = join(work, "out.css");
@@ -40,6 +41,21 @@ body = body.replace(/\{\{IMG:([a-z0-9-]+)\}\}/g, (_, name) => {
   const base64 = readFileSync(join(shotsDir, `${name}.png`)).toString("base64");
   return `data:image/png;base64,${base64}`;
 });
+
+// ポスター画像は軽いので、どちらの出力でも data URI にする
+body = body.replace(/\{\{POSTER:([a-z0-9-]+)\}\}/g, (_, name) => {
+  const base64 = readFileSync(join(mediaDir, `${name}.jpg`)).toString("base64");
+  return `data:image/jpeg;base64,${base64}`;
+});
+
+// 動画は出力ごとに変える。1ファイルで完結させたい artifact.html だけ data URI にし、
+// index.html は隣の media/ を相対参照して、版管理へ同じ中身を二重に置かないようにする。
+const dataUri = (name, ext, mime) =>
+  `data:${mime};base64,${readFileSync(join(mediaDir, `${name}.${ext}`)).toString("base64")}`;
+const withVideo = (html, toSrc) =>
+  html
+    .replace(/\{\{VIDEO:([a-z0-9-]+)\}\}/g, (_, name) => toSrc(name, "mp4", "video/mp4"))
+    .replace(/\{\{VIDEOWEBM:([a-z0-9-]+)\}\}/g, (_, name) => toSrc(name, "webm", "video/webm"));
 
 // <title> と <link rel="stylesheet"> は head 相当の行。index.html では head へ移す
 const headLines = [];
@@ -67,7 +83,7 @@ ${headLines.join("\n")}
 <style>${css}</style>
 </head>
 <body>
-${bodyOnly}
+${withVideo(bodyOnly, (name, ext) => `media/${name}.${ext}`)}
 </body>
 </html>
 `,
@@ -75,6 +91,10 @@ ${bodyOnly}
 );
 
 // Artifact 公開用は body 断片のまま。<title> と font の link は先頭に残す
-writeFileSync(join(outDir, "artifact.html"), `${headLines.join("\n")}\n<style>${css}</style>\n${bodyOnly}\n`, "utf8");
+writeFileSync(
+  join(outDir, "artifact.html"),
+  `${headLines.join("\n")}\n<style>${css}</style>\n${withVideo(bodyOnly, dataUri)}\n`,
+  "utf8"
+);
 
 console.log("built index.html / artifact.html");

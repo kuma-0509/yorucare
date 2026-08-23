@@ -65,6 +65,17 @@
       </div>
     </div>
 
+    <h3 class="mt-16 font-display text-2xl font-bold">デモ動画</h3>
+    <p class="mt-2 text-[14px] text-dim">58秒・音声なし。記録する → ふりかえる → 相談先へつなぐ、までの一連の流れ。</p>
+    <figure class="mt-8 rounded-3xl border border-line bg-surface p-3">
+      <video class="w-full rounded-2xl" controls playsinline preload="metadata" poster="{{POSTER:demo-poster}}">
+        <source src="{{VIDEO:demo}}" type="video/mp4" />
+        <source src="{{VIDEOWEBM:demo}}" type="video/webm" />
+        <p class="p-6 text-[14px] text-muted">お使いのブラウザでは動画を再生できません。<a href="https://yorucare.vercel.app/" class="text-care underline decoration-line underline-offset-4">アプリを直接開いてご覧ください。</a></p>
+      </video>
+      <figcaption class="px-2 pb-1 pt-4 text-[13.5px] leading-[1.9] text-dim">都知事杯オープンデータ・ハッカソン 2026 で使ったデモ動画。画面に出てくる記録はすべて検証用のダミーデータで、実在の体調・服薬・面談の内容は含みません。</figcaption>
+    </figure>
+
     <h3 class="mt-16 font-display text-2xl font-bold">主な機能</h3>
     <div class="mt-8 grid gap-4 sm:grid-cols-2">
       <div class="rounded-2xl border border-line bg-raised p-6">
