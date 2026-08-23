@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root { color-scheme: dark; }
+  body {
+    background-color: #080B18;
+    color: #E9ECF7;
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", sans-serif;
+    line-height: 1.9;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { text-wrap: balance; }
+  ::selection { background-color: #F2C97D; color: #080B18; }
+  :focus-visible { outline: 2px solid #F2C97D; outline-offset: 3px; }
+}
+
+@layer components {
+  /* 夜空のかすかな明かり。数値は図解のヒーローだけに使う */
+  .night-glow {
+    background-image:
+      radial-gradient(60rem 32rem at 78% -12%, rgba(242, 201, 125, 0.10), transparent 62%),
+      radial-gradient(48rem 30rem at 8% 6%, rgba(134, 174, 242, 0.10), transparent 60%);
+  }
+  .rule-moon { background-image: linear-gradient(90deg, #F2C97D, rgba(242, 201, 125, 0)); }
+  .fig { overflow-x: auto; }
+  .fig svg { min-width: 640px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

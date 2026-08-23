@@ -1,0 +1,776 @@
+<title>ヨルケア 卒業制作の記録</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<div class="night-glow">
+<main class="mx-auto max-w-page px-5 pb-28 sm:px-8">
+
+  <!-- ============ HERO ============ -->
+  <header class="pt-16 pb-14 sm:pt-24 sm:pb-20">
+    <p class="font-mono text-[11px] tracking-[0.18em] text-moon">AI-DRIVEN SCHOOL ／ 第1期 土曜クラス ／ 6ヶ月目 卒業制作</p>
+    <h1 class="mt-6 font-display text-5xl font-extrabold leading-[1.15] tracking-tight sm:text-7xl">ヨルケア</h1>
+    <p class="mt-5 max-w-[38ch] font-display text-xl leading-[1.9] text-moon sm:text-2xl">支援が届かない夜と休日に、自分の状態を<br class="hidden sm:inline" />1〜2分だけ残せるようにした。</p>
+    <p class="mt-8 max-w-[60ch] text-[15px] leading-[2] text-muted">メンタル不調から復職したあと、平日の夜と土日祝に調子が落ちる。けれど支援は平日の日中にしかない。その空白の時間に、スマートフォンだけで完結する「本人のためのセルフケア記録」を作りました。</p>
+
+    <div class="mt-10 flex flex-wrap items-center gap-3">
+      <a href="https://yorucare.vercel.app/" class="inline-flex items-center gap-2 rounded-full bg-moon px-6 py-3 font-mono text-sm font-semibold text-ground transition hover:bg-ink">yorucare.vercel.app ↗</a>
+      <span class="rounded-full border border-line px-5 py-3 font-mono text-xs text-muted">Next.js 15 ／ TypeScript ／ Tailwind CSS</span>
+      <span class="rounded-full border border-line px-5 py-3 font-mono text-xs text-muted">記録は端末内だけに保存</span>
+    </div>
+
+    <p class="mt-10 border-l-2 border-line pl-4 text-[13px] leading-[1.9] text-dim">この図解に載せた画面は、すべて検証用のダミーデータで撮影しています。実在の体調・服薬・面談の内容、氏名、所属は含みません。ヒアリングの内容も一般化して記載しています。</p>
+  </header>
+
+  <!-- ============ 目次 ============ -->
+  <nav aria-label="目次" class="mb-24 grid gap-x-8 gap-y-2 border-y border-line py-6 sm:grid-cols-2">
+    <a href="#made" class="group flex items-baseline gap-3 py-1 text-[15px] text-muted transition hover:text-ink"><span class="font-mono text-xs text-moon">01</span>作ったもの</a>
+    <a href="#problem" class="group flex items-baseline gap-3 py-1 text-[15px] text-muted transition hover:text-ink"><span class="font-mono text-xs text-moon">02</span>解決する面倒・課題</a>
+    <a href="#why" class="group flex items-baseline gap-3 py-1 text-[15px] text-muted transition hover:text-ink"><span class="font-mono text-xs text-moon">03</span>作りたいと思った理由</a>
+    <a href="#how" class="group flex items-baseline gap-3 py-1 text-[15px] text-muted transition hover:text-ink"><span class="font-mono text-xs text-moon">04</span>どう作ったか</a>
+    <a href="#craft" class="group flex items-baseline gap-3 py-1 text-[15px] text-muted transition hover:text-ink"><span class="font-mono text-xs text-moon">05</span>工夫したポイント</a>
+    <a href="#struggle" class="group flex items-baseline gap-3 py-1 text-[15px] text-muted transition hover:text-ink"><span class="font-mono text-xs text-moon">06</span>苦戦したポイント</a>
+    <a href="#numbers" class="group flex items-baseline gap-3 py-1 text-[15px] text-muted transition hover:text-ink"><span class="font-mono text-xs text-moon">07</span>数字で見る制作</a>
+    <a href="#next" class="group flex items-baseline gap-3 py-1 text-[15px] text-muted transition hover:text-ink"><span class="font-mono text-xs text-moon">08</span>これから</a>
+  </nav>
+
+  <!-- ============ 01 作ったもの ============ -->
+  <section id="made" class="scroll-mt-8">
+    <p class="font-mono text-[11px] tracking-[0.18em] text-moon">01 ／ WHAT I BUILT</p>
+    <div class="mt-3 h-px w-32 rule-moon"></div>
+    <h2 class="mt-6 font-display text-3xl font-bold sm:text-4xl">作ったもの</h2>
+    <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">スマートフォンのブラウザで開く、セルフケア記録のWEBアプリです。ログインもインストールも要りません。開いた瞬間に「よい／ふつう／しんどい」の3つが並び、1つ押して保存すればその日の記録は終わりです。書けることがある日だけ、睡眠・メモ・できたこと・明日の小さな目標を足せます。</p>
+
+    <div class="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="rounded-2xl border border-line bg-surface p-5">
+        <p class="font-mono text-[11px] text-care">TAB 01</p>
+        <h3 class="mt-2 font-display text-xl font-bold">書く</h3>
+        <p class="mt-2 text-[13px] leading-[1.9] text-muted">3段階を選んで保存。追加の項目は本人が選んだものだけ出る。</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-5">
+        <p class="font-mono text-[11px] text-care">TAB 02</p>
+        <h3 class="mt-2 font-display text-xl font-bold">これまで</h3>
+        <p class="mt-2 text-[13px] leading-[1.9] text-muted">直近7日の記録。あとから直せる。ファイルへの保存と復元もここ。</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-5">
+        <p class="font-mono text-[11px] text-care">TAB 03</p>
+        <h3 class="mt-2 font-display text-xl font-bold">できること</h3>
+        <p class="mt-2 text-[13px] leading-[1.9] text-muted">自分に効いた行動の登録簿。記録画面から1タップで選べる。</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-5">
+        <p class="font-mono text-[11px] text-care">TAB 04</p>
+        <h3 class="mt-2 font-display text-xl font-bold">ふりかえり</h3>
+        <p class="mt-2 text-[13px] leading-[1.9] text-muted">積み重ね・週のまとめ・体調の傾向グラフ。評価も助言もしない。</p>
+      </div>
+    </div>
+
+    <h3 class="mt-16 font-display text-2xl font-bold">実際の画面</h3>
+    <p class="mt-2 text-[14px] text-dim">iPhone相当（390×844）で撮影。内容はすべてダミーデータ。</p>
+    <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <figure class="rounded-3xl border border-line bg-surface p-3">
+        <img src="{{IMG:today-state}}" alt="「書く」タブ。今日の気分はどうですか？の下に、よい・ふつう・しんどいの3つの選択肢が並んでいる" class="w-full rounded-2xl" loading="lazy" />
+        <figcaption class="px-2 pb-1 pt-4 text-[13px] leading-[1.8] text-muted"><span class="font-mono text-[11px] text-moon">書く</span><br />開いて最初に出るのは3択だけ。これを押して保存すれば記録は完了する。</figcaption>
+      </figure>
+      <figure class="rounded-3xl border border-line bg-surface p-3">
+        <img src="{{IMG:today-selfcare}}" alt="「書く」タブの下部。昨日の目標のふりかえりと、自分メンテの提案が並んでいる" class="w-full rounded-2xl" loading="lazy" />
+        <figcaption class="px-2 pb-1 pt-4 text-[13px] leading-[1.8] text-muted"><span class="font-mono text-[11px] text-moon">書く（任意項目）</span><br />前日の目標のふりかえりと「自分メンテ」。表示するかは本人が決める。</figcaption>
+      </figure>
+      <figure class="rounded-3xl border border-line bg-surface p-3">
+        <img src="{{IMG:records}}" alt="「これまで」タブ。直近7日の記録が日付ごとのカードで並んでいる" class="w-full rounded-2xl" loading="lazy" />
+        <figcaption class="px-2 pb-1 pt-4 text-[13px] leading-[1.8] text-muted"><span class="font-mono text-[11px] text-moon">これまで</span><br />書かなかった日は空欄のまま置き、責める文言を出さない。</figcaption>
+      </figure>
+      <figure class="rounded-3xl border border-line bg-surface p-3">
+        <img src="{{IMG:reflection-weekly}}" alt="「ふりかえり」タブ。積み重ねと週のまとめが表示されている" class="w-full rounded-2xl" loading="lazy" />
+        <figcaption class="px-2 pb-1 pt-4 text-[13px] leading-[1.8] text-muted"><span class="font-mono text-[11px] text-moon">ふりかえり</span><br />中断で減らない累計を先に置く。連続日数は主役にしない。</figcaption>
+      </figure>
+      <figure class="rounded-3xl border border-line bg-surface p-3">
+        <img src="{{IMG:reflection-chart}}" alt="「ふりかえり」タブの体調の傾向。週・月・6ヶ月・年で気分や睡眠の折れ線グラフを表示している" class="w-full rounded-2xl" loading="lazy" />
+        <figcaption class="px-2 pb-1 pt-4 text-[13px] leading-[1.8] text-muted"><span class="font-mono text-[11px] text-moon">体調の傾向</span><br />記録がある日だけ線でつなぐ。空白を0として描かない。</figcaption>
+      </figure>
+      <figure class="rounded-3xl border border-line bg-surface p-3">
+        <img src="{{IMG:consultation}}" alt="困ったときの相談先ダイアログ。危険がある場合の119・110、いのちSOS、こころの耳などが並んでいる" class="w-full rounded-2xl" loading="lazy" />
+        <figcaption class="px-2 pb-1 pt-4 text-[13px] leading-[1.8] text-muted"><span class="font-mono text-[11px] text-moon">相談先</span><br />どのタブからも同じ操作で開く。記録は読み取らず、送信もしない。</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ 02 課題 ============ -->
+  <section id="problem" class="mt-28 scroll-mt-8">
+    <p class="font-mono text-[11px] tracking-[0.18em] text-moon">02 ／ THE PROBLEM</p>
+    <div class="mt-3 h-px w-32 rule-moon"></div>
+    <h2 class="mt-6 font-display text-3xl font-bold sm:text-4xl">解決する面倒・課題</h2>
+
+    <h3 class="mt-12 font-display text-2xl font-bold text-care">面倒①　支援が動いていない時間に、調子が落ちる</h3>
+    <p class="mt-5 max-w-[62ch] text-[16px] leading-[2.1] text-muted">通勤も業務も、緊張感でなんとか乗り切れる。落ちるのは帰宅後の夜と、土日祝です。ところが職場も産業医も支援機関も平日の日中に動いていて、通院と支援面談は月1回。いちばん揺れる時間帯に、相談できる相手がいません。「週末で回復させても、月曜が怖い」が繰り返され、再休職の入口になります。</p>
+
+    <figure class="mt-10 rounded-3xl border border-line bg-surface p-5 sm:p-8">
+      <div class="fig text-muted">
+        <svg viewBox="0 0 920 356" role="img" aria-label="1日24時間のうち、平日は9時から18時だけが支援に覆われ、それ以外の夜間と土日祝は空白であることを示す帯グラフ。ヨルケアはその24時間すべてに置かれている" class="w-full max-w-full" style="height:auto">
+          <defs>
+            <pattern id="gapHatch" width="9" height="9" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="0" x2="0" y2="9" stroke="#EE8FA0" stroke-width="1.4" opacity="0.42" />
+            </pattern>
+            <marker id="arrowMoon" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#F2C97D" />
+            </marker>
+          </defs>
+
+          <text x="110" y="30" font-size="12.5" fill="#98A2C8" font-family="monospace">1日 24 時間</text>
+          <text x="890" y="30" font-size="12.5" fill="#98A2C8" text-anchor="end" font-family="monospace">通院・支援面談は月1回（いずれも平日日中）</text>
+
+          <!-- 平日 -->
+          <text x="98" y="92" font-size="13.5" fill="currentColor" text-anchor="end">平日</text>
+          <rect x="110" y="64" width="780" height="46" rx="8" fill="#0E1428" stroke="#28325A" />
+          <rect x="110" y="64" width="292.5" height="46" rx="8" fill="url(#gapHatch)" />
+          <rect x="695" y="64" width="195" height="46" rx="8" fill="url(#gapHatch)" />
+          <rect x="402.5" y="64" width="292.5" height="46" fill="#86AEF2" opacity="0.28" />
+          <rect x="402.5" y="64" width="292.5" height="46" fill="none" stroke="#86AEF2" stroke-width="1.5" />
+          <text x="548" y="93" font-size="13" fill="#DDE7FB" text-anchor="middle">職場・産業医・支援機関</text>
+          <text x="256" y="93" font-size="12.5" fill="#EE8FA0" text-anchor="middle">夜中〜出勤前</text>
+          <text x="792" y="93" font-size="12.5" fill="#EE8FA0" text-anchor="middle">帰宅後の夜</text>
+
+          <!-- 土日祝 -->
+          <text x="98" y="160" font-size="13.5" fill="currentColor" text-anchor="end">土日祝</text>
+          <rect x="110" y="132" width="780" height="46" rx="8" fill="#0E1428" stroke="#28325A" />
+          <rect x="110" y="132" width="780" height="46" rx="8" fill="url(#gapHatch)" />
+          <text x="500" y="161" font-size="13" fill="#EE8FA0" text-anchor="middle">終日、動いている支援がない</text>
+
+          <!-- 時間軸 -->
+          <line x1="110" y1="196" x2="890" y2="196" stroke="#28325A" />
+          <g font-size="11.5" fill="#6E78A0" text-anchor="middle" font-family="monospace">
+            <line x1="110" y1="196" x2="110" y2="203" stroke="#28325A" /><text x="110" y="219">0</text>
+            <line x1="207.5" y1="196" x2="207.5" y2="203" stroke="#28325A" /><text x="207.5" y="219">3</text>
+            <line x1="305" y1="196" x2="305" y2="203" stroke="#28325A" /><text x="305" y="219">6</text>
+            <line x1="402.5" y1="196" x2="402.5" y2="203" stroke="#28325A" /><text x="402.5" y="219">9</text>
+            <line x1="500" y1="196" x2="500" y2="203" stroke="#28325A" /><text x="500" y="219">12</text>
+            <line x1="597.5" y1="196" x2="597.5" y2="203" stroke="#28325A" /><text x="597.5" y="219">15</text>
+            <line x1="695" y1="196" x2="695" y2="203" stroke="#28325A" /><text x="695" y="219">18</text>
+            <line x1="792.5" y1="196" x2="792.5" y2="203" stroke="#28325A" /><text x="792.5" y="219">21</text>
+            <line x1="890" y1="196" x2="890" y2="203" stroke="#28325A" /><text x="890" y="219">24時</text>
+          </g>
+
+          <!-- ヨルケア -->
+          <text x="98" y="277" font-size="13.5" fill="#F2C97D" text-anchor="end">ヨルケア</text>
+          <rect x="110" y="249" width="780" height="46" rx="8" fill="#F2C97D" opacity="0.16" />
+          <rect x="110" y="249" width="780" height="46" rx="8" fill="none" stroke="#F2C97D" stroke-width="1.5" />
+          <text x="500" y="278" font-size="13" fill="#F5D9A6" text-anchor="middle">24時間いつでも、1〜2分。ひとりで開いて、ひとりで閉じられる</text>
+
+          <line x1="792.5" y1="118" x2="792.5" y2="241" stroke="#F2C97D" stroke-width="1.4" stroke-dasharray="4 4" marker-end="url(#arrowMoon)" />
+          <text x="780" y="238" font-size="11.5" fill="#F2C97D" text-anchor="end">いちばん落ちる時間帯</text>
+
+          <text x="110" y="336" font-size="12.5" fill="#6E78A0">網かけ＝相談できる相手がいない時間。医療・福祉と競合せず、その外側を埋めるという立ち位置にした。</text>
+        </svg>
+      </div>
+      <figcaption class="mt-5 border-t border-line pt-4 text-[13.5px] leading-[1.9] text-dim">支援の帯（青）は平日9〜18時にしかなく、通院・支援面談は月1回。ヨルケアは帯の外側に、記録という形で常時置いた。</figcaption>
+    </figure>
+
+    <h3 class="mt-16 font-display text-2xl font-bold text-care">面倒②　体調記録は、続かないほうが普通だった</h3>
+    <p class="mt-5 max-w-[62ch] text-[16px] leading-[2.1] text-muted">支援員へのヒアリングで繰り返し出てきたのが「復職して1〜2ヶ月で体調管理の記録が途切れ、そこから不調が出る」という話でした。当事者は自作の表計算ファイルで、ひとりで管理している。既存のアプリは服薬に特化したものが多く、体調の波と生活リズムまでを一体で扱えるものが見当たりませんでした。<br /><br />理由は根性ではなく設計です。項目が多いほど「今日は書けない」が起き、空白が並ぶと自分を責め、開かなくなる。だから最初に決めたのは<strong class="font-bold text-ink">「保存の最低条件を、状態1つに下げる」</strong>ことでした。</p>
+
+    <figure class="mt-10 rounded-3xl border border-line bg-surface p-5 sm:p-8">
+      <div class="fig text-muted">
+        <svg viewBox="0 0 960 306" role="img" aria-label="従来の体調管理は毎日15項目を埋めきれず空白が並び自分を責めて開かなくなるのに対し、ヨルケアは状態を1つ選ぶだけで保存でき記録が残り次の日も開ける、という2つの流れの比較図" class="w-full max-w-full" style="height:auto">
+          <defs>
+            <marker id="arrowRose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#EE8FA0" />
+            </marker>
+            <marker id="arrowMint" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#7ED3B2" />
+            </marker>
+          </defs>
+
+          <!-- 従来 -->
+          <text x="20" y="34" font-size="13" fill="#EE8FA0">これまでの体調管理（自作の表・項目の多いアプリ）</text>
+          <g>
+            <rect x="20" y="50" width="150" height="62" rx="10" fill="#1E1730" stroke="#EE8FA0" stroke-opacity="0.55" />
+            <text x="95" y="78" font-size="12.5" fill="#F6D3D9" text-anchor="middle">毎日15項目を</text>
+            <text x="95" y="96" font-size="12.5" fill="#F6D3D9" text-anchor="middle">埋める</text>
+
+            <rect x="265" y="50" width="150" height="62" rx="10" fill="#1E1730" stroke="#EE8FA0" stroke-opacity="0.55" />
+            <text x="340" y="87" font-size="12.5" fill="#F6D3D9" text-anchor="middle">空白の日が並ぶ</text>
+
+            <rect x="510" y="50" width="150" height="62" rx="10" fill="#1E1730" stroke="#EE8FA0" stroke-opacity="0.55" />
+            <text x="585" y="78" font-size="12.5" fill="#F6D3D9" text-anchor="middle">できていない自分</text>
+            <text x="585" y="96" font-size="12.5" fill="#F6D3D9" text-anchor="middle">が可視化される</text>
+
+            <rect x="755" y="50" width="150" height="62" rx="10" fill="#2A1420" stroke="#EE8FA0" />
+            <text x="830" y="87" font-size="12.5" fill="#F6D3D9" text-anchor="middle">開かなくなる</text>
+
+            <line x1="176" y1="81" x2="259" y2="81" stroke="#EE8FA0" stroke-width="1.5" marker-end="url(#arrowRose)" />
+            <text x="217" y="70" font-size="11" fill="#EE8FA0" text-anchor="middle">埋めきれない</text>
+            <line x1="421" y1="81" x2="504" y2="81" stroke="#EE8FA0" stroke-width="1.5" marker-end="url(#arrowRose)" />
+            <text x="462" y="70" font-size="11" fill="#EE8FA0" text-anchor="middle">見返すのが</text>
+            <text x="462" y="97" font-size="11" fill="#EE8FA0" text-anchor="middle">つらい</text>
+            <line x1="666" y1="81" x2="749" y2="81" stroke="#EE8FA0" stroke-width="1.5" marker-end="url(#arrowRose)" />
+            <text x="707" y="70" font-size="11" fill="#EE8FA0" text-anchor="middle">自分を責める</text>
+          </g>
+
+          <line x1="20" y1="150" x2="905" y2="150" stroke="#28325A" stroke-dasharray="3 5" />
+
+          <!-- ヨルケア -->
+          <text x="20" y="184" font-size="13" fill="#7ED3B2">ヨルケア（保存の最低条件を、状態1つに下げた）</text>
+          <g>
+            <rect x="20" y="200" width="150" height="62" rx="10" fill="#12291F" stroke="#7ED3B2" stroke-opacity="0.55" />
+            <text x="95" y="228" font-size="12.5" fill="#D6F2E7" text-anchor="middle">状態を1つ選ぶ</text>
+            <text x="95" y="246" font-size="11.5" fill="#7ED3B2" text-anchor="middle">よい／ふつう／しんどい</text>
+
+            <rect x="265" y="200" width="150" height="62" rx="10" fill="#12291F" stroke="#7ED3B2" stroke-opacity="0.55" />
+            <text x="340" y="237" font-size="12.5" fill="#D6F2E7" text-anchor="middle">その日の記録が残る</text>
+
+            <rect x="510" y="200" width="150" height="62" rx="10" fill="#12291F" stroke="#7ED3B2" stroke-opacity="0.55" />
+            <text x="585" y="228" font-size="12.5" fill="#D6F2E7" text-anchor="middle">書ける日だけ</text>
+            <text x="585" y="246" font-size="12.5" fill="#D6F2E7" text-anchor="middle">項目を足す</text>
+
+            <rect x="755" y="200" width="150" height="62" rx="10" fill="#123326" stroke="#7ED3B2" />
+            <text x="830" y="237" font-size="12.5" fill="#D6F2E7" text-anchor="middle">次の日も開ける</text>
+
+            <line x1="176" y1="231" x2="259" y2="231" stroke="#7ED3B2" stroke-width="1.5" marker-end="url(#arrowMint)" />
+            <text x="217" y="220" font-size="11" fill="#7ED3B2" text-anchor="middle">それで保存</text>
+            <line x1="421" y1="231" x2="504" y2="231" stroke="#7ED3B2" stroke-width="1.5" marker-end="url(#arrowMint)" />
+            <text x="462" y="220" font-size="11" fill="#7ED3B2" text-anchor="middle">任意項目は</text>
+            <text x="462" y="247" font-size="11" fill="#7ED3B2" text-anchor="middle">既定で非表示</text>
+            <line x1="666" y1="231" x2="749" y2="231" stroke="#7ED3B2" stroke-width="1.5" marker-end="url(#arrowMint)" />
+            <text x="707" y="220" font-size="11" fill="#7ED3B2" text-anchor="middle">空白を</text>
+            <text x="707" y="247" font-size="11" fill="#7ED3B2" text-anchor="middle">責めない</text>
+          </g>
+
+          <text x="20" y="294" font-size="12.5" fill="#6E78A0">変えたのは機能の数ではなく、1件の記録が成立する条件。空白の日を「失敗」として描かないところまでを含めて設計した。</text>
+        </svg>
+      </div>
+      <figcaption class="mt-5 border-t border-line pt-4 text-[13.5px] leading-[1.9] text-dim">同じ「体調を記録する」でも、成立条件を1つ下げるだけで離脱の連鎖が切れる。ここが設計上の分岐点だった。</figcaption>
+    </figure>
+
+    <div class="mt-12 grid gap-4 sm:grid-cols-3">
+      <div class="rounded-2xl border border-line bg-raised p-6">
+        <p class="font-mono text-[11px] text-moon">HEARING 01</p>
+        <p class="mt-3 text-[14px] leading-[2] text-muted">夜のSNS閲覧が習慣になり、睡眠不足がそのまま翌日の不調になる。</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-raised p-6">
+        <p class="font-mono text-[11px] text-moon">HEARING 02</p>
+        <p class="mt-3 text-[14px] leading-[2] text-muted">会社には相談しにくい。支援面談は月1回。表計算ファイルでひとりで管理している。</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-raised p-6">
+        <p class="font-mono text-[11px] text-moon">HEARING 03</p>
+        <p class="mt-3 text-[14px] leading-[2] text-muted">面談は仕事ができているかの確認で精一杯で、生活や体調まで踏み込む時間がない。</p>
+      </div>
+    </div>
+    <p class="mt-4 text-[13px] text-dim">復職経験者・就労移行支援の支援員へのヒアリングで確認した内容を、個人が特定されない形に一般化して記載。</p>
+  </section>
+
+  <!-- ============ 03 理由 ============ -->
+  <section id="why" class="mt-28 scroll-mt-8">
+    <p class="font-mono text-[11px] tracking-[0.18em] text-moon">03 ／ WHY I MADE IT</p>
+    <div class="mt-3 h-px w-32 rule-moon"></div>
+    <h2 class="mt-6 font-display text-3xl font-bold sm:text-4xl">作りたいと思った理由</h2>
+
+    <div class="mt-10 grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+      <div>
+        <p class="max-w-[62ch] text-[16px] leading-[2.1] text-muted">もともと、就労移行支援の事業所へ運動講座を届ける仕事をしています。現場に入るたびに聞こえてくるのが、決まって<strong class="font-bold text-ink">「夜と休日の話」</strong>でした。日中は動けている人が、帰宅後と週末に崩れる。けれど支援は平日の日中にしかない。</p>
+        <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">その空白を埋めようと、平日夜と日曜のオンラインセッションを始めました。すると次の面倒が出てきます。<strong class="font-bold text-ink">セッションに来ていない日の状態が、誰にも分からない。</strong>本人も「先週どうでしたか」に答えられない。支援員との月1回の面談も、思い出せる範囲の話から始まる。</p>
+        <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">つまり、足りないのは支援の熱量ではなく<strong class="font-bold text-ink">「本人の手元に残る、その日の記録」</strong>でした。表計算ファイルで孤独に管理するのをやめたい。面談を「今日どうでした？」から始めるのをやめたい。この2つの面倒は、自分の仕事のなかで毎週感じているものだったので、卒業制作のお題にしました。</p>
+        <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">同時に、はっきり決めたことがあります。<strong class="font-bold text-ink">診断も治療もしない。</strong>体調を判定せず、助言もせず、良し悪しを言わない。医療と福祉の代わりではなく、その手が届かない時間帯を埋める道具に徹する。この線を最初に引いたことが、そのあとの実装判断のほぼすべてを決めました。</p>
+      </div>
+      <aside class="h-fit rounded-3xl border border-line bg-surface p-7">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-moon">DESIGN CONSTRAINTS</p>
+        <h3 class="mt-3 font-display text-xl font-bold">先に引いた4本の線</h3>
+        <ul class="mt-5 space-y-4 text-[14px] leading-[1.95] text-muted">
+          <li class="border-l-2 border-mint pl-4"><span class="text-ink">診断・治療・危機判定をしない</span><br />状態から危険度を推定しない。</li>
+          <li class="border-l-2 border-mint pl-4"><span class="text-ink">記録の本文を端末の外へ出さない</span><br />運用ルールではなく、型と経路で保証する。</li>
+          <li class="border-l-2 border-mint pl-4"><span class="text-ink">評価語・助言を画面に出さない</span><br />「すごい」「順調」「改善」を出さないことをテストで固定する。</li>
+          <li class="border-l-2 border-mint pl-4"><span class="text-ink">書けなかった日を失敗として描かない</span><br />連続日数を主役にせず、累計を先に置く。</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 04 どう作ったか ============ -->
+  <section id="how" class="mt-28 scroll-mt-8">
+    <p class="font-mono text-[11px] tracking-[0.18em] text-moon">04 ／ HOW</p>
+    <div class="mt-3 h-px w-32 rule-moon"></div>
+    <h2 class="mt-6 font-display text-3xl font-bold sm:text-4xl">どう作ったか</h2>
+    <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">課題で案内された4ステップの順に進めました。ここは実際に踏んだ順序なので、番号どおりです。</p>
+
+    <ol class="mt-10 space-y-4">
+      <li class="grid gap-4 rounded-2xl border border-line bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-7 sm:p-7">
+        <span class="font-mono text-2xl font-semibold text-moon">01</span>
+        <div>
+          <h3 class="font-display text-xl font-bold">毎日の面倒を書き出して、お題を決める</h3>
+          <p class="mt-2 text-[14.5px] leading-[2] text-muted">「夜と休日に支援がない」「記録が続かない」「面談が思い出し話から始まる」を分解し、いちばん手前にある“記録が続かない”をお題にした。</p>
+        </div>
+      </li>
+      <li class="grid gap-4 rounded-2xl border border-line bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-7 sm:p-7">
+        <span class="font-mono text-2xl font-semibold text-moon">02</span>
+        <div>
+          <h3 class="font-display text-xl font-bold">grill-me で企画を詰める</h3>
+          <p class="mt-2 text-[14.5px] leading-[2] text-muted">「誰がどれくらい困っているのか」を問われ続けたことで、対象を“復職後に波が残る人”へ絞り、診断・治療をしないという線が固まった。ここで決めた境界を、あとから <span class="font-mono text-[13px] text-care">docs/</span> の判断メモ20本に残した。</p>
+        </div>
+      </li>
+      <li class="grid gap-4 rounded-2xl border border-line bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-7 sm:p-7">
+        <span class="font-mono text-2xl font-semibold text-moon">03</span>
+        <div>
+          <h3 class="font-display text-xl font-bold">企画をもとに作り上げる</h3>
+          <p class="mt-2 text-[14.5px] leading-[2] text-muted">Tailwind CSS で画面のモックアップ → Next.js で動く形 → 自分のスマートフォンで毎日使う → Vercel で公開、の順。作っては使い、直しては使うを125回のコミットに分けて回した。</p>
+        </div>
+      </li>
+      <li class="grid gap-4 rounded-2xl border border-line bg-surface p-6 sm:grid-cols-[auto_1fr] sm:gap-7 sm:p-7">
+        <span class="font-mono text-2xl font-semibold text-moon">04</span>
+        <div>
+          <h3 class="font-display text-xl font-bold">発表資料を作り、練習する</h3>
+          <p class="mt-2 text-[14.5px] leading-[2] text-muted">聞き手は自分の仕事を知らない前提で、「何を作ったか」より先に「なぜ作ったか」を置いた構成にした。この図解も同じ順序で並べている。</p>
+        </div>
+      </li>
+    </ol>
+
+    <h3 class="mt-16 font-display text-2xl font-bold">いちばん効いた構造：差し替えられる継ぎ目を1か所にする</h3>
+    <p class="mt-5 max-w-[62ch] text-[16px] leading-[2.1] text-muted">記録は今、端末のブラウザの中にしかありません。将来クラウドへ移すかどうかは、まだ決めていません（後述のゲートで判断します）。決めていないものを作らずに済ませるために、画面からデータへ触る経路を <span class="font-mono text-[14px] text-care">repository.ts</span> の1か所に集約しました。移すと決めた日に、差し替えるのはここだけです。</p>
+
+    <figure class="mt-10 rounded-3xl border border-line bg-surface p-5 sm:p-8">
+      <div class="fig text-muted">
+        <svg viewBox="0 0 920 326" role="img" aria-label="4つのタブ画面はすべて repository.ts を通してデータを読み書きし、その先が現在は端末内のブラウザ保存、Phase 2 では同じ口のままAPIとデータベースへ差し替えられることを示す図" class="w-full max-w-full" style="height:auto">
+          <defs>
+            <marker id="arrowCare" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#86AEF2" />
+            </marker>
+            <marker id="arrowDim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#6E78A0" />
+            </marker>
+          </defs>
+
+          <g font-size="13" text-anchor="middle">
+            <rect x="60" y="30" width="170" height="50" rx="10" fill="#18203C" stroke="#28325A" />
+            <text x="145" y="60" fill="#E9ECF7">書く</text>
+            <rect x="265" y="30" width="170" height="50" rx="10" fill="#18203C" stroke="#28325A" />
+            <text x="350" y="60" fill="#E9ECF7">これまで</text>
+            <rect x="470" y="30" width="170" height="50" rx="10" fill="#18203C" stroke="#28325A" />
+            <text x="555" y="60" fill="#E9ECF7">できること</text>
+            <rect x="675" y="30" width="170" height="50" rx="10" fill="#18203C" stroke="#28325A" />
+            <text x="760" y="60" fill="#E9ECF7">ふりかえり</text>
+          </g>
+
+          <g stroke="#86AEF2" stroke-width="1.5">
+            <line x1="145" y1="80" x2="145" y2="120" marker-end="url(#arrowCare)" />
+            <line x1="350" y1="80" x2="350" y2="120" marker-end="url(#arrowCare)" />
+            <line x1="555" y1="80" x2="555" y2="120" marker-end="url(#arrowCare)" />
+            <line x1="760" y1="80" x2="760" y2="120" marker-end="url(#arrowCare)" />
+          </g>
+          <text x="657" y="106" font-size="11.5" fill="#86AEF2" text-anchor="middle">読み書きは必ずここを通る</text>
+
+          <rect x="60" y="126" width="785" height="56" rx="12" fill="#101B3A" stroke="#86AEF2" stroke-width="1.6" />
+          <text x="452" y="150" font-size="14" fill="#DDE7FB" text-anchor="middle" font-family="monospace">src/lib/repository.ts</text>
+          <text x="452" y="170" font-size="12" fill="#98A2C8" text-anchor="middle">データ操作の唯一の口（結果は成功／失敗を持つ型で返す）</text>
+
+          <line x1="290" y1="182" x2="290" y2="222" stroke="#86AEF2" stroke-width="1.5" marker-end="url(#arrowCare)" />
+          <line x1="675" y1="182" x2="675" y2="222" stroke="#6E78A0" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrowDim)" />
+
+          <rect x="140" y="228" width="300" height="62" rx="12" fill="#12291F" stroke="#7ED3B2" />
+          <text x="290" y="253" font-size="13" fill="#D6F2E7" text-anchor="middle">いま：この端末のブラウザ内</text>
+          <text x="290" y="273" font-size="11.5" fill="#7ED3B2" text-anchor="middle">記録・できること・設定。外へ出ない</text>
+
+          <rect x="505" y="228" width="340" height="62" rx="12" fill="#141A32" stroke="#6E78A0" stroke-dasharray="6 5" />
+          <text x="675" y="253" font-size="13" fill="#98A2C8" text-anchor="middle">Phase 2：API ＋ データベース</text>
+          <text x="675" y="273" font-size="11.5" fill="#6E78A0" text-anchor="middle">ゲートを通過したら、この口だけを差し替える</text>
+
+          <text x="60" y="316" font-size="12.5" fill="#6E78A0">点線＝まだ作っていない部分。作らない判断を、あとから安く取り消せる形にしておく。</text>
+        </svg>
+      </div>
+      <figcaption class="mt-5 border-t border-line pt-4 text-[13.5px] leading-[1.9] text-dim">画面はデータの居場所を知らない。だから居場所を変える決断を、実装ではなく判断のタイミングまで先送りできる。</figcaption>
+    </figure>
+
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="rounded-2xl border border-line bg-raised p-5">
+        <p class="font-mono text-[11px] text-care">FRONT</p>
+        <p class="mt-2 text-[14px] leading-[1.9] text-muted">Next.js 15（App Router）／ React 19 ／ TypeScript</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-raised p-5">
+        <p class="font-mono text-[11px] text-care">UI</p>
+        <p class="mt-2 text-[14px] leading-[1.9] text-muted">Tailwind CSS ／ Radix UI ／ lucide ／ Recharts</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-raised p-5">
+        <p class="font-mono text-[11px] text-care">DATA</p>
+        <p class="mt-2 text-[14px] leading-[1.9] text-muted">localStorage ＋ Zod で検証 ／ 匿名イベントのみ Neon Postgres</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-raised p-5">
+        <p class="font-mono text-[11px] text-care">QUALITY</p>
+        <p class="mt-2 text-[14px] leading-[1.9] text-muted">Vitest ／ ESLint ／ GitHub Actions ／ Vercel</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 05 工夫 ============ -->
+  <section id="craft" class="mt-28 scroll-mt-8">
+    <p class="font-mono text-[11px] tracking-[0.18em] text-moon">05 ／ WHAT I GOT RIGHT</p>
+    <div class="mt-3 h-px w-32 rule-moon"></div>
+    <h2 class="mt-6 font-display text-3xl font-bold sm:text-4xl">工夫したポイント</h2>
+    <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">扱うのが体調の記録なので、「気をつけて運用する」では守れないものがあります。運用ルールではなく、<strong class="font-bold text-ink">破れない形</strong>にできたかどうかで判断しました。</p>
+
+    <!-- 工夫 A -->
+    <h3 class="mt-14 font-display text-2xl font-bold text-mint">A.　外へ出ない、を型と経路で保証する</h3>
+    <p class="mt-5 max-w-[62ch] text-[16px] leading-[2.1] text-muted">記録の本文は端末の外に出しません。これを「送らないように気をつける」で終わらせず、送る経路そのものを作らないことにしました。ブラウザの通信先は自分自身に限定してあり、外部サービスへ渡す実装が存在しません。共有したいときは、本人が全文を確認したうえで、ファイル保存かコピーで自分の手で渡します。</p>
+
+    <figure class="mt-10 rounded-3xl border border-line bg-surface p-5 sm:p-8">
+      <div class="fig text-muted">
+        <svg viewBox="0 0 920 412" role="img" aria-label="端末のブラウザに入っている記録は、本人の操作でファイル保存や共有に出ていく経路と、任意同意した場合だけイベント名と日付を送る計測の経路を持つが、記録の本文が外部サービスへ出る経路は存在しないことを示す図" class="w-full max-w-full" style="height:auto">
+          <defs>
+            <marker id="arrowMint2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#7ED3B2" />
+            </marker>
+            <marker id="arrowCare2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#86AEF2" />
+            </marker>
+          </defs>
+
+          <!-- 端末 -->
+          <rect x="20" y="56" width="300" height="256" rx="16" fill="#12291F" stroke="#7ED3B2" stroke-width="1.6" />
+          <text x="170" y="86" font-size="14" fill="#D6F2E7" text-anchor="middle">この端末のブラウザの中</text>
+          <g font-size="11.5" fill="#D6F2E7" text-anchor="middle">
+            <rect x="40" y="100" width="125" height="27" rx="13" fill="#0F2119" stroke="#7ED3B2" stroke-opacity="0.5" /><text x="102" y="118">気分・状態</text>
+            <rect x="175" y="100" width="125" height="27" rx="13" fill="#0F2119" stroke="#7ED3B2" stroke-opacity="0.5" /><text x="237" y="118">睡眠</text>
+            <rect x="40" y="136" width="125" height="27" rx="13" fill="#0F2119" stroke="#7ED3B2" stroke-opacity="0.5" /><text x="102" y="154">お薬</text>
+            <rect x="175" y="136" width="125" height="27" rx="13" fill="#0F2119" stroke="#7ED3B2" stroke-opacity="0.5" /><text x="237" y="154">しんどさのサイン</text>
+            <rect x="40" y="172" width="125" height="27" rx="13" fill="#0F2119" stroke="#7ED3B2" stroke-opacity="0.5" /><text x="102" y="190">メモ（自由記述）</text>
+            <rect x="175" y="172" width="125" height="27" rx="13" fill="#0F2119" stroke="#7ED3B2" stroke-opacity="0.5" /><text x="237" y="190">できたこと</text>
+            <rect x="40" y="208" width="125" height="27" rx="13" fill="#0F2119" stroke="#7ED3B2" stroke-opacity="0.5" /><text x="102" y="226">小さな目標</text>
+            <rect x="175" y="208" width="125" height="27" rx="13" fill="#0F2119" stroke="#7ED3B2" stroke-opacity="0.5" /><text x="237" y="226">復職日</text>
+          </g>
+          <text x="170" y="264" font-size="11.5" fill="#7ED3B2" text-anchor="middle">保存先はこの端末だけ。別の端末とも共有しない</text>
+          <text x="170" y="288" font-size="11.5" fill="#7ED3B2" text-anchor="middle">全部消す操作をひとつ用意し、演出の履歴まで消す</text>
+
+          <!-- lane 1 -->
+          <line x1="320" y1="97" x2="574" y2="97" stroke="#7ED3B2" stroke-width="1.6" marker-end="url(#arrowMint2)" />
+          <text x="447" y="86" font-size="11.5" fill="#7ED3B2" text-anchor="middle">本人がボタンを押したときだけ</text>
+          <rect x="580" y="62" width="320" height="70" rx="12" fill="#18203C" stroke="#7ED3B2" stroke-opacity="0.7" />
+          <text x="740" y="90" font-size="13" fill="#E9ECF7" text-anchor="middle">ファイルに保存／コピー／共有シート</text>
+          <text x="740" y="112" font-size="11.5" fill="#98A2C8" text-anchor="middle">全文を画面で確認してから、自分の手で渡す</text>
+
+          <!-- lane 2 -->
+          <line x1="320" y1="206" x2="574" y2="206" stroke="#86AEF2" stroke-width="1.6" marker-end="url(#arrowCare2)" />
+          <text x="447" y="194" font-size="11.5" fill="#86AEF2" text-anchor="middle">本人が任意同意したときだけ</text>
+          <text x="447" y="226" font-size="11.5" fill="#86AEF2" text-anchor="middle">送るのはイベント名だけ</text>
+          <rect x="580" y="162" width="320" height="88" rx="12" fill="#101B3A" stroke="#86AEF2" />
+          <text x="740" y="188" font-size="13" fill="#DDE7FB" text-anchor="middle">匿名の利用イベント（Neon Postgres）</text>
+          <text x="740" y="210" font-size="11.5" fill="#98A2C8" text-anchor="middle">端末IDとイベントIDは保存前に不可逆化</text>
+          <text x="740" y="232" font-size="11.5" fill="#98A2C8" text-anchor="middle">365日で自動削除／停止すると即削除</text>
+
+          <!-- lane 3 blocked -->
+          <line x1="320" y1="322" x2="574" y2="322" stroke="#EE8FA0" stroke-width="1.6" stroke-dasharray="6 5" />
+          <g stroke="#EE8FA0" stroke-width="3.2">
+            <line x1="434" y1="308" x2="460" y2="336" />
+            <line x1="460" y1="308" x2="434" y2="336" />
+          </g>
+          <text x="447" y="296" font-size="11.5" fill="#EE8FA0" text-anchor="middle">記録の本文・気分・睡眠・メモ</text>
+          <rect x="580" y="290" width="320" height="64" rx="12" fill="#14172B" stroke="#6E78A0" stroke-dasharray="6 5" />
+          <text x="740" y="316" font-size="13" fill="#98A2C8" text-anchor="middle">外部サービス・外部AI・第三者</text>
+          <text x="740" y="337" font-size="11.5" fill="#6E78A0" text-anchor="middle">送る実装が存在しない</text>
+
+          <text x="20" y="392" font-size="12.5" fill="#6E78A0">ブラウザの通信先を自分自身に限定（CSP: connect-src 'self'）。許可していないイベントや項目はサーバ側で受理せず拒否する。</text>
+        </svg>
+      </div>
+      <figcaption class="mt-5 border-t border-line pt-4 text-[13.5px] leading-[1.9] text-dim">3本目の線は「気をつけて運用する」ではなく、実装が無いことで閉じている。あとから誰かが油断しても開かない。</figcaption>
+    </figure>
+
+    <!-- 工夫 B -->
+    <h3 class="mt-16 font-display text-2xl font-bold text-mint">B.　AIに文章を書かせず、候補から選ばせる</h3>
+    <p class="mt-5 max-w-[62ch] text-[16px] leading-[2.1] text-muted">面談や通院の前に持っていける「期間の報告書」を作る機能で、いちばん悩んだところです。最初はAIに文章を書かせて、診断や助言に読める言葉を禁止語リストで弾く形を考えました。<br /><br />でもこれは担保になりません。<strong class="font-bold text-ink">一覧に挙げていない言い回しは、そのまま通ってしまう</strong>からです。禁止語を足し続けても、書かれ得る文のほうが必ず多い。そこで方式ごと変えました。数値はアプリが確定させ、文章はアプリが用意した候補から1つ選ばせる。渡していない主張が報告書に入る経路が、そもそも無くなります。</p>
+
+    <figure class="mt-10 rounded-3xl border border-line bg-surface p-5 sm:p-8">
+      <div class="fig text-muted">
+        <svg viewBox="0 0 920 336" role="img" aria-label="AIに自由に文章を書かせて禁止語で濾す案は、一覧にない言い回しが素通りしてしまうのに対し、アプリが用意した候補から選ばせる案では想定外の文が画面に出る経路がないことを比較した図" class="w-full max-w-full" style="height:auto">
+          <defs>
+            <marker id="arrowRose2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#EE8FA0" />
+            </marker>
+            <marker id="arrowMint3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#7ED3B2" />
+            </marker>
+          </defs>
+
+          <text x="40" y="26" font-size="13" fill="#EE8FA0">却下した案：書かせてから濾す</text>
+          <path d="M140,72 C 300,4 560,4 720,72" fill="none" stroke="#EE8FA0" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#arrowRose2)" />
+          <text x="430" y="58" font-size="11.5" fill="#EE8FA0" text-anchor="middle">一覧にない言い回しは、そのまま通る</text>
+
+          <rect x="40" y="72" width="200" height="64" rx="10" fill="#1E1730" stroke="#EE8FA0" stroke-opacity="0.6" />
+          <text x="140" y="110" font-size="12.5" fill="#F6D3D9" text-anchor="middle">AIが自由に文章を書く</text>
+          <rect x="330" y="72" width="200" height="64" rx="10" fill="#1E1730" stroke="#EE8FA0" stroke-opacity="0.6" />
+          <text x="430" y="102" font-size="12.5" fill="#F6D3D9" text-anchor="middle">禁止語の一覧で濾す</text>
+          <text x="430" y="122" font-size="11" fill="#EE8FA0" text-anchor="middle">「すごい」「改善」…</text>
+          <rect x="620" y="72" width="200" height="64" rx="10" fill="#2A1420" stroke="#EE8FA0" />
+          <text x="720" y="110" font-size="12.5" fill="#F6D3D9" text-anchor="middle">画面に出る</text>
+
+          <line x1="246" y1="104" x2="324" y2="104" stroke="#EE8FA0" stroke-width="1.6" marker-end="url(#arrowRose2)" />
+          <line x1="536" y1="104" x2="614" y2="104" stroke="#EE8FA0" stroke-width="1.6" marker-end="url(#arrowRose2)" />
+          <text x="40" y="166" font-size="12" fill="#98A2C8">「肺炎です」「薬を増やすと良いでしょう」は、この判定を素通りする。</text>
+
+          <line x1="40" y1="186" x2="880" y2="186" stroke="#28325A" stroke-dasharray="3 5" />
+
+          <text x="40" y="216" font-size="13" fill="#7ED3B2">採用した案：書かせずに、選ばせる</text>
+          <rect x="40" y="234" width="200" height="64" rx="10" fill="#12291F" stroke="#7ED3B2" stroke-opacity="0.6" />
+          <text x="140" y="264" font-size="12.5" fill="#D6F2E7" text-anchor="middle">アプリが候補文を用意</text>
+          <text x="140" y="284" font-size="11" fill="#7ED3B2" text-anchor="middle">数値はアプリが確定させる</text>
+          <rect x="330" y="234" width="200" height="64" rx="10" fill="#12291F" stroke="#7ED3B2" stroke-opacity="0.6" />
+          <text x="430" y="264" font-size="12.5" fill="#D6F2E7" text-anchor="middle">AIは候補から1つ選ぶ</text>
+          <text x="430" y="284" font-size="11" fill="#7ED3B2" text-anchor="middle">自由記述は受け取らない</text>
+          <rect x="620" y="234" width="200" height="64" rx="10" fill="#123326" stroke="#7ED3B2" />
+          <text x="720" y="264" font-size="12.5" fill="#D6F2E7" text-anchor="middle">画面に出る</text>
+          <text x="720" y="284" font-size="11" fill="#7ED3B2" text-anchor="middle">確定は本人のボタン操作</text>
+
+          <line x1="246" y1="266" x2="324" y2="266" stroke="#7ED3B2" stroke-width="1.6" marker-end="url(#arrowMint3)" />
+          <line x1="536" y1="266" x2="614" y2="266" stroke="#7ED3B2" stroke-width="1.6" marker-end="url(#arrowMint3)" />
+
+          <text x="40" y="326" font-size="12.5" fill="#6E78A0">迂回する矢印が引けない＝渡していない主張が入る経路がない。候補そのものが制約を守っているかは、テストで固定した。</text>
+        </svg>
+      </div>
+      <figcaption class="mt-5 border-t border-line pt-4 text-[13.5px] leading-[1.9] text-dim">上下の違いは「フィルタの精度」ではなく、迂回路の有無。フィルタは候補を検査する用途に残した。</figcaption>
+    </figure>
+
+    <!-- 工夫 C -->
+    <h3 class="mt-16 font-display text-2xl font-bold text-mint">C.　「作らない条件」を、作る前に決めておく</h3>
+    <p class="mt-5 max-w-[62ch] text-[16px] leading-[2.1] text-muted">リマインド通知、アカウント、クラウド保存、共有リンク。どれも「あったほうがいい」機能ですが、どれも個人の健康情報を扱う責任と固定費が増えます。そこで、着手する前に<strong class="font-bold text-ink">「何が観測できたら作るか」</strong>を5つのゲートとして先に決め、満たすまで実装しないことにしました。<br /><br />結果として、いま保留にしている機能が3つあります。作れなかったのではなく、<strong class="font-bold text-ink">まだ作らないと決めている</strong>状態です。</p>
+
+    <figure class="mt-10 rounded-3xl border border-line bg-surface p-5 sm:p-8">
+      <div class="fig text-muted">
+        <svg viewBox="0 0 920 254" role="img" aria-label="5つの投資判断ゲート。Gate 0 は通過、Gate 1 は判定待ち、Gate 2 から 4 は未達のため対応する機能を保留していることを示す図" class="w-full max-w-full" style="height:auto">
+          <line x1="70" y1="100" x2="870" y2="100" stroke="#28325A" stroke-width="2" />
+
+          <g font-family="monospace" font-size="11.5" text-anchor="middle">
+            <text x="100" y="64" fill="#7ED3B2">GATE 0</text>
+            <text x="280" y="64" fill="#F2C97D">GATE 1</text>
+            <text x="460" y="64" fill="#6E78A0">GATE 2</text>
+            <text x="640" y="64" fill="#6E78A0">GATE 3</text>
+            <text x="820" y="64" fill="#6E78A0">GATE 4</text>
+          </g>
+
+          <circle cx="100" cy="100" r="13" fill="#7ED3B2" />
+          <circle cx="280" cy="100" r="13" fill="#080B18" stroke="#F2C97D" stroke-width="3" />
+          <circle cx="460" cy="100" r="13" fill="#080B18" stroke="#6E78A0" stroke-width="2" stroke-dasharray="4 3" />
+          <circle cx="640" cy="100" r="13" fill="#080B18" stroke="#6E78A0" stroke-width="2" stroke-dasharray="4 3" />
+          <circle cx="820" cy="100" r="13" fill="#080B18" stroke="#6E78A0" stroke-width="2" stroke-dasharray="4 3" />
+
+          <g font-size="12.5" text-anchor="middle">
+            <text x="100" y="144" fill="#E9ECF7">計測をはじめる</text>
+            <text x="280" y="144" fill="#E9ECF7">継続支援へ進む</text>
+            <text x="460" y="144" fill="#98A2C8">リマインド通知</text>
+            <text x="640" y="144" fill="#98A2C8">アカウント・保存</text>
+            <text x="820" y="144" fill="#98A2C8">対人共有リンク</text>
+          </g>
+          <g font-size="11" text-anchor="middle">
+            <text x="100" y="168" fill="#7ED3B2">通過</text>
+            <text x="280" y="168" fill="#F2C97D">判定待ち</text>
+            <text x="460" y="168" fill="#6E78A0">未達・保留</text>
+            <text x="640" y="168" fill="#6E78A0">未達・保留</text>
+            <text x="820" y="168" fill="#6E78A0">未達・保留</text>
+          </g>
+          <g font-size="10.5" text-anchor="middle" fill="#6E78A0">
+            <text x="100" y="190">データ境界を確定</text>
+            <text x="280" y="190">15台・4週間の観測</text>
+            <text x="460" y="190">「忘れる」が30%以上</text>
+            <text x="640" y="190">Gate 1 の継続基準</text>
+            <text x="820" y="190">5人以上の明示需要</text>
+          </g>
+
+          <text x="70" y="232" font-size="12.5" fill="#6E78A0">通過していないゲートの先は、設計だけ済ませて実装しない。判断は文書に日付つきで残し、あとから理由を追えるようにした。</text>
+        </svg>
+      </div>
+      <figcaption class="mt-5 border-t border-line pt-4 text-[13.5px] leading-[1.9] text-dim">機能の有無ではなく、投資の順番の話。Gate 1 の判定は、実機テストの結果が出てから行う。</figcaption>
+    </figure>
+
+    <!-- 工夫 D-F カード -->
+    <div class="mt-16 grid gap-5 lg:grid-cols-3">
+      <div class="rounded-3xl border border-line bg-surface p-7">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-moon">D</p>
+        <h3 class="mt-3 font-display text-xl font-bold">言葉を1か所に集めた</h3>
+        <p class="mt-4 text-[14px] leading-[2] text-muted">画面に出る文言は <span class="font-mono text-[13px] text-care">copy.ts</span> だけを見れば分かる形にしました。「できること」と「できたこと」のような紛らわしい語を1語に決め、localStorage や JSON といった技術用語は当事者向けの画面に出しません。文言を直書きした箇所が見つかるたび、ここへ戻しました。</p>
+      </div>
+      <div class="rounded-3xl border border-line bg-surface p-7">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-moon">E</p>
+        <h3 class="mt-3 font-display text-xl font-bold">評価語を出さないことをテストで固定</h3>
+        <p class="mt-4 text-[14px] leading-[2] text-muted">「すごい」「順調」「改善」のような評価語と助言を、節目のねぎらい文にも週のまとめにも出しません。人がうっかり足せてしまうので、禁止語の一覧を1か所に置き、表示テストで落ちるようにしました。割合ではなく日数で示し、数値には必ず母数を添えます。</p>
+      </div>
+      <div class="rounded-3xl border border-line bg-surface p-7">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-moon">F</p>
+        <h3 class="mt-3 font-display text-xl font-bold">オープンデータで地域の相談先へ</h3>
+        <p class="mt-4 text-[14px] leading-[2] text-muted">東京都のオープンデータから、特別区・市町村・中核市の保健所と保健センター163か所（58区市町村）を統合しました。選んだ地域は保存も送信もせず、現在地も取得しません。電話も公式サイトも、本人が押したときだけ開きます。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 06 苦戦 ============ -->
+  <section id="struggle" class="mt-28 scroll-mt-8">
+    <p class="font-mono text-[11px] tracking-[0.18em] text-moon">06 ／ WHAT WENT WRONG</p>
+    <div class="mt-3 h-px w-32 rule-moon"></div>
+    <h2 class="mt-6 font-display text-3xl font-bold sm:text-4xl">苦戦したポイント</h2>
+    <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">うまくいった話より、こちらのほうが学びが多く残りました。5つとも「作ってから気づいた」ことです。</p>
+
+    <div class="mt-12 space-y-5">
+      <article class="rounded-3xl border border-line bg-surface p-7 sm:p-9">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-rose">CASE 01</p>
+        <h3 class="mt-3 font-display text-2xl font-bold">3週間かけた演出を、実機テストの結果ぜんぶ消した</h3>
+        <div class="mt-6 grid gap-6 sm:grid-cols-2">
+          <div>
+            <p class="font-mono text-[11px] text-dim">何が起きたか</p>
+            <p class="mt-2 text-[14.5px] leading-[2] text-muted">記録を保存したあとに、書いた紙が本になって書庫にしまわれる3Dの演出を作りました。革・紙・木の質感、カメラの動き、音、縦長画面での見切れまで詰めて、いちばん時間をかけた部分です。</p>
+          </div>
+          <div>
+            <p class="font-mono text-[11px] text-mint">どう直したか</p>
+            <p class="mt-2 text-[14.5px] leading-[2] text-muted">実機で触ってもらった結果は「毎日やるには要らない」。保存したらすぐ完了画面へ戻る形に戻し、3D一式・音の設定・関連するテストと依存関係まで削除しました。<strong class="text-ink">1〜2分で終わるという約束と、7秒の演出は両立しません。</strong>作り込みの量ではなく、目的に合うかで判断すると決め直しました。</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-line bg-surface p-7 sm:p-9">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-rose">CASE 02</p>
+        <h3 class="mt-3 font-display text-2xl font-bold">項目を増やすほど、書けなくなった</h3>
+        <div class="mt-6 grid gap-6 sm:grid-cols-2">
+          <div>
+            <p class="font-mono text-[11px] text-dim">何が起きたか</p>
+            <p class="mt-2 text-[14.5px] leading-[2] text-muted">自分メンテ、しんどさのサイン、小さな目標。役に立つ機能を足すたび、記録画面が縦に伸びました。自分で毎日使っていて、開いた瞬間に閉じたくなる日が出てきました。</p>
+          </div>
+          <div>
+            <p class="font-mono text-[11px] text-mint">どう直したか</p>
+            <p class="mt-2 text-[14.5px] leading-[2] text-muted">追加した5項目を、端末内の設定で表示・非表示にできるようにし、<strong class="text-ink">既定をすべて非表示</strong>にしました。いつも出るのは日付・状態・睡眠・メモだけ。非表示にしても保存済みの記録は消えず、戻せばまた見えます。機能を消さずに、初期状態だけを軽くする形に落ち着きました。</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-line bg-surface p-7 sm:p-9">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-rose">CASE 03</p>
+        <h3 class="mt-3 font-display text-2xl font-bold">指標の分母を間違えると、都合のいい数字が出る</h3>
+        <div class="mt-6 grid gap-6 sm:grid-cols-2">
+          <div>
+            <p class="font-mono text-[11px] text-dim">何が起きたか</p>
+            <p class="mt-2 text-[14.5px] leading-[2] text-muted">「中断後の再開率」を集計したら、必ず100%になりました。再開した人だけを分母に入れていたからです。さらに、観測期間の途中で数えると、その日のうちに届いた保存で報告済みの値があとから変わることにも気づきました。</p>
+          </div>
+          <div>
+            <p class="font-mono text-[11px] text-mint">どう直したか</p>
+            <p class="mt-2 text-[14.5px] leading-[2] text-muted">戻らなかった側も分母に数え、観測窓（Day 0〜Day 27）が終わってから初めて集計対象に入れる形にしました。割合には必ず母数を添え、母数が0のときは値を出さない。<strong class="text-ink">自分の作ったものを評価する数字ほど、疑ってかかる必要がありました。</strong></p>
+          </div>
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-line bg-surface p-7 sm:p-9">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-rose">CASE 04</p>
+        <h3 class="mt-3 font-display text-2xl font-bold">「消したはず」の記録が、端末に残っていた</h3>
+        <div class="mt-6 grid gap-6 sm:grid-cols-2">
+          <div>
+            <p class="font-mono text-[11px] text-dim">何が起きたか</p>
+            <p class="mt-2 text-[14.5px] leading-[2] text-muted">記録を削除しても、演出の履歴が別のキーに残っていました。中身は消えていても、<strong class="text-ink">どの日に記録したかという日付の一覧が端末に残る</strong>。共有のパソコンで使い終わった人にとっては、これも十分に個人的な情報です。</p>
+          </div>
+          <div>
+            <p class="font-mono text-[11px] text-mint">どう直したか</p>
+            <p class="mt-2 text-[14.5px] leading-[2] text-muted">1件の削除でも全件削除でも、関連する履歴を先に消してから本体を消すようにし、履歴の削除に失敗したら本体も消さない形にしました。削除は「見えなくする」ではなく「残らない」まで持っていく必要がある、と学びました。</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="rounded-3xl border border-line bg-surface p-7 sm:p-9">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-rose">CASE 05</p>
+        <h3 class="mt-3 font-display text-2xl font-bold">テストの手順そのものが、測定になっていなかった</h3>
+        <div class="mt-6 grid gap-6 sm:grid-cols-2">
+          <div>
+            <p class="font-mono text-[11px] text-dim">何が起きたか</p>
+            <p class="mt-2 text-[14.5px] leading-[2] text-muted">「補助なしで2分以内に記録できるか」を測るはずの手順書に、押すボタンの位置が書いてありました。これでは、迷う場所こそ見つけたいのに、迷いが起きません。あわせて、日本時間で走らせると落ちるテストも見つかりました（世界標準時のつもりで日付を計算していた）。</p>
+          </div>
+          <div>
+            <p class="font-mono text-[11px] text-mint">どう直したか</p>
+            <p class="mt-2 text-[14.5px] leading-[2] text-muted">参加者に渡す「操作を教えない指示」と、実施者用のチェックリストを分け、無誘導の計測を先に行う順序にしました。日付の計算は、製品と同じ集計経路を通して検証する形へ直しました。<strong class="text-ink">測りたいものが測れる手順か</strong>を、実施前に点検する必要があります。</p>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 07 数字 ============ -->
+  <section id="numbers" class="mt-28 scroll-mt-8">
+    <p class="font-mono text-[11px] tracking-[0.18em] text-moon">07 ／ BY THE NUMBERS</p>
+    <div class="mt-3 h-px w-32 rule-moon"></div>
+    <h2 class="mt-6 font-display text-3xl font-bold sm:text-4xl">数字で見る制作</h2>
+    <p class="mt-6 max-w-[62ch] text-[16px] leading-[2.1] text-muted">2026年6月4日から8月22日までの記録です。すべて実際のリポジトリから数えた値です。</p>
+
+    <div class="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="rounded-2xl border border-line bg-surface p-6">
+        <p class="font-mono text-4xl font-semibold tabular-nums text-moon">125</p>
+        <p class="mt-2 text-[13.5px] text-muted">コミット</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-6">
+        <p class="font-mono text-4xl font-semibold tabular-nums text-moon">40</p>
+        <p class="mt-2 text-[13.5px] text-muted">マージしたプルリクエスト</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-6">
+        <p class="font-mono text-4xl font-semibold tabular-nums text-moon">415</p>
+        <p class="mt-2 text-[13.5px] text-muted">自動テスト（44ファイル・全件成功）</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-6">
+        <p class="font-mono text-4xl font-semibold tabular-nums text-moon">19,088</p>
+        <p class="mt-2 text-[13.5px] text-muted">TypeScript の行数</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-6">
+        <p class="font-mono text-4xl font-semibold tabular-nums text-care">50</p>
+        <p class="mt-2 text-[13.5px] text-muted">管理表に起票した課題（完了42・保留3・確認待ち3）</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-6">
+        <p class="font-mono text-4xl font-semibold tabular-nums text-care">20</p>
+        <p class="mt-2 text-[13.5px] text-muted">設計・判断を残した文書</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-6">
+        <p class="font-mono text-4xl font-semibold tabular-nums text-care">163</p>
+        <p class="mt-2 text-[13.5px] text-muted">アプリ内から引ける相談窓口（58区市町村）</p>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-6">
+        <p class="font-mono text-4xl font-semibold tabular-nums text-care">0</p>
+        <p class="mt-2 text-[13.5px] text-muted">端末の外へ出た記録の本文</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 08 これから ============ -->
+  <section id="next" class="mt-28 scroll-mt-8">
+    <p class="font-mono text-[11px] tracking-[0.18em] text-moon">08 ／ NEXT</p>
+    <div class="mt-3 h-px w-32 rule-moon"></div>
+    <h2 class="mt-6 font-display text-3xl font-bold sm:text-4xl">これから</h2>
+
+    <div class="mt-10 grid gap-5 lg:grid-cols-3">
+      <div class="rounded-3xl border border-line bg-surface p-7">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-moon">STEP 1</p>
+        <h3 class="mt-3 font-display text-xl font-bold">実機テストを終える</h3>
+        <p class="mt-4 text-[14px] leading-[2] text-muted">iPhone と Android で、5人に無誘導で触ってもらう。「補助なしで2分以内に保存できるか」「週の状態を振り返る場所へ到達できるか」を測る。手順書はもう直してある。</p>
+      </div>
+      <div class="rounded-3xl border border-line bg-surface p-7">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-moon">STEP 2</p>
+        <h3 class="mt-3 font-display text-xl font-bold">Gate 1 を判定する</h3>
+        <p class="mt-4 text-[14px] leading-[2] text-muted">15台・4週間の観測で、初週に複数日書けた割合と2週目・4週目の継続を見る。ここで継続の兆しが出なければ、リマインドもクラウド保存も作らない。</p>
+      </div>
+      <div class="rounded-3xl border border-line bg-surface p-7">
+        <p class="font-mono text-[11px] tracking-[0.14em] text-moon">STEP 3</p>
+        <h3 class="mt-3 font-display text-xl font-bold">実践研究につなげる</h3>
+        <p class="mt-4 text-[14px] leading-[2] text-muted">約20名規模で、夜間・休日のオンラインセッションと記録を組み合わせて検証する。指標案は PHQ-9・UWES-9・WHO-HPQ・PSQI。効果が確かめられてから、広げる。</p>
+      </div>
+    </div>
+
+    <div class="mt-12 rounded-3xl border border-moon/40 bg-surface p-8 sm:p-10">
+      <p class="font-display text-xl leading-[2.1] text-ink sm:text-2xl">半年間で身についたのは、作る速さより<span class="text-moon">「作らない判断を、根拠つきで残す書き方」</span>でした。夜と休日の空白は、まだ埋まっていません。小さく作って、使って、直す。それを続けられる形にできたことが、この卒業制作でいちばんの成果です。</p>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="mt-28 border-t border-line pt-10">
+    <div class="grid gap-8 sm:grid-cols-2">
+      <div>
+        <p class="font-mono text-[11px] tracking-[0.14em] text-moon">SUBMISSION</p>
+        <p class="mt-3 text-[14px] leading-[2] text-muted">AI-Driven School 第1期 土曜クラス<br />【6ヶ月目】卒業制作『自分の武器を作る』<br />提出物：本ページ（卒業制作の図解）</p>
+        <a href="https://yorucare.vercel.app/" class="mt-4 inline-flex items-center gap-2 font-mono text-[13px] text-care underline decoration-line underline-offset-4 transition hover:text-moon">https://yorucare.vercel.app/ ↗</a>
+      </div>
+      <div>
+        <p class="font-mono text-[11px] tracking-[0.14em] text-moon">SOURCES &amp; NOTES</p>
+        <ul class="mt-3 space-y-2 text-[13px] leading-[1.95] text-dim">
+          <li>事業内容の整理：株式会社mimococo「支援の空白を埋める〜復職後の夜間・休日オンラインケア〜」（Vision Hacker Association 2026 エントリーシート記載内容に基づく）</li>
+          <li>医学的背景の参照：日本うつ病学会「うつ病診療ガイドライン2025」</li>
+          <li>相談窓口データ：東京都オープンデータ（特別区・市町村・中核市の保健所／保健センター一覧）</li>
+          <li>画面写真はすべて検証用のダミーデータ。ヒアリング内容は個人が特定されない形に一般化しています。</li>
+        </ul>
+        <p class="mt-5 rounded-xl border border-rose/40 bg-raised px-4 py-3 text-[13px] leading-[1.9] text-muted">※ヨルケアおよび本プログラムは、診断・治療・処方を行うものではありません。医療・福祉の代替ではなく、その手が届かない時間帯を補う生活支援・セルフケアの道具です。</p>
+      </div>
+    </div>
+    <p class="mt-10 font-mono text-[11px] text-dim">ヨルケア ／ YORUCARE — 卒業制作の記録</p>
+  </footer>
+
+</main>
+</div>
