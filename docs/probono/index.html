@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ヨルケア プロボノ募集</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #eef1f7;
+    --card: #ffffff;
+    --ink: #131a33;
+    --ink-mid: #495270;
+    --ink-soft: #79839f;
+    --line: #d7ddea;
+    --band: linear-gradient(105deg, #10173a 0%, #1d2456 62%, #2c2f63 100%);
+    --band-ink: #f2f5ff;
+    --band-soft: #b9c2e6;
+    --amber: #96560a;
+    --amber-fill: #fbf0d8;
+    --amber-line: #e9d3a4;
+    --indigo: #3f3bc4;
+    --indigo-fill: #e9eafd;
+    --indigo-line: #cbcdf7;
+    --moon: #f4bf3f;
+    --chip: #eff2f8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #090d20;
+      --card: #151c3c;
+      --ink: #edf1fa;
+      --ink-mid: #aeb8d6;
+      --ink-soft: #8891b1;
+      --line: #2b3462;
+      --band: linear-gradient(105deg, #1a2350 0%, #232c62 60%, #343a78 100%);
+      --band-ink: #f6f8ff;
+      --band-soft: #c2cbef;
+      --amber: #fbd06a;
+      --amber-fill: rgba(251, 208, 106, 0.11);
+      --amber-line: rgba(251, 208, 106, 0.3);
+      --indigo: #aab5fd;
+      --indigo-fill: rgba(140, 150, 250, 0.13);
+      --indigo-line: rgba(140, 150, 250, 0.34);
+      --moon: #fcd34d;
+      --chip: #1d2650;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #090d20;
+    --card: #151c3c;
+    --ink: #edf1fa;
+    --ink-mid: #aeb8d6;
+    --ink-soft: #8891b1;
+    --line: #2b3462;
+    --band: linear-gradient(105deg, #1a2350 0%, #232c62 60%, #343a78 100%);
+    --band-ink: #f6f8ff;
+    --band-soft: #c2cbef;
+    --amber: #fbd06a;
+    --amber-fill: rgba(251, 208, 106, 0.11);
+    --amber-line: rgba(251, 208, 106, 0.3);
+    --indigo: #aab5fd;
+    --indigo-fill: rgba(140, 150, 250, 0.13);
+    --indigo-line: rgba(140, 150, 250, 0.34);
+    --moon: #fcd34d;
+    --chip: #1d2650;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1.2vmin;
+  }
+  .maru { font-family: "Zen Maru Gothic", "Noto Sans JP", sans-serif; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  /* ===== スライド（16:9・1枚） ===== */
+  .slide {
+    width: min(100%, calc((100vh - 2.4vmin) * 16 / 9));
+    aspect-ratio: 16 / 9;
+    font-size: min(1.02vw, 1.81vh);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 1.2em;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1.5em 4em -2em rgba(10, 16, 45, 0.45);
+  }
+
+  /* ===== ヘッダー ===== */
+  .band {
+    background: var(--band);
+    color: var(--band-ink);
+    padding: 1.25em 2.2em 1.15em;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.6em;
+    align-items: end;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7em;
+    font-size: 0.82em;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--moon);
+    margin-bottom: 0.65em;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 0.62em; height: 0.62em;
+    border-radius: 50%;
+    background: var(--moon);
+    box-shadow: 0 0 0 0.28em rgba(244, 191, 63, 0.18);
+  }
+  h1 {
+    font-size: 2.05em;
+    font-weight: 900;
+    line-height: 1.34;
+    letter-spacing: 0.01em;
+    text-wrap: balance;
+  }
+  h1 em { font-style: normal; color: var(--moon); }
+  .lede {
+    margin-top: 0.7em;
+    font-size: 0.95em;
+    line-height: 1.7;
+    color: var(--band-soft);
+    max-width: 46em;
+  }
+
+  /* ===== ゴール ===== */
+  .goals { display: flex; flex-direction: column; gap: 0.6em; min-width: 25em; }
+  .goal {
+    display: grid;
+    grid-template-columns: 5.4em 1fr;
+    align-items: center;
+    gap: 0.9em;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 0.6em;
+    padding: 0.62em 0.9em;
+  }
+  .goal .tag {
+    font-size: 0.74em;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-align: center;
+    color: #0e1330;
+    background: var(--moon);
+    border-radius: 0.35em;
+    padding: 0.3em 0;
+  }
+  .goal .txt { font-size: 0.92em; font-weight: 500; line-height: 1.5; }
+  .goal .num { font-weight: 700; font-size: 1.15em; color: var(--moon); font-variant-numeric: tabular-nums; }
+
+  /* ===== 本文 4カラム ===== */
+  .grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.95em;
+    padding: 1.05em 2.2em 0.95em;
+    min-height: 0;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.58em;
+    border: 1px solid var(--line);
+    border-radius: 0.8em;
+    padding: 0.85em 0.95em 0.8em;
+    background: var(--card);
+  }
+  .phase {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6em;
+    color: var(--ink-soft);
+    font-size: 0.75em;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+  .phase .idx { font-size: 1.05em; color: var(--ink-soft); }
+  .col h2 {
+    font-size: 1.12em;
+    font-weight: 900;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+  }
+  .block { display: flex; flex-direction: column; gap: 0.35em; }
+  .label {
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    align-self: flex-start;
+    border-radius: 0.3em;
+    padding: 0.22em 0.55em;
+  }
+  .label.trouble { color: var(--amber); background: var(--amber-fill); border: 1px solid var(--amber-line); }
+  .label.ask { color: var(--indigo); background: var(--indigo-fill); border: 1px solid var(--indigo-line); }
+  .trouble-text {
+    font-size: 0.86em;
+    line-height: 1.62;
+    color: var(--ink-mid);
+  }
+  ul { list-style: none; display: flex; flex-direction: column; gap: 0.26em; }
+  li {
+    font-size: 0.86em;
+    line-height: 1.6;
+    padding-left: 1em;
+    position: relative;
+  }
+  li::before {
+    content: "";
+    position: absolute;
+    left: 0.1em; top: 0.72em;
+    width: 0.36em; height: 0.36em;
+    border-radius: 50%;
+    background: var(--indigo);
+  }
+  .col-foot {
+    margin-top: auto;
+    padding-top: 0.6em;
+    border-top: 1px dashed var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+  }
+  .who { font-size: 0.8em; font-weight: 700; line-height: 1.45; }
+  .who span { color: var(--ink-soft); font-weight: 500; }
+  .time {
+    font-size: 0.76em;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  /* ===== フッター ===== */
+  .foot {
+    border-top: 1px solid var(--line);
+    background: var(--chip);
+    padding: 0.8em 2.2em 0.95em;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.6em;
+    align-items: center;
+  }
+  .terms { font-size: 0.82em; line-height: 1.7; color: var(--ink-mid); }
+  .terms strong { color: var(--ink); font-weight: 700; }
+  .plus {
+    font-size: 0.78em;
+    color: var(--ink-soft);
+    margin-top: 0.25em;
+    line-height: 1.6;
+  }
+  .contact {
+    text-align: right;
+    font-size: 0.82em;
+    line-height: 1.75;
+    color: var(--ink-mid);
+    white-space: nowrap;
+  }
+  .contact .org { font-size: 1.15em; font-weight: 700; color: var(--ink); }
+  .contact a { color: var(--indigo); text-decoration: none; border-bottom: 1px solid var(--indigo-line); }
+  .contact a:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
+  .blank { color: var(--ink-soft); letter-spacing: 0.05em; }
+
+  /* ===== 縦長・スマホでは1枚固定をやめて縦に流す ===== */
+  @media (max-width: 900px) {
+    body { display: block; padding: 0; }
+    .slide {
+      width: 100%;
+      aspect-ratio: auto;
+      font-size: 15px;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      min-height: 100vh;
+    }
+    .band { grid-template-columns: 1fr; align-items: start; padding: 1.6em 1.3em; }
+    .goals { min-width: 0; }
+    .grid { grid-template-columns: 1fr; padding: 1.3em; }
+    .foot { grid-template-columns: 1fr; padding: 1.3em; }
+    .contact { text-align: left; white-space: normal; }
+  }
+
+  @media print {
+    @page { size: A4 landscape; margin: 6mm; }
+    body { background: #fff; padding: 0; display: block; }
+    .slide {
+      width: 100%;
+      font-size: 8.2pt;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+</style>
+</head>
+<body>
+<main class="slide">
+
+  <header class="band">
+    <div>
+      <div class="eyebrow mono">PRO BONO WANTED</div>
+      <h1 class="maru">夜と休日のオンラインコミュニティを、<br /><em>続く事業</em>にするところを手伝ってください</h1>
+      <p class="lede">
+        ヨルケアは、メンタル不調から復職したあと「平日の夜と土日」に調子を崩しやすい人のためのオンラインセルフケアです。火・木 21:00 の運動20分、日曜 21:00 の疲労回復＋振り返り45分、1日1〜2分の記録アプリ。2026年9月〜2027年3月に21名規模で実践研究を始めます。プログラムの中身はできました。<strong>事業にする部分が、まだできていません。</strong>
+      </p>
+    </div>
+    <div class="goals">
+      <div class="goal">
+        <div class="tag mono">GOAL 1</div>
+        <div class="txt">個人が <span class="num">月5,000円</span> を払い続けてくれるコミュニティにする</div>
+      </div>
+      <div class="goal">
+        <div class="tag mono">GOAL 2</div>
+        <div class="txt">企業に <span class="num">復職後数か月のリワーク支援</span> として導入してもらう</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <section class="col">
+      <div class="phase"><span class="idx mono">01</span><span>立ち上げ</span></div>
+      <h2 class="maru">月5,000円の中身と根拠</h2>
+      <div class="block">
+        <span class="label trouble">困っていること</span>
+        <p class="trouble-text">いまは無料の検証プログラムしかなく、有料版に何を入れるか、なぜ5,000円なのかを説明できない。無料参加者に「来月から有料です」とどう伝えるかも決まっていない。</p>
+      </div>
+      <div class="block">
+        <span class="label ask">助けてほしいこと</span>
+        <ul>
+          <li>個人プラン・法人プランの構成と価格表のたたき台</li>
+          <li>継続率を入れた簡易収支モデル</li>
+          <li>無料検証から有料への移行シナリオ</li>
+        </ul>
+      </div>
+      <div class="col-foot">
+        <p class="who">事業開発／会員制・サブスクの価格設計<br /><span>ヘルスケア領域の経験があれば尚うれしい</span></p>
+        <p class="time">月1回60分のオンライン壁打ち × 6か月＋チャット</p>
+      </div>
+    </section>
+
+    <section class="col">
+      <div class="phase"><span class="idx mono">02</span><span>立ち上げ</span></div>
+      <h2 class="maru">企業への売り方</h2>
+      <div class="block">
+        <span class="label trouble">困っていること</span>
+        <p class="trouble-text">人事・産業医・障害者雇用担当・健康経営、どこに持ち込めばよいか定まらない。1名あたり月額か枠売りかも、稟議に何が必要かも分からず、法人向けの資料が1枚もない。</p>
+      </div>
+      <div class="block">
+        <span class="label ask">助けてほしいこと</span>
+        <ul>
+          <li>誰の予算で買われるのか、決裁ルートの整理</li>
+          <li>法人向け提案書1式のレビューまたは作成</li>
+          <li>導入企業に聞くべきこと／可能ならパイロット1社の紹介</li>
+        </ul>
+      </div>
+      <div class="col-foot">
+        <p class="who">人事・労務／産業保健／EAP・健康経営／法人営業<br /><span>企業側で休職・復職に関わった経験</span></p>
+        <p class="time">月1回60分＋資料レビュー2〜3回</p>
+      </div>
+    </section>
+
+    <section class="col">
+      <div class="phase"><span class="idx mono">03</span><span>募集</span></div>
+      <h2 class="maru">21名を集める導線</h2>
+      <div class="block">
+        <span class="label trouble">困っていること</span>
+        <p class="trouble-text">集客は就労移行支援事業所とクリニックからの紹介頼みで、止まったら止まる。募集ページも申込フォームもない。「治る」「効果がある」とは言えない領域で、何をどう書けば届くか迷っている。</p>
+      </div>
+      <div class="block">
+        <span class="label ask">助けてほしいこと</span>
+        <ul>
+          <li>募集ページの構成と文面</li>
+          <li>申込 → 面談 → 同意までの導線整理</li>
+          <li>紹介元（事業所・クリニック）に置く1枚チラシ</li>
+          <li>note・SNSで続けられる発信の型</li>
+        </ul>
+      </div>
+      <div class="col-foot">
+        <p class="who">Webマーケティング／コピーライティング／デザイン<br /><span>医療・福祉分野の発信経験があれば尚うれしい</span></p>
+        <p class="time">9〜10月に集中して合計10時間ほど＋以降は月1回</p>
+      </div>
+    </section>
+
+    <section class="col">
+      <div class="phase"><span class="idx mono">04</span><span>運営</span></div>
+      <h2 class="maru">増えても回る運営</h2>
+      <div class="block">
+        <span class="label trouble">困っていること</span>
+        <p class="trouble-text">連絡・出欠・3名×7グループの毎週の組み替え・記録確認まで、週3時間すべて手作業。決済も会員管理も退会フローも未整備で、有料化して人数が増えると確実に回らない。</p>
+      </div>
+      <div class="block">
+        <span class="label ask">助けてほしいこと</span>
+        <ul>
+          <li>週次運営の手順書とテンプレート</li>
+          <li>決済・会員管理・出欠集計のツール選定と初期構築</li>
+          <li>入会時の案内と、続けてもらうための設計</li>
+          <li>コミュニティのガイドライン</li>
+        </ul>
+      </div>
+      <div class="col-foot">
+        <p class="who">コミュニティ運営／カスタマーサクセス／業務改善・ノーコード<br /><span>Notion・Stripe などの構築経験</span></p>
+        <p class="time">初期構築でまとまった時間＋開始後は月1回の改善</p>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="foot">
+    <div>
+      <p class="terms">
+        <strong>関わり方</strong>　オンライン中心・期間は2026年9月〜2027年3月　|　<strong>1人1テーマでOK。単発の壁打ち1回だけでも歓迎です</strong>　|　NDA対応可　|　参加者ご本人の記録・個人情報には触れない範囲でお願いします（記録は本人の端末内に保存し、運営者も原則見ません）
+      </p>
+      <p class="plus">
+        ＋ あれば助かること：効果検証の設計・統計解析・報告書づくり（PHQ-9／UWES-9／WHO-HPQ／PSQI・開始／中間／終了のスポット3回）　※ヨルケアは医療・緊急支援サービスではありません。
+      </p>
+    </div>
+    <div class="contact">
+      <div class="org">株式会社mimococo　ヨルケア</div>
+      <div>担当：<span class="blank">＿＿＿＿</span>　連絡先：<span class="blank">＿＿＿＿＿＿＿</span></div>
+      <div>記録アプリ試作　<a href="https://yorucare.vercel.app/">yorucare.vercel.app</a></div>
+    </div>
+  </footer>
+
+</main>
+</body>
+</html>
