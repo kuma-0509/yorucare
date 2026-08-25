@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ヨルケア アプリ設計レビュー募集</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #eef1f7;
+    --card: #ffffff;
+    --ink: #131a33;
+    --ink-mid: #495270;
+    --ink-soft: #79839f;
+    --line: #d7ddea;
+    --band: linear-gradient(105deg, #10173a 0%, #1d2456 62%, #2c2f63 100%);
+    --band-ink: #f2f5ff;
+    --band-soft: #b9c2e6;
+    --amber: #96560a;
+    --amber-fill: #fbf0d8;
+    --amber-line: #e9d3a4;
+    --indigo: #3f3bc4;
+    --indigo-fill: #e9eafd;
+    --indigo-line: #cbcdf7;
+    --moon: #f4bf3f;
+    --chip: #eff2f8;
+    --now: #0f6b53;
+    --now-fill: #dff2ea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #090d20;
+      --card: #151c3c;
+      --ink: #edf1fa;
+      --ink-mid: #aeb8d6;
+      --ink-soft: #8891b1;
+      --line: #2b3462;
+      --band: linear-gradient(105deg, #1a2350 0%, #232c62 60%, #343a78 100%);
+      --band-ink: #f6f8ff;
+      --band-soft: #c2cbef;
+      --amber: #fbd06a;
+      --amber-fill: rgba(251, 208, 106, 0.11);
+      --amber-line: rgba(251, 208, 106, 0.3);
+      --indigo: #aab5fd;
+      --indigo-fill: rgba(140, 150, 250, 0.13);
+      --indigo-line: rgba(140, 150, 250, 0.34);
+      --moon: #fcd34d;
+      --chip: #1d2650;
+      --now: #6fd5b3;
+      --now-fill: rgba(111, 213, 179, 0.12);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #090d20;
+    --card: #151c3c;
+    --ink: #edf1fa;
+    --ink-mid: #aeb8d6;
+    --ink-soft: #8891b1;
+    --line: #2b3462;
+    --band: linear-gradient(105deg, #1a2350 0%, #232c62 60%, #343a78 100%);
+    --band-ink: #f6f8ff;
+    --band-soft: #c2cbef;
+    --amber: #fbd06a;
+    --amber-fill: rgba(251, 208, 106, 0.11);
+    --amber-line: rgba(251, 208, 106, 0.3);
+    --indigo: #aab5fd;
+    --indigo-fill: rgba(140, 150, 250, 0.13);
+    --indigo-line: rgba(140, 150, 250, 0.34);
+    --moon: #fcd34d;
+    --chip: #1d2650;
+    --now: #6fd5b3;
+    --now-fill: rgba(111, 213, 179, 0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1.2vmin;
+  }
+  .maru { font-family: "Zen Maru Gothic", "Noto Sans JP", sans-serif; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  /* ===== スライド（16:9・1枚） ===== */
+  .slide {
+    width: min(100%, calc((100vh - 2.4vmin) * 16 / 9));
+    aspect-ratio: 16 / 9;
+    font-size: min(1.02vw, 1.81vh);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 1.2em;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1.5em 4em -2em rgba(10, 16, 45, 0.45);
+  }
+
+  /* ===== ヘッダー ===== */
+  .band {
+    background: var(--band);
+    color: var(--band-ink);
+    padding: 1.2em 2.2em 1.15em;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.8em;
+    align-items: end;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7em;
+    font-size: 0.82em;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--moon);
+    margin-bottom: 0.6em;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 0.62em; height: 0.62em;
+    border-radius: 50%;
+    background: var(--moon);
+    box-shadow: 0 0 0 0.28em rgba(244, 191, 63, 0.18);
+  }
+  h1 {
+    font-size: 1.95em;
+    font-weight: 900;
+    line-height: 1.36;
+    letter-spacing: 0.01em;
+    text-wrap: balance;
+  }
+  h1 em { font-style: normal; color: var(--moon); }
+  .lede {
+    margin-top: 0.7em;
+    font-size: 0.93em;
+    line-height: 1.7;
+    color: var(--band-soft);
+    max-width: 44em;
+  }
+
+  /* ===== 予算の数字 ===== */
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 0.55em;
+    min-width: 24em;
+  }
+  .fact {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 0.6em;
+    padding: 0.6em 0.9em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+  }
+  .fact.wide { grid-column: span 2; }
+  .fact.hot { background: rgba(244, 191, 63, 0.14); border-color: rgba(244, 191, 63, 0.45); }
+  .fact .k { font-size: 0.74em; letter-spacing: 0.06em; color: var(--band-soft); }
+  .fact .v { font-size: 1.24em; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .fact.hot .v { color: var(--moon); }
+  .fact .n { font-size: 0.74em; color: var(--band-soft); }
+
+  /* ===== 本文 ===== */
+  .grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1.08fr 1.08fr 1fr;
+    gap: 0.95em;
+    padding: 1.05em 2.2em 0.95em;
+    min-height: 0;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55em;
+    border: 1px solid var(--line);
+    border-radius: 0.8em;
+    padding: 0.85em 0.95em 0.8em;
+    background: var(--card);
+  }
+  .col.stack { background: var(--chip); }
+  .phase {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6em;
+    color: var(--ink-soft);
+    font-size: 0.75em;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+  .col h2 {
+    font-size: 1.1em;
+    font-weight: 900;
+    line-height: 1.35;
+  }
+  .block { display: flex; flex-direction: column; gap: 0.35em; }
+  .label {
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    align-self: flex-start;
+    border-radius: 0.3em;
+    padding: 0.22em 0.55em;
+  }
+  .label.trouble { color: var(--amber); background: var(--amber-fill); border: 1px solid var(--amber-line); }
+  .label.ask { color: var(--indigo); background: var(--indigo-fill); border: 1px solid var(--indigo-line); }
+  .label.now { color: var(--now); background: var(--now-fill); border: 1px solid var(--now); }
+  .trouble-text { font-size: 0.85em; line-height: 1.62; color: var(--ink-mid); }
+  ul { list-style: none; display: flex; flex-direction: column; gap: 0.26em; }
+  li {
+    font-size: 0.85em;
+    line-height: 1.58;
+    padding-left: 1em;
+    position: relative;
+  }
+  li::before {
+    content: "";
+    position: absolute;
+    left: 0.1em; top: 0.7em;
+    width: 0.36em; height: 0.36em;
+    border-radius: 50%;
+    background: var(--indigo);
+  }
+  li strong { font-weight: 700; }
+
+  .bottom-note {
+    margin-top: auto;
+    padding: 0.6em 0.75em;
+    border-radius: 0.5em;
+    border: 1px solid var(--line);
+    border-left: 0.25em solid var(--indigo);
+    background: var(--chip);
+    font-size: 0.8em;
+    line-height: 1.6;
+    color: var(--ink-mid);
+  }
+  .bottom-note b { color: var(--ink); font-weight: 700; }
+
+  /* ===== 構成一覧 ===== */
+  .stack-group { display: flex; flex-direction: column; gap: 0.3em; }
+  .stack-list { display: flex; flex-direction: column; gap: 0.22em; }
+  .item {
+    font-size: 0.78em;
+    line-height: 1.5;
+    color: var(--ink-mid);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5em;
+  }
+  .item .t { font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .verdict {
+    margin-top: auto;
+    padding-top: 0.6em;
+    border-top: 1px dashed var(--line);
+    font-size: 0.79em;
+    line-height: 1.6;
+    color: var(--ink-mid);
+  }
+  .verdict b { color: var(--ink); }
+  .judge { display: flex; gap: 0.35em; margin-top: 0.4em; }
+  .judge span {
+    flex: 1;
+    text-align: center;
+    font-size: 0.9em;
+    font-weight: 700;
+    border-radius: 0.3em;
+    padding: 0.25em 0;
+    border: 1px solid var(--indigo-line);
+    background: var(--indigo-fill);
+    color: var(--indigo);
+  }
+
+  /* ===== フッター ===== */
+  .foot {
+    border-top: 1px solid var(--line);
+    background: var(--chip);
+    padding: 0.8em 2.2em 0.95em;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.6em;
+    align-items: center;
+  }
+  .terms { font-size: 0.82em; line-height: 1.7; color: var(--ink-mid); }
+  .terms strong { color: var(--ink); font-weight: 700; }
+  .plus { font-size: 0.78em; color: var(--ink-soft); margin-top: 0.25em; line-height: 1.6; }
+  .contact {
+    text-align: right;
+    font-size: 0.82em;
+    line-height: 1.75;
+    color: var(--ink-mid);
+    white-space: nowrap;
+  }
+  .contact .org { font-size: 1.15em; font-weight: 700; color: var(--ink); }
+  .contact a { color: var(--indigo); text-decoration: none; border-bottom: 1px solid var(--indigo-line); }
+  .contact a:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
+  .blank { color: var(--ink-soft); letter-spacing: 0.05em; }
+
+  @media (max-width: 900px) {
+    body { display: block; padding: 0; }
+    .slide {
+      width: 100%;
+      aspect-ratio: auto;
+      font-size: 15px;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      min-height: 100vh;
+    }
+    .band { grid-template-columns: 1fr; align-items: start; padding: 1.6em 1.3em; }
+    .facts { min-width: 0; }
+    .grid { grid-template-columns: 1fr; padding: 1.3em; }
+    .foot { grid-template-columns: 1fr; padding: 1.3em; }
+    .contact { text-align: left; white-space: normal; }
+  }
+
+  @media print {
+    @page { size: A4 landscape; margin: 6mm; }
+    body { background: #fff; padding: 0; display: block; }
+    .slide {
+      width: 100%;
+      font-size: 8.2pt;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+</style>
+</head>
+<body>
+<main class="slide">
+
+  <header class="band">
+    <div>
+      <div class="eyebrow mono">PRO BONO WANTED &nbsp;/&nbsp; APP</div>
+      <h1 class="maru">セキュリティに使えるお金が5万円しかありません。<br />この設計、<em>盛りすぎていないか</em>見てください</h1>
+      <p class="lede">
+        ヨルケアは、メンタル不調から復職した人が夜と休日に使うセルフケア記録アプリです（Next.js／Vercel／プロトタイプ稼働中）。扱うのは気分・睡眠・服薬・しんどさのサイン。だからこそ手は抜けない。でも、外部のセキュリティ診断を発注できる予算がありません。<strong>「削れるところ」と「削ってはいけないところ」の線を、一緒に引いてほしい。</strong>
+      </p>
+    </div>
+    <div class="facts">
+      <div class="fact"><span class="k">利用者（実践研究）</span><span class="v">21<small>名</small></span><span class="n">2026年11月〜・5か月</span></div>
+      <div class="fact"><span class="k">アプリ開発関連の予算</span><span class="v">62.2<small>万円</small></span><span class="n">助成金申請中・6か月分</span></div>
+      <div class="fact hot wide"><span class="k">うち、セキュリティレビュー・不具合修正に使える額</span><span class="v">50,000<small>円</small>　<span class="n">＝ 開発関連費の8%。外部診断を頼めば一発で超える</span></span></div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <section class="col">
+      <div class="phase"><span class="mono">01</span><span>お願い</span></div>
+      <h2 class="maru">5万円で、どこまで守れるか</h2>
+      <div class="block">
+        <span class="label trouble">困っていること</span>
+        <p class="trouble-text">扱うのが健康情報なので「予算がないから見ない」は選べない。かといって外部診断を発注する余力もない。5万円をどこに置くのが一番効くのか、自分たちでは判断できない。</p>
+      </div>
+      <div class="block">
+        <span class="label ask">助けてほしいこと</span>
+        <ul>
+          <li><strong>5万円の使いどころの優先順位</strong>（設計レビューか、実装後の一点集中チェックか、範囲を絞った有償診断か）</li>
+          <li><strong>無償・低コストで代替できる確認手順</strong>：依存の脆弱性・シークレット検出・静的解析・ヘッダ検査、CIに組み込める自動チェックの型</li>
+          <li><strong>「ここだけは有償で」の線引き</strong>と、逆に「自前で十分」の線引き</li>
+          <li>無償・割引でレビューしてくれる先や制度の心当たり</li>
+        </ul>
+      </div>
+      <p class="bottom-note"><b>最低これだけでも。</b>いまのコードと設計を見て「ここが一番危ない」を3つ挙げてもらえるだけでも、5万円の使い道が決まります。</p>
+    </section>
+
+    <section class="col">
+      <div class="phase"><span class="mono">02</span><span>お願い</span></div>
+      <h2 class="maru">この構成、21名には過剰では</h2>
+      <div class="block">
+        <span class="label trouble">困っていること</span>
+        <p class="trouble-text">クラウド保存の設計は固めた。ただ利用者は21名・5か月。KMSでの本文暗号化や四半期の権限棚卸しまで、いま本当に要るのか。むしろ端末内保存のまま走るほうが安全で安いのではないか。</p>
+      </div>
+      <div class="block">
+        <span class="label ask">助けてほしいこと</span>
+        <ul>
+          <li>右の構成を <strong>「いま必要／後でよい／要らない」の3つに仕分け</strong></li>
+          <li>削れる固定費の指摘（Vercel Proは要る？ Neonを2プロジェクトに分ける必要は？ KMSなしでNeonの保存時暗号化だけで足りる？ 監視SaaSなしで回せる？）</li>
+          <li><strong>「クラウド保存を今はやらない」という選択肢の評価</strong>。それが正解ならそう言ってほしい</li>
+          <li>削ってはいけない安全性の下限を、理由つきで</li>
+        </ul>
+      </div>
+      <p class="bottom-note"><b>最低これだけでも。</b>「クラウド保存は今やめておけ」または「やるならここは削るな」の一言でも、判断の材料になります。</p>
+    </section>
+
+    <section class="col stack">
+      <div class="phase"><span class="mono">03</span><span>レビュー対象</span></div>
+      <div class="stack-group">
+        <span class="label now">いま動いている（追加費用 0円）</span>
+        <div class="stack-list">
+          <p class="item"><span class="t">アプリ</span><span>Next.js 15／React 19／TypeScript・Vercel無料枠</span></p>
+          <p class="item"><span class="t">本人の記録</span><span>端末内（localStorage）のみ・手動JSONバックアップ</span></p>
+          <p class="item"><span class="t">匿名利用ログ</span><span>初期OFF・任意同意。Neon Postgres＋日次purge cron</span></p>
+        </div>
+      </div>
+      <div class="stack-group">
+        <span class="label ask">計画中（クラウド保存に進む場合）</span>
+        <div class="stack-list">
+          <p class="item"><span class="t">実行</span><span>Vercel Functions（sin1）に本人記録API</span></p>
+          <p class="item"><span class="t">認証</span><span>Neon Auth のメールマジックリンク＋10分以内の再認証</span></p>
+          <p class="item"><span class="t">DB</span><span>匿名分析とは別プロジェクトの本人記録用Neon</span></p>
+          <p class="item"><span class="t">認可</span><span>API所有者確認＋RLS / FORCE RLS（CRUD別ポリシー）</span></p>
+          <p class="item"><span class="t">暗号化</span><span>AWS KMS顧客管理鍵で利用者ごとDEK→AES-256-GCM</span></p>
+          <p class="item"><span class="t">資格情報</span><span>Vercel OIDC→AWS IAMの短期資格情報</span></p>
+          <p class="item"><span class="t">同期</span><span>端末優先＋同期キュー、競合は両版保持で本人が選ぶ</span></p>
+          <p class="item"><span class="t">運用</span><span>スナップショット／PITR・復元試験・四半期の権限棚卸し</span></p>
+        </div>
+      </div>
+      <div class="verdict">
+        <b>ほしいアウトプットは1枚の仕分け表です。</b>設計文書とコードはGitHubで先にお渡しします。
+        <div class="judge"><span>いま必要</span><span>後でよい</span><span>要らない</span></div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="foot">
+    <div>
+      <p class="terms">
+        <strong>関わり方</strong>　<strong>単発2時間の設計レビュー1回だけでも歓迎です</strong>　|　オンライン中心　|　NDA対応可　|　実装は当方が行うので、手を動かしていただくことは前提にしません　|　参加者ご本人の記録・個人情報には触れない範囲でお願いします（記録は本人の端末内に保存し、運営者も原則見ません）
+      </p>
+      <p class="plus">
+        ※ヨルケアは医療・緊急支援サービスではありません。アプリの記録はリアルタイムに確認されません。　※コミュニティ運営そのもの（値付け・法人開拓・募集・運営）の相談は別紙にまとめています。
+      </p>
+    </div>
+    <div class="contact">
+      <div class="org">株式会社mimococo　ヨルケア</div>
+      <div>担当：<span class="blank">＿＿＿＿</span>　連絡先：<span class="blank">＿＿＿＿＿＿＿</span></div>
+      <div>アプリ試作　<a href="https://yorucare.vercel.app/">yorucare.vercel.app</a></div>
+    </div>
+  </footer>
+
+</main>
+</body>
+</html>
