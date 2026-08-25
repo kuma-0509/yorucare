@@ -604,7 +604,7 @@ function note(slide, y, text) {
   );
 
   s.addText("株式会社mimococo　ヨルケア", { x: M, y: 6.1, w: 6, h: 0.34, fontFace: JP, fontSize: 13, bold: true, color: "FFFFFF", margin: 0, valign: "middle" });
-  s.addText("担当：＿＿＿＿＿＿　連絡先：＿＿＿＿＿＿＿＿＿", { x: M, y: 6.45, w: 6.5, h: 0.34, fontFace: JP, fontSize: 12, color: BAND_SOFT, margin: 0, valign: "middle" });
+  s.addText("担当：熊谷祐希　問い合わせ先：gmpm1001@gmail.com", { x: M, y: 6.45, w: 6.5, h: 0.34, fontFace: JP, fontSize: 12, color: BAND_SOFT, margin: 0, valign: "middle" });
   s.addText("アプリ試作　yorucare.vercel.app", { x: W - M - 5, y: 6.1, w: 5, h: 0.34, fontFace: JP, fontSize: 12.5, bold: true, color: AMBER, align: "right", margin: 0, valign: "middle" });
   s.addText("※ ヨルケアは医療・緊急支援サービスではありません。", { x: W - M - 6, y: 6.45, w: 6, h: 0.34, fontFace: JP, fontSize: 11, color: "8891B1", align: "right", margin: 0, valign: "middle" });
 
