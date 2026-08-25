@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ヨルケア 卒業制作 発表スライド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Shippori+Mincho+B1:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ground:#080B18; --surface:#111830; --raised:#18203C; --line:#28325A;
+    --ink:#E9ECF7; --muted:#98A2C8; --dim:#6E78A0;
+    --moon:#F2C97D; --care:#86AEF2; --mint:#7ED3B2; --rose:#EE8FA0;
+    --notes-w:0px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;background:var(--ground);overflow:hidden;}
+  body{
+    font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+    color:var(--ink); -webkit-font-smoothing:antialiased;
+  }
+  .mincho{font-family:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+
+  /* ===== 1280x720 の板を、画面いっぱいに拡大する ===== */
+  .stagewrap{position:fixed;inset:0;right:var(--notes-w);}
+  .stage{
+    position:absolute;left:50%;top:50%;
+    width:1280px;height:720px;transform-origin:center center;
+    background:var(--ground);overflow:hidden;
+  }
+  .slide{position:absolute;inset:0;display:none;padding:60px 76px 74px;flex-direction:column;justify-content:center;}
+  .slide.on{display:flex;}
+
+  .kick{font-size:17px;letter-spacing:.22em;color:var(--dim);margin-bottom:18px;}
+  .kick b{color:var(--moon);font-weight:700;}
+  h1{font-size:78px;line-height:1.12;font-weight:900;letter-spacing:-.01em;}
+  h2{font-size:46px;line-height:1.25;font-weight:900;letter-spacing:-.01em;}
+  .lead{font-size:25px;line-height:1.7;color:var(--muted);}
+  .hi{color:var(--moon);}
+  .hi-c{color:var(--care);}
+  .hi-m{color:var(--mint);}
+  .hi-r{color:var(--rose);}
+  .under{
+    background:linear-gradient(transparent 62%,rgba(242,201,125,.28) 62%);
+    padding:0 .1em;
+  }
+
+  /* 下の帯 */
+  .bar{
+    position:absolute;left:0;right:0;bottom:0;height:46px;
+    display:flex;align-items:center;gap:20px;padding:0 76px;
+    border-top:1px solid var(--line);background:rgba(8,11,24,.9);
+    font-size:14px;color:var(--dim);
+  }
+  .bar .grow{flex:1;height:3px;background:var(--line);border-radius:2px;overflow:hidden;}
+  .bar .grow i{display:block;height:100%;background:var(--moon);transition:width .3s;}
+
+  /* 統計タイル */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:34px;}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:30px 26px;}
+  .stat .n{font-size:62px;font-weight:900;line-height:1;letter-spacing:-.02em;}
+  .stat .t{font-size:19px;line-height:1.55;color:var(--muted);margin-top:16px;}
+  .src{font-size:12.5px;color:var(--dim);margin-top:22px;line-height:1.7;}
+
+  /* 引用 */
+  .quotes{display:flex;flex-direction:column;gap:20px;margin-top:34px;}
+  .q{
+    background:var(--surface);border-left:5px solid var(--moon);border-radius:0 14px 14px 0;
+    padding:24px 30px;font-size:31px;font-weight:700;line-height:1.45;
+  }
+  .q span{display:block;font-size:15px;font-weight:500;color:var(--dim);margin-bottom:8px;letter-spacing:.1em;}
+
+  /* 比較表 */
+  table{width:100%;border-collapse:separate;border-spacing:0;margin-top:18px;font-size:18px;}
+  th,td{padding:13px 18px;text-align:left;vertical-align:top;line-height:1.5;}
+  thead th{font-size:16px;color:var(--dim);font-weight:500;border-bottom:1px solid var(--line);}
+  tbody th{font-size:16px;color:var(--muted);font-weight:500;width:190px;}
+  tbody tr+tr th,tbody tr+tr td{border-top:1px solid rgba(40,50,90,.6);}
+  .me{background:rgba(126,211,178,.09);}
+  thead .me{color:var(--mint);font-weight:900;font-size:19px;border-bottom:1px solid rgba(126,211,178,.4);}
+  td.me{color:var(--ink);font-weight:700;}
+  td.me b{color:var(--mint);}
+  .zero{
+    margin-top:20px;display:flex;align-items:baseline;gap:14px;
+    padding:14px 24px;background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  }
+  .zero .n{font-size:42px;font-weight:900;color:var(--mint);line-height:1;}
+  .zero .t{font-size:18px;color:var(--muted);}
+
+  /* 動画 */
+  .videoslide{padding:0;}
+  .videoslide video{width:100%;height:100%;object-fit:contain;background:#000;}
+  .vnote{
+    position:absolute;left:0;right:0;bottom:46px;padding:12px 76px;
+    background:linear-gradient(transparent,rgba(8,11,24,.92));
+    font-size:15px;color:var(--dim);text-align:center;
+  }
+
+  /* 苦戦 */
+  .flip{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:34px;margin-top:36px;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px;}
+  .card .n{font-size:56px;font-weight:900;line-height:1;}
+  .card .t{font-size:19px;color:var(--muted);margin-top:14px;line-height:1.6;}
+  .arrow{font-size:40px;color:var(--dim);}
+
+  /* これから */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:30px;}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px 24px;}
+  .step .s{font-size:13px;letter-spacing:.18em;color:var(--moon);font-weight:700;}
+  .step .h{font-size:23px;font-weight:900;margin-top:12px;line-height:1.35;}
+  .step .b{font-size:16px;color:var(--muted);margin-top:12px;line-height:1.6;}
+  .close{
+    margin-top:34px;padding-top:24px;display:flex;justify-content:space-between;
+    align-items:flex-end;gap:30px;border-top:1px solid var(--line);
+  }
+  .url{font-size:27px;font-weight:700;color:var(--moon);}
+  .disc{font-size:14px;color:var(--dim);line-height:1.7;max-width:640px;text-align:right;}
+
+  /* ===== 発表者ノート ===== */
+  .notes{
+    position:fixed;top:0;right:0;bottom:0;width:0;overflow:hidden;
+    background:#05070F;border-left:1px solid var(--line);transition:width .2s;
+    display:flex;flex-direction:column;
+  }
+  body.notes-on .notes{width:400px;}
+  .notes-in{padding:22px 24px;overflow-y:auto;font-size:15px;line-height:1.85;flex:1;}
+  .notes-in h3{font-size:16px;color:var(--moon);margin-bottom:14px;letter-spacing:.06em;}
+  .notes-in p{margin-bottom:12px;color:#CBD3EC;}
+  .notes-in .cue{color:var(--dim);font-size:13.5px;}
+  .notes-in strong{color:#fff;}
+  .notes-hd{
+    padding:16px 24px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .clock{font-size:30px;font-weight:700;letter-spacing:.02em;}
+  .clock.warn{color:var(--moon);} .clock.over{color:var(--rose);}
+  .target{font-size:13px;color:var(--dim);text-align:right;line-height:1.5;}
+  .help{
+    position:fixed;right:14px;top:12px;font-size:12px;color:#4A5480;z-index:5;
+    font-family:"IBM Plex Mono",monospace;background:rgba(5,7,15,.75);
+    padding:6px 12px;border-radius:8px;transition:opacity .6s;
+  }
+  .help.hide{opacity:0;}
+  @media print{.notes,.help,.bar{display:none;}}
+</style>
+</head>
+<body>
+
+<div class="stagewrap"><div class="stage" id="stage">
+
+<!-- ============ 1 タイトル ============ -->
+<section class="slide" data-end="15">
+  <div>
+    <div class="kick">AI-DRIVEN SCHOOL ／ 第1期 土曜クラス ／ <b>卒業制作</b></div>
+    <h1 class="mincho">ヨルケア</h1>
+    <p class="lead" style="margin-top:26px;max-width:900px;">
+      メンタル不調を経験して復職した人が、<br>自分の体調を<span class="hi">1日1〜2分</span>で記録できるアプリ
+    </p>
+    <p style="margin-top:44px;font-size:29px;font-weight:700;">
+      まず、<span class="under">なぜ記録が必要なのか</span>から話します
+    </p>
+  </div>
+  <div class="notes-src">
+    <h3>① タイトル ｜ 0:00 - 0:15</h3>
+    <p>ヨルケアというアプリを作りました。メンタル不調を経験して復職した人が、自分の体調を1日1〜2分で記録できるアプリです。</p>
+    <p>まず、<strong>なぜ記録が必要なのか</strong>から話させてください。</p>
+    <p class="cue">〔深呼吸してから始める〕</p>
+  </div>
+</section>
+
+<!-- ============ 2 12年の現場 ============ -->
+<section class="slide" data-end="47">
+  <div class="kick">WHY ／ <b>01</b> 前提</div>
+  <h2>12年以上、障がいのある方の<br>就労支援をしています</h2>
+  <div class="stats">
+    <div class="stat">
+      <div class="n hi">約6<span style="font-size:34px;">%</span></div>
+      <div class="t">日本人が<b>生涯に</b>うつ病を<br>経験する割合</div>
+    </div>
+    <div class="stat" style="border-color:rgba(242,201,125,.45);">
+      <div class="n hi">約50<span style="font-size:34px;">%</span></div>
+      <div class="t">初回のうつ病エピソード後に<br><b>再発する可能性</b></div>
+    </div>
+    <div class="stat">
+      <div class="n hi-r">50.7<span style="font-size:34px;">%</span></div>
+      <div class="t">精神障がい者が<br>就職後1年以内に離職した割合</div>
+    </div>
+  </div>
+  <p class="src">
+    国立精神・神経医療研究センター／Ishikawa et al.（2018）　｜　NICE, Depression in adults（NG222, 2022）　｜　JEED 障害者職業総合センター No.137（2017）<br>
+    離職割合は、2015年7〜8月にハローワーク紹介で一般企業へ就職した精神障がい者1,206人の1年後定着率49.3%から算出。就労継続支援A型を除く。
+  </p>
+  <div class="notes-src">
+    <h3>② 12年の現場 ｜ 0:15 - 0:47（32秒）</h3>
+    <p>私は12年以上、障がいのある方の就労支援をしています。働きたい人と会社のあいだに入って、働き続けられるように支える仕事です。</p>
+    <p>メンタル不調で体調を崩して、働き続けるのが難しくなる方に、何人も出会ってきました。</p>
+    <p>数字も同じです。日本人が<strong>生涯に</strong>うつ病を経験する割合は約6%。一度目のあと、再発する可能性は<strong>約50%</strong>。就職して1年以内に離職した精神障がいのある方は、<strong>50.7%</strong>です。</p>
+    <p class="cue">〔「生涯に」を落とさない。落とすと「今6%の人がうつ病」と読まれる〕<br>〔「約50%」は次の章の入口。強く言う〕</p>
+  </div>
+</section>
+
+<!-- ============ 3 なぜ記録が必要なのか ============ -->
+<section class="slide" data-end="101">
+  <div class="kick">WHY ／ <b>02</b> なぜ記録が必要なのか</div>
+  <h2 style="font-size:40px;">診察室で起きていること</h2>
+  <svg viewBox="0 0 1128 400" style="width:100%;margin-top:16px;" role="img"
+       aria-label="1か月の実際の体調が、記憶を通ると『まあまあでした』に縮み、そのまま治療の判断材料になる。記録があると30日分の事実がそのまま判断へ渡る">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#6E78A0"/>
+      </marker>
+      <marker id="arm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#7ED3B2"/>
+      </marker>
+    </defs>
+
+    <!-- 左：1か月の実際 -->
+    <rect x="2" y="60" width="252" height="278" rx="14" fill="#111830" stroke="#28325A"/>
+    <text x="24" y="92" fill="#98A2C8" font-size="15">この1か月に、実際に起きたこと</text>
+    <polyline points="24,190 44,175 64,200 84,168 104,232 124,244 144,206 164,180 184,238 204,250 224,214 232,186"
+              fill="none" stroke="#86AEF2" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="104" cy="232" r="5" fill="#EE8FA0"/><circle cx="124" cy="244" r="5" fill="#EE8FA0"/>
+    <circle cx="184" cy="238" r="5" fill="#EE8FA0"/><circle cx="204" cy="250" r="5" fill="#EE8FA0"/>
+    <text x="24" y="300" fill="#EE8FA0" font-size="14">● しんどかった日</text>
+    <text x="24" y="322" fill="#6E78A0" font-size="14">30日ぶん、毎日</text>
+
+    <!-- 上の道：いま -->
+    <text x="322" y="82" fill="#EE8FA0" font-size="15" font-weight="700">いま</text>
+    <line x1="256" y1="128" x2="316" y2="128" stroke="#6E78A0" stroke-width="2" marker-end="url(#ar)"/>
+    <rect x="322" y="94" width="192" height="70" rx="12" fill="#18203C" stroke="#EE8FA0"/>
+    <text x="418" y="126" fill="#E9ECF7" font-size="21" font-weight="700" text-anchor="middle">記　憶</text>
+    <text x="418" y="150" fill="#EE8FA0" font-size="12.5" text-anchor="middle">その日の体調に引きずられる</text>
+    <line x1="514" y1="128" x2="552" y2="128" stroke="#6E78A0" stroke-width="2" marker-end="url(#ar)"/>
+    <rect x="558" y="88" width="286" height="82" rx="12" fill="#18203C" stroke="#28325A"/>
+    <text x="576" y="116" fill="#6E78A0" font-size="14">「この1か月、どうでしたか」</text>
+    <text x="576" y="150" fill="#E9ECF7" font-size="24" font-weight="700">「まあまあでした」</text>
+    <line x1="844" y1="128" x2="902" y2="150" stroke="#6E78A0" stroke-width="2" marker-end="url(#ar)"/>
+
+    <!-- 下の道：記録があると -->
+    <text x="322" y="222" fill="#7ED3B2" font-size="15" font-weight="700">記録があると</text>
+    <line x1="256" y1="268" x2="316" y2="268" stroke="#7ED3B2" stroke-width="2" marker-end="url(#arm)"/>
+    <rect x="322" y="234" width="192" height="70" rx="12" fill="#18203C" stroke="#7ED3B2"/>
+    <text x="418" y="266" fill="#E9ECF7" font-size="21" font-weight="700" text-anchor="middle">記　録</text>
+    <text x="418" y="290" fill="#7ED3B2" font-size="12.5" text-anchor="middle">1日1〜2分、その場で残す</text>
+    <line x1="514" y1="268" x2="552" y2="268" stroke="#7ED3B2" stroke-width="2" marker-end="url(#arm)"/>
+    <rect x="558" y="228" width="286" height="82" rx="12" fill="#18203C" stroke="rgba(126,211,178,.6)"/>
+    <text x="576" y="256" fill="#6E78A0" font-size="14">「この1か月、どうでしたか」</text>
+    <text x="576" y="290" fill="#7ED3B2" font-size="24" font-weight="700">30日ぶんの事実</text>
+    <line x1="844" y1="268" x2="902" y2="246" stroke="#7ED3B2" stroke-width="2" marker-end="url(#arm)"/>
+
+    <!-- 右：治療の判断 -->
+    <rect x="908" y="120" width="218" height="156" rx="14" fill="#111830" stroke="#F2C97D"/>
+    <text x="1017" y="158" fill="#F2C97D" font-size="15" text-anchor="middle">月に1回の診察</text>
+    <text x="1017" y="196" fill="#E9ECF7" font-size="26" font-weight="900" text-anchor="middle">治療の判断</text>
+    <text x="1017" y="228" fill="#98A2C8" font-size="15" text-anchor="middle">薬を続けるのか、</text>
+    <text x="1017" y="250" fill="#98A2C8" font-size="15" text-anchor="middle">減らすのか</text>
+  </svg>
+  <p style="margin-top:14px;font-size:26px;font-weight:700;text-align:center;">
+    残りの<span class="hi">29日</span>を知っている人は、本人しかいない
+  </p>
+  <div class="notes-src">
+    <h3>③ なぜ記録が必要なのか ｜ 0:47 - 1:41（54秒）★核</h3>
+    <p class="cue">〔いちばんゆっくり話す章。焦らない〕</p>
+    <p>再発する可能性が約50%ということは、<strong>復職したあとも治療が続く</strong>ということです。薬を続けるのか、減らすのか。それを決めるのは、<strong>月に1回の診察</strong>です。</p>
+    <p>その診察で、主治医は必ずこう聞きます。<strong>「この1か月、どうでしたか」</strong></p>
+    <p class="cue">〔ここで一拍置く〕</p>
+    <p>本人は、<strong>記憶で</strong>答えます。</p>
+    <p>ここが問題です。人の記憶は、<strong>その日の体調に引きずられます。</strong>診察の日にたまたま調子が良ければ、しんどい日が10日あった月でも「まあまあでした」になる。</p>
+    <p>つまり今は、<strong>治療を決める材料が、診察の日の気分で変わってしまう。</strong></p>
+    <p>私たち支援者が会えるのも、月に1回の面談だけです。<strong>残りの29日を知っている人は、本人しかいません。</strong></p>
+    <p>だから記録が要ります。記録は、自分のためだけのものではなくて、<strong>主治医が判断するための材料</strong>です。</p>
+  </div>
+</section>
+
+<!-- ============ 4 でも、続かない ============ -->
+<section class="slide" data-end="123">
+  <div class="kick">PROBLEM ／ <b>03</b> ところが</div>
+  <h2>その記録が、続かない</h2>
+  <svg viewBox="0 0 1128 132" style="width:100%;margin-top:30px;" role="img"
+       aria-label="把握・セルフケア・伝える・治療・就労継続の循環のうち、把握と伝えるの2か所で詰まる">
+    <defs>
+      <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#6E78A0"/>
+      </marker>
+    </defs>
+    <g font-size="16" fill="#98A2C8" text-anchor="middle">
+      <rect x="4" y="30" width="192" height="56" rx="12" fill="#18203C" stroke="#EE8FA0"/>
+      <text x="100" y="64" fill="#E9ECF7" font-weight="700">状態を記録する</text>
+      <rect x="238" y="30" width="176" height="56" rx="12" fill="#111830" stroke="#28325A"/>
+      <text x="326" y="64">セルフケア</text>
+      <rect x="456" y="30" width="216" height="56" rx="12" fill="#18203C" stroke="#EE8FA0"/>
+      <text x="564" y="64" fill="#E9ECF7" font-weight="700">主治医に伝える</text>
+      <rect x="714" y="30" width="186" height="56" rx="12" fill="#111830" stroke="#28325A"/>
+      <text x="807" y="64">治療・服薬調整</text>
+      <rect x="942" y="30" width="182" height="56" rx="12" fill="#111830" stroke="#28325A"/>
+      <text x="1033" y="64">働き続ける</text>
+    </g>
+    <g stroke="#6E78A0" stroke-width="2" marker-end="url(#ar2)">
+      <line x1="196" y1="58" x2="232" y2="58"/><line x1="414" y1="58" x2="450" y2="58"/>
+      <line x1="672" y1="58" x2="708" y2="58"/><line x1="900" y1="58" x2="936" y2="58"/>
+    </g>
+    <path d="M1033,90 L1033,116 L100,116 L100,92" fill="none" stroke="#6E78A0" stroke-width="2"
+          stroke-dasharray="5 5" marker-end="url(#ar2)"/>
+    <text x="566" y="132" fill="#6E78A0" font-size="14" text-anchor="middle">毎日、本人がひとりで回している</text>
+    <text x="100" y="22" fill="#EE8FA0" font-size="15" text-anchor="middle" font-weight="700">詰まり①</text>
+    <text x="564" y="22" fill="#EE8FA0" font-size="15" text-anchor="middle" font-weight="700">詰まり②</text>
+  </svg>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:38px;">
+    <div class="card"><div class="t" style="margin:0;font-size:22px;color:var(--ink);">
+      <b class="hi-r">①</b> 日々記録するツールはあるが、<br><b>使いづらくて続かない</b></div></div>
+    <div class="card"><div class="t" style="margin:0;font-size:22px;color:var(--ink);">
+      <b class="hi-r">②</b> 続いたとしても、<b>3分の診察で<br>整理して伝えきれない</b></div></div>
+  </div>
+  <p style="margin-top:26px;font-size:23px;color:var(--muted);">
+    続かなければ材料がない。伝わらなければ、材料になりません。
+  </p>
+  <div class="notes-src">
+    <h3>④ でも、続かない ｜ 1:41 - 2:03（22秒）</h3>
+    <p>ところが、その記録が続きません。</p>
+    <p>現場で聞くのは、決まって2つです。ひとつ、<strong>日々記録するツールはあるが、使いづらくて続かない。</strong>もうひとつ、<strong>続いたとしても、3分の診察で整理して伝えきれない。</strong></p>
+    <p>続かなければ材料がない。伝わらなければ、材料になりません。</p>
+  </div>
+</section>
+
+<!-- ============ 5 3つの条件 ============ -->
+<section class="slide" data-end="150">
+  <div class="kick">RESEARCH ／ <b>04</b> 当事者に聞いた</div>
+  <h2 style="font-size:40px;">返ってきたのは、ほしい機能ではなく<br><span class="hi">3つの条件</span>でした</h2>
+  <div class="quotes">
+    <div class="q"><span>条件 01</span>Excelでの管理が大変で、続けるのがつらい</div>
+    <div class="q"><span>条件 02</span>会社のものだと、土日は書けない</div>
+    <div class="q"><span>条件 03</span>会社の人に見られないようにしたい</div>
+  </div>
+  <div class="notes-src">
+    <h3>⑤ 3つの条件 ｜ 2:03 - 2:30（27秒）</h3>
+    <p>この2か所を、自分の見立てで直したくなかったので、企業で働いている精神障がいのある方に聞きました。</p>
+    <p>返ってきたのは、ほしい機能ではなく、<strong>3つの条件</strong>でした。</p>
+    <p>ひとつ。<strong>Excelでの管理が大変で、続けるのがつらい。</strong></p>
+    <p>ふたつ。<strong>会社のものだと、土日は書けない。</strong></p>
+    <p>みっつ。<strong>会社の人に見られないようにしたい。</strong></p>
+    <p class="cue">〔1つずつ、間を置いて読む〕</p>
+  </div>
+</section>
+
+<!-- ============ 6 デモ ============ -->
+<section class="slide videoslide" data-end="220">
+  <video id="demo" preload="auto" playsinline poster="../media/demo-poster.jpg">
+    <source src="../media/demo.webm" type="video/webm" />
+    <source src="../media/demo.mp4" type="video/mp4" />
+  </video>
+  <div class="vnote">画面はすべて検証用のダミーデータ　／　スペースキーで再生・一時停止</div>
+  <div class="notes-src">
+    <h3>⑥ デモ ｜ 2:30 - 3:40（70秒）</h3>
+    <p class="cue">〔前振り 9秒。再生ボタンに手をかけてから話し始める〕</p>
+    <p>作ったのがこれです。ブラウザで開くだけ。ログインもインストールも要りません。46秒の動画でお見せします。</p>
+    <p class="cue">── ここで再生（V キー）。以下を上からかぶせる。余ったら黙って待つ ──</p>
+    <p class="cue">〔0-8秒｜記録画面〕</p>
+    <p>開いて最初に出るのは、よい・ふつう・しんどい、の3つだけです。ひとつ押して保存すれば、その日の記録は終わりです。</p>
+    <p class="cue">〔8-16秒｜任意項目〕</p>
+    <p>書ける日は、睡眠やメモを足せます。<strong>どの項目を出すかは、主治医と相談して選べます。</strong>〔⑦の伏線。はっきり言う〕</p>
+    <p class="cue">〔16-24秒｜一覧〕</p>
+    <p>ためた記録は一覧で見返せます。書かなかった日は空欄のまま置いて、責める言葉は出しません。</p>
+    <p class="cue">〔24-36秒｜ふりかえり・グラフ〕</p>
+    <p>ふりかえりでは、積み重ねと、気分や睡眠の変化をグラフで見られます。連続日数は主役にしていません。中断しても減らない数字を、先に置いています。</p>
+    <p class="cue">〔36-47秒｜相談先〕</p>
+    <p>最後が相談先の検索です。東京都のオープンデータから、58の区市町村、163か所の保健所と保健センターを、住所と電話番号つきで引けます。</p>
+    <p class="cue">── 動画が止まってから。受け 14秒。早口にしない ──</p>
+    <p>今の記録は、すべてダミーデータです。それと、前提をひとつ。<strong>ヨルケアは、診断も治療もしません。</strong>良し悪しも言いません。主治医に伝える材料を作る道具に徹しています。</p>
+  </div>
+</section>
+
+<!-- ============ 7 なぜヨルケアなのか ============ -->
+<section class="slide" data-end="280">
+  <div class="kick">WHY THIS ／ <b>05</b> なぜヨルケアなのか</div>
+  <h2 style="font-size:34px;">Excelでも紙の手帳でもいいのでは、と思われるかもしれません</h2>
+  <table>
+    <thead><tr><th></th><th>紙の手帳・Excel</th><th>一般の記録アプリ</th><th class="me">ヨルケア</th></tr></thead>
+    <tbody>
+      <tr>
+        <th>1件が成立する条件</th>
+        <td>列が埋まらないと<br>書いた気にならない</td>
+        <td>項目が多く、<br>通知と連続日数で急かす</td>
+        <td class="me"><b>状態をひとつ選ぶだけ</b></td>
+      </tr>
+      <tr>
+        <th>記録する項目</th>
+        <td>自由。ただし続かない</td>
+        <td>作った人が決めたもので<br>固定</td>
+        <td class="me"><b>主治医と相談して<br>出し入れできる</b></td>
+      </tr>
+      <tr>
+        <th>記録の置き場所</th>
+        <td>手元、または会社のもの</td>
+        <td>運営に預ける</td>
+        <td class="me"><b>端末のなか。<br>外に送る実装がない</b></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="zero">
+    <div class="n mono">0</div>
+    <div class="t">件　──　端末の外へ出た記録の本文</div>
+    <div style="margin-left:auto;font-size:19px;font-weight:700;">
+      <span class="hi-m">続く軽さ</span>と<span class="hi-m">主治医に合わせられること</span>の両立が、答えです
+    </div>
+  </div>
+  <div class="notes-src">
+    <h3>⑦ なぜヨルケアなのか ｜ 3:40 - 4:40（60秒）★核</h3>
+    <p>では、<strong>Excelでも紙の手帳でもいいのでは</strong>、と思われるかもしれません。実際、それで続いている方もいます。</p>
+    <p>ヨルケアが違うのは、3つです。</p>
+    <p><strong>ひとつ。1件が成立する条件が、いちばん軽い。</strong>状態をひとつ選べば、その日の記録になります。表は、列が埋まらないと書いた気になりません。<strong>しんどい日ほど、ここが効きます。</strong></p>
+    <p><strong>ふたつ。記録する項目を、主治医と相談して選べる。</strong>当事者と、その主治医と、支援者にレビューしてもらって出てきた形です。一般の記録アプリは、項目が作った人の決めたものに固定されています。ヨルケアは出し入れできるので、<strong>その人の治療方針に合った記録</strong>になる。だから、診察で使えます。</p>
+    <p><strong>みっつ。外に出ない。</strong>クラウドのアプリは、記録を運営に預けることになります。ヨルケアには、外に送る実装がありません。<strong>外へ出た記録の本文は、0件です。</strong></p>
+    <p>続く軽さと、主治医に合わせられること。<strong>この両立</strong>が、ヨルケアの答えです。</p>
+    <p class="cue">〔比較であって否定ではない。「他はダメ」と言わない〕</p>
+  </div>
+</section>
+
+<!-- ============ 8 苦戦 ============ -->
+<section class="slide" data-end="316">
+  <div class="kick">WHAT WENT WRONG ／ <b>06</b> 苦戦したところ</div>
+  <h2>3週間かけた演出を、全部消しました</h2>
+  <div class="flip">
+    <div class="card">
+      <div class="n hi">3週間</div>
+      <div class="t">記録を保存すると、書いた紙が本になって書庫にしまわれる3Dの演出。革と紙と木の質感、カメラの動き、音まで詰めた</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="card" style="border-color:rgba(238,143,160,.5);">
+      <div class="n hi-r">7秒</div>
+      <div class="t">実機で触ってもらった結果は「毎日やるには要らない」。<b>1〜2分で終わるという約束と両立しない</b></div>
+    </div>
+  </div>
+  <p style="margin-top:34px;font-size:30px;font-weight:900;text-align:center;">
+    <span class="under">条件1に、自分で反していました</span>
+  </p>
+  <p style="margin-top:18px;font-size:19px;color:var(--muted);text-align:center;">
+    3D一式も、音も、テストも、依存関係まで全部削除
+  </p>
+  <div class="notes-src">
+    <h3>⑧ 苦戦したところ ｜ 4:40 - 5:16（36秒）</h3>
+    <p>うまくいった話より、こちらのほうが学びが残りました。</p>
+    <p>保存したあとに、書いた紙が本になって、書庫にしまわれる3Dの演出を作っていました。〔押していたらここを飛ばす→〕革と紙と木の質感、カメラの動き、音まで詰めて、<strong>3週間</strong>、いちばん時間をかけた部分です。</p>
+    <p>実機で触ってもらった結果は、「毎日やるには要らない」。</p>
+    <p><strong>7秒かかるんです。</strong>1〜2分で終わるという約束と両立しません。<strong>条件1に、自分で反していました。</strong></p>
+    <p>3D一式も、音も、テストも、全部消しました。</p>
+  </div>
+</section>
+
+<!-- ============ 9 これから ============ -->
+<section class="slide" data-end="343">
+  <div class="kick">NEXT ／ <b>07</b> これから</div>
+  <h2 style="font-size:40px;">作らない判断を、根拠つきで残す</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="s">STEP 1</div>
+      <div class="h">実機テストを終える</div>
+      <div class="b">5人に無誘導で触ってもらい、補助なしで2分以内に保存できるかを測る</div>
+    </div>
+    <div class="step">
+      <div class="s">STEP 2</div>
+      <div class="h">Gate 1 を判定する</div>
+      <div class="b">続く兆しが出なければ、リマインド通知もクラウド保存も作らない</div>
+    </div>
+    <div class="step">
+      <div class="s">STEP 3</div>
+      <div class="h">診察・面談で使ってもらう</div>
+      <div class="b">記録から組み立てた文章が、実際に伝わるかを確かめる</div>
+    </div>
+  </div>
+  <div class="close">
+    <div>
+      <div style="font-size:14px;color:var(--dim);letter-spacing:.14em;margin-bottom:8px;">TRY IT</div>
+      <div class="url">yorucare.vercel.app</div>
+    </div>
+    <p class="disc">
+      ヨルケアは、診断・治療・処方を行うものではありません。医療の代替ではなく、本人が自分の状態を把握し、主治医・支援者へ伝える材料を作るためのセルフケアの道具です。<br>
+      画面はすべて検証用のダミーデータ。現場で見てきた内容は個人が特定されない形に一般化しています。
+    </p>
+  </div>
+  <div class="notes-src">
+    <h3>⑨ これから ｜ 5:16 - 5:43（27秒）</h3>
+    <p>これからは、5人に実機で触ってもらって、補助なしで2分以内に記録できるかを測ります。続く兆しが出なければ、リマインド通知もクラウド保存も作りません。<strong>作れないのではなく、まだ作らないと決めています。</strong></p>
+    <p>半年で身についたのは、作る速さより、<strong>作らない判断を、根拠つきで残す書き方</strong>でした。</p>
+    <p>ありがとうございました。</p>
+    <p class="cue">〔URLを出したまま話す〕</p>
+  </div>
+</section>
+
+<div class="bar">
+  <span class="mono"><b id="cur">1</b> / <span id="total">9</span></span>
+  <span class="grow"><i id="prog"></i></span>
+  <span id="label">ヨルケア ／ 卒業制作</span>
+</div>
+
+</div></div>
+
+<aside class="notes">
+  <div class="notes-hd">
+    <div>
+      <div class="clock mono" id="clock">0:00</div>
+      <div style="font-size:12px;color:var(--dim);margin-top:2px;">T 開始・停止　R 戻す</div>
+    </div>
+    <div class="target mono" id="tgt">この面の終わり<br>0:15</div>
+  </div>
+  <div class="notes-in" id="notesIn"></div>
+</aside>
+
+<div class="help mono">← → 送る　N ノート　T 計測　V 動画　F 全画面</div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const stage = document.getElementById('stage');
+  const notesIn = document.getElementById('notesIn');
+  const clockEl = document.getElementById('clock');
+  const tgtEl = document.getElementById('tgt');
+  const video = document.getElementById('demo');
+  document.getElementById('total').textContent = slides.length;
+
+  // ノート本文は各面から抜いて、右のパネルへ移す
+  const notes = slides.map(s => {
+    const n = s.querySelector('.notes-src');
+    const html = n ? n.innerHTML : '';
+    if (n) n.remove();
+    return html;
+  });
+
+  let idx = Math.max(0, Math.min(slides.length - 1, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+
+  function fmt(sec){
+    sec = Math.max(0, Math.round(sec));
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+  }
+
+  function show(i){
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, j) => s.classList.toggle('on', j === idx));
+    document.getElementById('cur').textContent = idx + 1;
+    document.getElementById('prog').style.width = ((idx + 1) / slides.length * 100) + '%';
+    notesIn.innerHTML = notes[idx];
+    notesIn.scrollTop = 0;
+    tgtEl.innerHTML = 'この面の終わり<br>' + fmt(+slides[idx].dataset.end);
+    history.replaceState(null, '', '#' + (idx + 1));
+    if (video && !slides[idx].contains(video)) { video.pause(); video.currentTime = 0; }
+  }
+
+  // 1280x720 の板を、はみ出さない大きさまで拡大する
+  function fit(){
+    const w = window.innerWidth - (document.body.classList.contains('notes-on') ? 400 : 0);
+    const s = Math.min(w / 1280, window.innerHeight / 720);
+    stage.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+    document.querySelector('.stagewrap').style.right =
+      document.body.classList.contains('notes-on') ? '400px' : '0';
+  }
+  window.addEventListener('resize', fit);
+
+  // 計測。押した時点から数え、面ごとの目安と見比べる
+  let t0 = null, paused = 0, tick = null;
+  function render(){
+    const sec = t0 === null ? paused : paused + (Date.now() - t0) / 1000;
+    clockEl.textContent = fmt(sec);
+    const end = +slides[idx].dataset.end;
+    clockEl.className = 'clock mono' + (sec > 360 ? ' over' : sec > end ? ' warn' : '');
+  }
+  function toggleTimer(){
+    if (t0 === null) { t0 = Date.now(); tick = setInterval(render, 200); }
+    else { paused += (Date.now() - t0) / 1000; t0 = null; clearInterval(tick); }
+    render();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); show(idx + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(idx - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'n' || e.key === 'N') { document.body.classList.toggle('notes-on'); fit(); }
+    else if (e.key === 't' || e.key === 'T') toggleTimer();
+    else if (e.key === 'r' || e.key === 'R') { t0 = null; paused = 0; clearInterval(tick); render(); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    }
+    else if (e.key === 'v' || e.key === 'V' || e.key === ' ') {
+      if (slides[idx].contains(video)) { e.preventDefault(); video.paused ? video.play() : video.pause(); }
+      else if (e.key === ' ') { e.preventDefault(); show(idx + 1); }
+    }
+  });
+
+  let touchX = null;
+  document.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 60) show(idx + (dx < 0 ? 1 : -1));
+    touchX = null;
+  }, { passive: true });
+
+  // キー操作の案内は数秒で引っ込め、マウスを動かすとまた出す
+  const help = document.querySelector('.help');
+  let hideTimer;
+  function nudgeHelp(){
+    help.classList.remove('hide');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => help.classList.add('hide'), 4000);
+  }
+  document.addEventListener('mousemove', nudgeHelp);
+
+  show(idx); fit(); render(); nudgeHelp();
+</script>
+</body>
+</html>
