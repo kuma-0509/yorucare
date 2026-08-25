@@ -15,8 +15,8 @@ import pptxgen from "pptxgenjs";
 
 const pres = new pptxgen();
 pres.layout = "LAYOUT_WIDE"; // 13.333 x 7.5
-pres.author = "株式会社mimococo";
-pres.company = "株式会社mimococo";
+pres.author = "熊谷祐希";
+pres.company = "ヨルケア";
 pres.title = "ヨルケア アプリのご説明";
 
 const W = 13.333;
@@ -155,7 +155,7 @@ function note(slide, y, text) {
     s.addText(c[1], { x: x + 0.25, y: 5.52, w: 3.3, h: 0.34, fontFace: JP, fontSize: 10.5, color: BAND_SOFT, margin: 0, valign: "middle" });
   });
 
-  s.addText("株式会社mimococo　ヨルケア　|　アプリ試作　yorucare.vercel.app", {
+  s.addText("アプリ試作　yorucare.vercel.app", {
     x: M, y: 6.5, w: 9, h: 0.34, fontFace: JP, fontSize: 12, color: "8891B1", margin: 0, valign: "middle",
   });
   s.addText("プロボノの皆さまへ", {
@@ -603,7 +603,7 @@ function note(slide, y, text) {
     { x: M, y: 5.1, w: CW, h: 0.75, fontFace: JP, fontSize: 12, color: BAND_INK, lineSpacing: 20, margin: 0 }
   );
 
-  s.addText("株式会社mimococo　ヨルケア", { x: M, y: 6.1, w: 6, h: 0.34, fontFace: JP, fontSize: 13, bold: true, color: "FFFFFF", margin: 0, valign: "middle" });
+  s.addText("ヨルケア", { x: M, y: 6.1, w: 6, h: 0.34, fontFace: JP, fontSize: 13, bold: true, color: "FFFFFF", margin: 0, valign: "middle" });
   s.addText("担当：熊谷祐希　問い合わせ先：gmpm1001@gmail.com", { x: M, y: 6.45, w: 6.5, h: 0.34, fontFace: JP, fontSize: 12, color: BAND_SOFT, margin: 0, valign: "middle" });
   s.addText("アプリ試作　yorucare.vercel.app", { x: W - M - 5, y: 6.1, w: 5, h: 0.34, fontFace: JP, fontSize: 12.5, bold: true, color: AMBER, align: "right", margin: 0, valign: "middle" });
   s.addText("※ ヨルケアは医療・緊急支援サービスではありません。", { x: W - M - 6, y: 6.45, w: 6, h: 0.34, fontFace: JP, fontSize: 11, color: "8891B1", align: "right", margin: 0, valign: "middle" });
