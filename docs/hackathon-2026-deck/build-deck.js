@@ -499,72 +499,78 @@ function footer(s, n) {
   const s = newSlide();
   eyebrow(s, "PRODUCT ／ DEMO");
   title(s, [
-    { text: "記録は1〜2分。" },
-    { text: "続けた分だけ、自分の状態が見えてくる。", options: { color: C.sec } },
+    { text: "記録から、" },
+    { text: "ふりかえり・調整・相談まで。", options: { color: C.sec } },
   ]);
 
-  const pw = 1.76;
-  const phh = pw * (1888 / 920); // 4.002
-  const py = G.bodyTop - 0.07;
-  const caps = [
-    { n: "①", t: "書く", d: "気分・睡眠・できたことを選ぶだけ。\n気分だけでも保存できる。" },
-    { n: "②", t: "これまで", d: "直近7日を一覧で確認。\n1週間以内ならあとから直せる。" },
-    { n: "③", t: "ふりかえり", d: "週・月・6か月・年で\n変化を折れ線グラフで見る。" },
+  // 端末は実機の録画。会場では再生し、PDFではポスターが残る。
+  const pw = 2.18;
+  const phh = pw * (1764 / 860); // 4.471
+  const px = G.ml;
+  const py = G.bodyTop;
+
+  s.addShape(pres.ShapeType.roundRect, {
+    x: px - 0.11,
+    y: py - 0.11,
+    w: pw + 0.22,
+    h: phh + 0.22,
+    rectRadius: 0.09,
+    fill: { color: C.surface },
+    line: { color: C.line, width: 1 },
+  });
+  s.addMedia({
+    type: "video",
+    path: path.join(A, "demo.mp4"),
+    cover:
+      "data:image/jpeg;base64," +
+      fs.readFileSync(path.join(A, "demo_poster.jpg")).toString("base64"),
+    x: px,
+    y: py,
+    w: pw,
+    h: phh,
+  });
+
+  // 右: 録画の4場面を、同じ順番で読めるように置く
+  const gx = 3.35;
+  const gw = (G.W - G.mr - gx - 0.3) / 2; // 4.4815
+  const gh = (phh - 0.25) / 2; // 2.11
+  const steps = [
+    ["①", "簡単に記録できる", "気分をひとつ選ぶだけで保存できる。書ける日は睡眠やメモも足せる。"],
+    ["②", "ふりかえりで確かめる", "35日分の記録から、気分と睡眠の変化を期間別の折れ線で見る。"],
+    ["③", "記録項目を自分に合わせる", "主治医や支援者と相談して、画面に出す項目を本人が決められる。"],
+    ["④", "相談先を地域から探す", "区市町村を選ぶと、地域の保健所・保健センターが住所・電話つきで出る。"],
   ];
-  const shots = ["screen_write.jpg", "screen_list.jpg", "screen_chart.jpg"];
 
-  caps.forEach((c, i) => {
-    const cx = x3[i] + (col3 - pw) / 2;
-    s.addShape(pres.ShapeType.roundRect, {
-      x: cx - 0.1,
-      y: py - 0.1,
-      w: pw + 0.2,
-      h: phh + 0.2,
-      rectRadius: 0.09,
-      fill: { color: C.surface },
-      line: { color: C.line, width: 1 },
-    });
-
-    if (i === 0) {
-      // 実機デモ動画（端末画面のみを切り出したもの）。会場では再生、PDFではポスターが残る。
-      s.addMedia({
-        type: "video",
-        path: path.join(A, "demo.mp4"),
-        cover:
-          "data:image/jpeg;base64," +
-          fs.readFileSync(path.join(A, "screen_write.jpg")).toString("base64"),
-        x: cx,
-        y: py,
-        w: pw,
-        h: phh,
-      });
-    } else {
-      s.addImage({ path: path.join(A, shots[i]), x: cx, y: py, w: pw, h: phh });
-    }
-
+  steps.forEach(([n, h, d], i) => {
+    const cx = gx + (i % 2) * (gw + 0.3);
+    const cy = py + Math.floor(i / 2) * (gh + 0.25);
+    card(s, { x: cx, y: cy, w: gw, h: gh });
     s.addText(
       [
-        { text: c.n + " ", options: { color: C.blue } },
-        { text: c.t, options: { color: C.white } },
+        { text: n + " ", options: { color: C.blue } },
+        { text: h, options: { color: C.white } },
       ],
       {
-        x: x3[i],
-        y: py + phh + 0.24,
-        w: col3,
-        h: 0.32,
+        x: cx + 0.36,
+        y: cy + 0.42,
+        w: gw - 0.72,
+        h: 0.38,
         margin: 0,
-        align: "center",
+        valign: "middle",
         fontFace: JP,
-        fontSize: 15,
+        fontSize: 15.5,
         bold: true,
         isTextBox: true,
       }
     );
-    body(s, c.d, { x: x3[i] + 0.1, y: py + phh + 0.62, w: col3 - 0.2, h: 0.62, color: C.sec, size: 11.5, align: "center" });
+    body(s, d, { x: cx + 0.36, y: cy + 1.0, w: gw - 0.72, h: 0.9, size: 12 });
   });
 
   footer(s, 5);
-  s.addNotes("左の画面は実機の録画です。記録 → これまで → ふりかえりの順に操作しています。");
+  s.addNotes(
+    "左は実機の録画です。記録 → ふりかえり → カスタム入力 → 相談先の順に、約23秒で操作しています。" +
+      "グラフは35日分の記録が入った状態で出しています。"
+  );
 }
 
 /* =====================================================================

@@ -18,36 +18,51 @@
 
 ## 素材の用意
 
-`build-deck.js` と同じ階層に `assets/` を置く。中身は次の6点。
+`build-deck.js` と同じ階層に `assets/` を置く。中身は次の4点。
 
-| ファイル | 内容 |
-| --- | --- |
-| `hero_phone.jpg` | 表紙の端末画面（アプリの実機スクリーンショット） |
-| `demo.mp4` | 5枚目の実演録画（端末部分だけを切り出したもの） |
-| `screen_write.jpg` | 書く画面 |
-| `screen_list.jpg` | これまで画面 |
-| `screen_chart.jpg` | ふりかえり画面 |
-| `founder.jpg` | 人物写真（正方形 900×900） |
+| ファイル | 内容 | 作り方 |
+| --- | --- | --- |
+| `hero_phone.jpg` | 表紙の端末画面 | アプリの実機スクリーンショット |
+| `demo.mp4` | 5枚目の実演録画（約23秒） | `record-demo.js` が書き出す |
+| `demo_poster.jpg` | 動画のポスター（PDF配布時に残る絵） | 同上 |
+| `founder.jpg` | 人物写真（正方形 900×900） | 撮影データから切り出す |
 
-画面収録が 1920×1080 で、端末が x=1240 / y=68 の位置に 460×944 で写っている場合、
-録画と静止画は次で作れる。座標は録画ごとに変わるため、実際の映像で確認する。
+### 実演録画（`demo.mp4` / `demo_poster.jpg`）
+
+`record-demo.js` が、実際に動いているアプリを操作して収録する。手作業の画面収録は使わない。
+改稿前は表紙を写した録画をそのまま貼っていたため、5枚目が1枚目と同じ絵になっていた。
+
+収録する流れは次の4つで、約23秒。
+
+1. 簡単に記録できる（気分を選んで保存する）
+2. ふりかえりで確かめる（35日分の記録から月のグラフを出す）
+3. 記録項目を自分に合わせる（カスタム入力で項目を足す）
+4. 相談先を地域から探す（区市町村を選んで窓口を出す）
+
+グラフは35件そろってから出す。`demo-seed.js` が34日分を入れ、収録中に1件書いて35件にする。
+見本データはすべて作りもので、実在の体調・服薬・面談の内容は含めない。
 
 ```bash
-# 端末部分だけを切り出し、2倍に拡大して再エンコードする
-ffmpeg -i 収録.mp4 \
-  -vf "crop=460:944:1240:68,scale=920:1888:flags=lanczos" \
-  -c:v libx264 -preset slow -crf 24 -pix_fmt yuv420p -an -movflags +faststart \
-  assets/demo.mp4
+# 1. アプリを動かす（別の端末で動いているなら YORUCARE_URL で指す）
+pnpm dev
 
-# 同じ録画から3画面を抜き出す（秒数は録画に合わせる）
-ffmpeg -ss 2  -i assets/demo.mp4 -frames:v 1 -q:v 2 assets/screen_write.jpg
-ffmpeg -ss 19 -i assets/demo.mp4 -frames:v 1 -q:v 2 assets/screen_list.jpg
-ffmpeg -ss 45 -i assets/demo.mp4 -frames:v 1 -q:v 2 assets/screen_chart.jpg
+# 2. 収録する。ffmpeg と Playwright の Chromium が要る
+npm install playwright
+node docs/hackathon-2026-deck/record-demo.js
 ```
 
-切り出した画面が説明文と合っているか、必ず目で確かめる。
-改稿前は、表紙を写した録画をそのまま貼っていたため、
-5枚目が1枚目と同じ絵になっていた。
+`assets/demo.mp4`（860×1764）と `assets/demo_poster.jpg` ができる。
+
+間合いを変えたいときは `record-demo.js` の `SPEED` を動かす。個々の待ち時間の比は
+そのままに、全体の長さだけが変わる。20〜25秒に収める。
+
+環境変数:
+
+- `YORUCARE_URL` — 収録するアプリのURL（既定 `http://localhost:3000`）
+- `CHROME_PATH` — Chromium の場所（既定は Playwright が入れたもの）
+
+収録は `localStorage` に見本データを入れ、案内・同意のダイアログが出ない状態にしてから
+始める。開発用のバッジも画面から外している。
 
 ## 組み立て
 
@@ -70,11 +85,12 @@ pdftoppm -jpeg -r 150 out/yorucare-hackathon-2026.pdf slide
 
 - 文字が枠や画面の外へ出ていないか（`Meiryo` が無い環境では別の書体に置き換わり、
   幅が変わる。本番の PowerPoint とは折り返しが違うので、余裕を1割見ておく）
-- 説明文と画面の中身が合っているか
+- 説明文と画面の中身が合っているか（4つの場面が動画の順番どおりか）
 - 脚注・フッターが本文と重なっていないか
 - カードの下に不自然な空きが残っていないか
 
 ## 発表時
 
-- 5枚目の1台目は録画である。会場では再生し、PDFで配るときはポスター画像が残る
+- 5枚目の端末は録画である。会場では再生し、PDFで配るときはポスター画像が残る
+- 録画は約23秒。右の4枚のカードが、そのまま動画の順番になっている
 - 表紙の要約は発表者ノートに入れてある
