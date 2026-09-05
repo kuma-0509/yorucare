@@ -143,21 +143,17 @@ function pageNo(s, n) {
     x: M, y: 3.85, w: 4.0, h: 0.32, isTextBox: true, margin: 0,
     fontFace: F, fontSize: 13, bold: true, color: "8A93B8",
   });
-  const no = ["モニター期間中の報酬", "有料化・企業受注後の収益配分", "役割分担と稼働の細部（全12項目）"];
-  no.forEach((t, i) => {
-    const x = M + i * 4.05;
-    s.addShape(pres.ShapeType.roundRect, {
-      x: x, y: 4.28, w: 3.75, h: 0.78, rectRadius: 0.08,
-      fill: { color: "141B3C" }, line: { color: "343D6E", width: 1 },
-    });
-    s.addText(t, {
-      x: x + 0.22, y: 4.45, w: 3.35, h: 0.5, isTextBox: true, margin: 0,
-      fontFace: F, fontSize: 12, color: "C3C9E4", lineSpacing: 17,
-    });
+  s.addShape(pres.ShapeType.roundRect, {
+    x: M, y: 4.28, w: W - M * 2, h: 0.78, rectRadius: 0.08,
+    fill: { color: "141B3C" }, line: { color: "343D6E", width: 1 },
   });
-  s.addText("まだ売り上げが立っていない段階で数字を詰めると、かえって話がまとまりにくい。必要なタイミングで、そのつどご相談させてください。", {
-    x: M, y: 5.4, w: W - M * 2, h: 0.5, isTextBox: true, margin: 0,
-    fontFace: F, fontSize: 11, color: "8A93B8", lineSpacing: 17,
+  s.addText("役割分担と稼働の細部（全12項目）は、これから一緒に決めていきます", {
+    x: M + 0.3, y: 4.48, w: W - M * 2 - 0.6, h: 0.4, isTextBox: true, margin: 0,
+    fontFace: F, fontSize: 13, color: "C3C9E4",
+  });
+  s.addText("必要なタイミングで、そのつどご相談させてください。", {
+    x: M, y: 5.4, w: W - M * 2, h: 0.4, isTextBox: true, margin: 0,
+    fontFace: F, fontSize: 11, color: "8A93B8",
   });
   pageNo(s, 2);
   s.addNotes("結論から言う。今日のゴールはこの1点だけで、それ以上は求めないと明言する。");
@@ -309,11 +305,6 @@ function pageNo(s, n) {
     x: 7.7, y: 2.9, w: 4.55, h: 1.9, size: 12.5, ls: 21,
     text: "試運転で直したものを持って、本編に進みます。いきなり21名で走り出すと、進行の詰まりも安全対応の穴も、参加者の負担として出てしまう。まずは小さく確かめさせてください。",
   });
-  card(s, { x: M, y: 5.35, w: W - M * 2, h: 0.95, fill: "EEF0FA", line: "C9CFEA" });
-  body(s, {
-    x: M + 0.35, y: 5.6, w: W - M * 2 - 0.7, h: 0.5, size: 13, bold: true, color: NAVY,
-    text: "精神科医・安全責任者は、すでに確保できています。安全対応3段階・尺度の使用条件も整理済みです。",
-  });
   pageNo(s, 6);
   s.addNotes("ここは伊藤さんにも一緒に体験してほしい部分だと伝える。");
 }
@@ -353,7 +344,7 @@ function pageNo(s, n) {
   });
   body(s, {
     x: M, y: 5.6, w: W - M * 2, h: 0.6, size: 13, bold: true, color: NAVY,
-    text: "個人有料版の役割は「お金を払ってでも続けたい人がいる」という実績づくりです。ここは正直にお伝えしておきます。",
+    text: "個人有料版の役割は「お金を払ってでも続けたい人がいる」という実績づくりです。",
   });
   note(s, "出典：事業計画（docs/business-plan-return-to-work.md）", 6.28);
   pageNo(s, 7);
@@ -381,13 +372,13 @@ function pageNo(s, n) {
   });
   body(s, { x: M + cw4 + 0.8, y: 4.35, w: cw4 - 0.7, h: 0.7, size: 12, color: MUTED,
             text: "言い切らないことが、結果として企業に信用される見せ方だと考えています。" });
-  card(s, { x: M, y: 5.45, w: W - M * 2, h: 0.9, fill: TINT, line: LINE });
+  card(s, { x: M, y: 5.4, w: W - M * 2, h: 1.0, fill: TINT, line: LINE });
   body(s, {
-    x: M + 0.35, y: 5.68, w: W - M * 2 - 0.7, h: 0.5, size: 12.5, color: INK,
-    text: "既存6法人・137事業所の就労定着支援（復職後6か月〜3年6か月）の枠に、夜間・休日オプションとして乗せられる形を想定しています。",
+    x: M + 0.35, y: 5.6, w: W - M * 2 - 0.7, h: 0.65, size: 12.5, ls: 21, color: INK,
+    text: "対象は、休職から復職して働いている方です。企業には、再休職1件あたりの損失を自社で試算していただいたうえで、復職後3〜6か月の夜間・休日サポートとして提案します。",
   });
   pageNo(s, 8);
-  s.addNotes("誠実な見せ方にしている理由を言う。言い切らないほうが企業に信用される。");
+  s.addNotes("誠実な見せ方にしている理由を言う。対象は休職から復職した働く方で、障がい福祉サービスの枠ではない。");
 }
 
 /* ============ S9 伊藤さんへのお願い（本題） ============ */
@@ -409,10 +400,10 @@ function pageNo(s, n) {
             text: "企業・支援機関への\n接点づくり" });
   body(s, { x: M + cw5 + 0.8, y: 3.9, w: cw5 - 0.7, h: 0.85, size: 12.5, ls: 21,
             text: "既存の6法人・137事業所との関係、支援機関へのパイプは一番の武器です。私も一緒に動きます。" });
-  card(s, { x: M, y: 5.25, w: W - M * 2, h: 1.05, fill: "EEF0FA", line: "C9CFEA" });
+  card(s, { x: M, y: 5.25, w: W - M * 2, h: 0.85, fill: "EEF0FA", line: "C9CFEA" });
   body(s, {
-    x: M + 0.35, y: 5.48, w: W - M * 2 - 0.7, h: 0.65, size: 12.5, ls: 20, color: INK,
-    text: "法人営業は、個人向け有料サービスが始まってから始めます。試運転や本編の段階で、伊藤さんのつながりを先に使うことはしません。いつ・どう使うかは、伊藤さんご自身が決められる状態を保ちます。",
+    x: M + 0.35, y: 5.53, w: W - M * 2 - 0.7, h: 0.35, size: 13, ls: 20, color: INK,
+    text: "法人営業は、個人向け有料サービスが始まってから始めます。",
   });
   pageNo(s, 9);
   s.addNotes("お願いを『今から』と『後から』に分けて、時間差を見せる。役割分担は今日決め切るものではない、と添える。");
@@ -454,34 +445,26 @@ function pageNo(s, n) {
 /* ============ S11 今日決めないこと（12項目） ============ */
 {
   const s = lightSlide();
-  head(s, "今日、決めないことは何か？", "12項目は「これから一緒に決める」。報酬と収益配分は、今日は保留", false);
+  head(s, "今日、決めないことは何か？", "12項目は今日決めません。これから一緒に決めていきます", false);
   const items = [
     "ゴールと期限", "モニターの期間", "役割分担と稼働の目安",
-    "モニター期間中の報酬", "有料化・企業受注後の収益配分", "精神科医・安全責任者の役割範囲",
-    "測る指標", "参加者情報の扱い", "続ける・やめるの判断基準",
-    "判断する場をいつ持つか", "ほか（全12項目）",
+    "精神科医・安全責任者の役割範囲", "測る指標", "参加者情報の扱い",
+    "続ける・やめるの判断基準", "判断する場をいつ持つか", "ほか（全12項目）",
   ];
-  const hold = ["モニター期間中の報酬", "有料化・企業受注後の収益配分"];
   const bw2 = (W - M * 2 - 0.3 * 3) / 4;
   items.forEach((t, i) => {
     const col = i % 4, row = Math.floor(i / 4);
     const x = M + col * (bw2 + 0.3), y = 2.2 + row * 0.86;
-    const isHold = hold.includes(t);
-    card(s, { x: x, y: y, w: bw2, h: 0.74, fill: isHold ? "FFF7E0" : TINT, line: isHold ? GOLD : LINE });
-    body(s, { x: x + 0.22, y: y + 0.14, w: bw2 - 0.44, h: 0.5, text: t, size: 11.5, ls: 17,
-              color: isHold ? "8A6508" : INK });
+    card(s, { x: x, y: y, w: bw2, h: 0.74 });
+    body(s, { x: x + 0.22, y: y + 0.14, w: bw2 - 0.44, h: 0.5, text: t, size: 11.5, ls: 17 });
   });
-  s.addShape(pres.ShapeType.ellipse, {
-    x: M, y: 5.02, w: 0.16, h: 0.16, fill: { color: GOLD }, line: { color: GOLD, width: 1 },
-  });
-  body(s, { x: M + 0.3, y: 4.95, w: 8.0, h: 0.3, text: "＝ 今日は保留にさせてください", size: 12, bold: true, color: GOLD });
-  card(s, { x: M, y: 5.45, w: W - M * 2, h: 1.0, fill: "EEF0FA", line: "C9CFEA" });
+  card(s, { x: M, y: 5.1, w: W - M * 2, h: 1.0, fill: "EEF0FA", line: "C9CFEA" });
   body(s, {
-    x: M + 0.35, y: 5.68, w: W - M * 2 - 0.7, h: 0.6, size: 12.5, ls: 20,
+    x: M + 0.35, y: 5.33, w: W - M * 2 - 0.7, h: 0.6, size: 12.5, ls: 20,
     text: "月末の定例ミーティングのような形は決めません。細かい項目は、必要なタイミングでそのつどご相談させてください。",
   });
   pageNo(s, 11);
-  s.addNotes("決め切ってはいけないと思っている、という言い方をする。売上が立つ前に数字を詰めると、かえってまとまらない。");
+  s.addNotes("決め切ってはいけないと思っている、という言い方をする。即答も期限も求めない。");
 }
 
 /* ============ S12 先に伝えておきたい心配 ============ */
