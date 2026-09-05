@@ -11,6 +11,9 @@ npm install pptxgenjs
 node ito-business-plan.js ../ヨルケア事業化プラン_伊藤さん_20260905.pptx
 ```
 
+完成品の `.pptx` は Git で追跡しています（`.gitignore` に `!/docs/*.pptx` の例外あり）。
+スクリプトを直して出し直したら、`.pptx` も一緒にコミットしてください。
+
 ## 決めごと
 
 - 元原稿: `docs/proposal-presentation-ito-business-plan.md`

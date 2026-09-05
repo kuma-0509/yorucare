@@ -27,6 +27,10 @@
 *.docx
 *.pptx
 
+# ただし docs/ 直下の完成品スライドは、配布したものを残すため追跡する
+# （作り直しは docs/slides-src/ のスクリプトで行う）
+!/docs/*.pptx
+
 # debug
 npm-debug.log*
 yarn-debug.log*
