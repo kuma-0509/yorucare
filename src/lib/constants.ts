@@ -137,6 +137,7 @@ export const SAMPLE_SELF_CARE = [
 export const STORAGE_KEYS = {
   records: "yorucare_daily_records",
   selfCare: "yorucare_self_care_items",
+  notToDo: "yorucare_not_to_do_items",
   storageNoticeDismissed: "yorucare_storage_notice_dismissed",
   reviewConsent: "yorucare_review_consent",
   schemaVersion: "yorucare_schema_version",

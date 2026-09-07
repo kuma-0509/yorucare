@@ -4,7 +4,7 @@
  */
 import { repository } from "./repository";
 import type { Result } from "./result";
-import type { DailyRecord, SelfCareItem } from "./types";
+import type { DailyRecord, NotToDoItem, SelfCareItem } from "./types";
 
 export {
   createEmptyRecordForm,
@@ -67,4 +67,23 @@ export function updateSelfCareItem(
 
 export function deleteSelfCareItem(id: string): Promise<Result<void>> {
   return repository.deleteSelfCareItem(id);
+}
+
+export function getAllNotToDoItems(): Promise<Result<NotToDoItem[]>> {
+  return repository.getAllNotToDoItems();
+}
+
+export function addNotToDoItem(title: string): Promise<Result<NotToDoItem>> {
+  return repository.addNotToDoItem(title);
+}
+
+export function updateNotToDoItem(
+  id: string,
+  title: string
+): Promise<Result<NotToDoItem>> {
+  return repository.updateNotToDoItem(id, title);
+}
+
+export function deleteNotToDoItem(id: string): Promise<Result<void>> {
+  return repository.deleteNotToDoItem(id);
 }

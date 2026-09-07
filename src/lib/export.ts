@@ -34,7 +34,9 @@ export async function downloadBackup(): Promise<Result<void>> {
 
 export async function importBackup(
   jsonText: string
-): Promise<Result<{ recordCount: number; selfCareCount: number }>> {
+): Promise<
+  Result<{ recordCount: number; selfCareCount: number; notToDoCount: number }>
+> {
   const result = await repository.importBackup(jsonText);
   if (result.ok) {
     // 取り込んだ元ファイルが手元にある＝バックアップ済みとみなす

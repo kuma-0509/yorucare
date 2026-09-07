@@ -11,7 +11,7 @@ export const COPY = {
   tab: {
     today: "書く",
     records: "これまで",
-    selfCare: "できること",
+    selfCare: "セルフケア",
     reflection: "ふりかえり",
   },
   reflection: {
@@ -62,6 +62,13 @@ export const COPY = {
   doneToday: "できたこと",
   /** 「書く」タブで今日の分を選ぶときの見出し */
   doneTodayToday: "今日できたこと",
+  /** あえて実行しないと決めた項目の登録簿 */
+  notToDoAction: "やらないこと",
+  /** 「書く」タブで今日の分を選ぶときの見出し */
+  notToDoToday: "今日やらないこと",
+  /** 第3ペインの説明 */
+  selfCareTabDescription:
+    "自分に合う「できること」と、負担を減らすための「やらないこと」を登録できます。",
   medicationNone: "お薬は飲んでいない",
   /** 翌日に向けた小さな目標・行動実験。達成を評価せず、次の大きさを決める材料として扱う */
   goal: {
@@ -190,12 +197,12 @@ export const COPY = {
   analyticsRetryDeleteAction: "保存済みデータの削除を再試行する",
   importConfirmTitle: "バックアップを復元しますか？",
   importConfirmBody:
-    "今の端末にある記録と「できること」は、ファイルの内容に置き換わります。保存したファイルには体調に関わる内容がそのまま読める形で入っているため、信頼できるファイルだけを読み込んでください。",
+    "今の端末にある記録・「できること」・「やらないこと」は、ファイルの内容に置き換わります。保存したファイルには体調に関わる内容がそのまま読める形で入っているため、信頼できるファイルだけを読み込んでください。",
   // 共有端末で使い終わったあとの全削除
   deleteAllTitle: "すべての記録を削除",
   deleteAllSharedDeviceHeading: "共有端末で使い終わったら",
   deleteAllSharedDeviceBody:
-    "この端末に保存されたヨルケアの記録だけを消します。「できること」の登録や、他のアプリのデータは消えません。",
+    "この端末に保存されたヨルケアの記録だけを消します。「できること」「やらないこと」の登録や、他のアプリのデータは消えません。",
   deleteAllConfirmBody:
     "この端末に保存された記録をすべて消しますか？この操作は元に戻せません。",
   deleteAllConfirmNote:

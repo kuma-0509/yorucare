@@ -34,6 +34,7 @@ describe("parseRecordsJson", () => {
       expect(result.data[0].moodLabels).toEqual([
         { label: "嬉しい", category: "ポジティブ", isCustom: false },
       ]);
+      expect(result.data[0].notToDoIds).toEqual([]);
     }
   });
 
@@ -126,6 +127,9 @@ describe("parseExportPayload", () => {
       selfCareItems: [],
     });
     expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.notToDoItems).toEqual([]);
+    }
   });
 
   it("version不一致を拒否する", () => {

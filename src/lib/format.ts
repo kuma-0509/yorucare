@@ -6,7 +6,7 @@ import {
 import { COPY } from "./copy";
 import { formatMoodLabelsDisplay } from "./mood-labels";
 import { formatSleepDuration } from "./sleep";
-import type { DailyRecord, SelfCareItem } from "./types";
+import type { DailyRecord, NotToDoItem, SelfCareItem } from "./types";
 
 const EMPTY_VALUES = new Set([
   "未入力",
@@ -59,9 +59,21 @@ export function formatSelfCareSummary(
   return titles.join("、");
 }
 
+export function formatNotToDoSummary(
+  record: DailyRecord,
+  items: NotToDoItem[]
+): string {
+  const titles = (record.notToDoIds ?? [])
+    .map((id) => items.find((item) => item.id === id)?.title)
+    .filter(Boolean) as string[];
+  if (titles.length === 0) return COPY.notEntered;
+  return titles.join("、");
+}
+
 export function buildRecordSummaryLines(
   record: DailyRecord,
-  selfCareItems: SelfCareItem[]
+  selfCareItems: SelfCareItem[],
+  notToDoItems: NotToDoItem[] = []
 ): { label: string; value: string }[] {
   const candidates: { label: string; value: string }[] = [
     { label: "気分", value: getMoodLabel(record.moodScore) },
@@ -83,6 +95,11 @@ export function buildRecordSummaryLines(
   const selfCare = formatSelfCareSummary(record, selfCareItems);
   if (isMeaningfulSummaryValue(selfCare)) {
     candidates.push({ label: COPY.doneToday, value: selfCare });
+  }
+
+  const notToDo = formatNotToDoSummary(record, notToDoItems);
+  if (isMeaningfulSummaryValue(notToDo)) {
+    candidates.push({ label: COPY.notToDoAction, value: notToDo });
   }
 
   return candidates.filter((line) => isMeaningfulSummaryValue(line.value));

@@ -27,11 +27,12 @@ const SECTION_LABELS = [
   COPY.detailSection,
   COPY.warningSign,
   COPY.doneToday,
+  COPY.notToDoAction,
   COPY.goal.sectionName,
 ];
 
 describe("カスタム入力の設定", () => {
-  it("切り替えられる5項目を並べ、はじめはすべて選ばれていない", async () => {
+  it("切り替えられる6項目を並べ、はじめはすべて選ばれていない", async () => {
     renderDialog();
 
     // fieldset と、その中の選択肢のまとまりが同じ名前を持つので、外側で絞る
@@ -42,6 +43,14 @@ describe("カスタム入力の設定", () => {
       const option = within(group).getByText(label).closest("button");
       expect(option?.getAttribute("aria-pressed")).toBe("false");
     }
+  });
+
+  it("やらないことを選ぶと端末内へ残る", async () => {
+    renderDialog();
+
+    fireEvent.click(await screen.findByText(COPY.notToDoAction));
+
+    expect(getRecordFormSections().notToDo).toBe(true);
   });
 
   it("選ぶと端末内へ残る", async () => {

@@ -21,13 +21,22 @@ const TABS: { id: AppTab; label: string; icon: LucideIcon }[] = [
 interface BottomNavProps {
   activeTab: AppTab;
   onTabChange: (tab: AppTab) => void;
+  showSelfCare?: boolean;
 }
 
-export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+export function BottomNav({
+  activeTab,
+  onTabChange,
+  showSelfCare = true,
+}: BottomNavProps) {
+  const visibleTabs = showSelfCare
+    ? TABS
+    : TABS.filter(({ id }) => id !== "selfcare");
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-sm pb-safe">
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pb-1 pt-2">
-        {TABS.map(({ id, label, icon: Icon }) => {
+        {visibleTabs.map(({ id, label, icon: Icon }) => {
           const active = activeTab === id;
           return (
             <button

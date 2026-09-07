@@ -40,6 +40,8 @@ export interface DailyRecord {
   warningTags: string[];
   warningNote: string;
   selfCareIds: string[];
+  /** 旧形式の記録では未定義。読み込み時は空配列として扱う */
+  notToDoIds?: string[];
   selfCareMemo: string;
   /** その日のセルフケアの感想。選択式のみで、未選択なら null */
   selfCareFeeling: SelfCareFeeling | null;
@@ -58,5 +60,8 @@ export interface SelfCareItem {
   createdAt: string;
   updatedAt: string;
 }
+
+/** 「やらないこと」の登録項目。保存形式は「できること」と同じ */
+export type NotToDoItem = SelfCareItem;
 
 export type AppTab = "today" | "records" | "selfcare" | "reflection";

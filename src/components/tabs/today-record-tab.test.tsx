@@ -21,6 +21,8 @@ import type { DailyRecord, SelfCareItem } from "@/lib/types";
 const getRecordByDate = vi.fn();
 const initSelfCareIfEmpty = vi.fn();
 const addSelfCareItem = vi.fn();
+const getAllNotToDoItems = vi.fn();
+const addNotToDoItem = vi.fn();
 const getAllRecords = vi.fn();
 const saveRecord = vi.fn();
 
@@ -33,6 +35,8 @@ vi.mock("@/lib/storage", async () => {
     getRecordByDate: (date: string) => getRecordByDate(date),
     initSelfCareIfEmpty: () => initSelfCareIfEmpty(),
     addSelfCareItem: (title: string) => addSelfCareItem(title),
+    getAllNotToDoItems: () => getAllNotToDoItems(),
+    addNotToDoItem: (title: string) => addNotToDoItem(title),
     getAllRecords: () => getAllRecords(),
     saveRecord: (date: string, form: unknown) => saveRecord(date, form),
   };
@@ -89,6 +93,7 @@ function showSections(...keys: RecordFormSectionKey[]) {
 
 beforeEach(() => {
   localStorage.clear();
+  getAllNotToDoItems.mockResolvedValue(ok([]));
 });
 
 afterEach(() => {
@@ -117,6 +122,7 @@ describe("カスタム入力による表示の切り替え", () => {
     expect(screen.queryByText(COPY.detailSection)).toBeNull();
     expect(screen.queryByText(`${COPY.warningSign}（任意）`)).toBeNull();
     expect(screen.queryByText(COPY.doneTodayToday)).toBeNull();
+    expect(screen.queryByText(COPY.notToDoToday)).toBeNull();
     expect(screen.queryByLabelText(/小さな目標/)).toBeNull();
   });
 
@@ -136,6 +142,26 @@ describe("カスタム入力による表示の切り替え", () => {
     expect(screen.getByLabelText(/小さな目標/)).toBeTruthy();
     expect(screen.queryByText(COPY.selfCareSuggestion.title)).toBeNull();
     expect(screen.queryByText(COPY.doneTodayToday)).toBeNull();
+    expect(screen.queryByText(COPY.notToDoToday)).toBeNull();
+  });
+
+  it("やらないことをONにしたときだけ記録画面に表示する", async () => {
+    const today = getTodayString();
+    const item = makeItem("n1", "夜は仕事のメールを開かない");
+    showSections("notToDo");
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getAllNotToDoItems.mockResolvedValue(ok([item]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(ok(date === today ? makeRecord(today) : null))
+    );
+
+    renderTab();
+
+    expect(await screen.findByText(COPY.notToDoToday)).toBeTruthy();
+    const option = screen.getByRole("button", { name: item.title });
+    expect(option.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(option);
+    expect(option.getAttribute("aria-pressed")).toBe("true");
   });
 
   it("項目を出さなくても、保存済みの内容は消さない。出し直せばまた見える", async () => {

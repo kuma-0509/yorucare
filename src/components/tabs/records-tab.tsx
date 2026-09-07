@@ -24,6 +24,7 @@ import {
   isWithinLast7Days,
 } from "@/lib/dates";
 import {
+  formatNotToDoSummary,
   formatSelfCareSummary,
   formatSleepSummary,
   getMedicationLabel,
@@ -39,11 +40,12 @@ import {
   deleteAllRecords,
   deleteRecord,
   getAllRecords,
+  getAllNotToDoItems,
   initSelfCareIfEmpty,
   isDailyRecordEmpty,
 } from "@/lib/storage";
 import type { AppTab } from "@/lib/types";
-import type { DailyRecord, SelfCareItem } from "@/lib/types";
+import type { DailyRecord, NotToDoItem, SelfCareItem } from "@/lib/types";
 
 interface RecordsTabProps {
   onNavigateTab: (tab: AppTab, options?: { recordDate?: string }) => void;
@@ -59,6 +61,7 @@ export function RecordsTab({
   const [loaded, setLoaded] = useState(false);
   const [records, setRecords] = useState<DailyRecord[]>([]);
   const [selfCareItems, setSelfCareItems] = useState<SelfCareItem[]>([]);
+  const [notToDoItems, setNotToDoItems] = useState<NotToDoItem[]>([]);
   const [detailRecord, setDetailRecord] = useState<DailyRecord | null>(null);
   const [deleteRecordTarget, setDeleteRecordTarget] =
     useState<DailyRecord | null>(null);
@@ -71,9 +74,10 @@ export function RecordsTab({
 
   const reload = useCallback(async () => {
     const requestId = ++reloadRequestRef.current;
-    const [recordsResult, selfCareResult] = await Promise.all([
+    const [recordsResult, selfCareResult, notToDoResult] = await Promise.all([
       getAllRecords(),
       initSelfCareIfEmpty(),
+      getAllNotToDoItems(),
     ]);
     if (requestId !== reloadRequestRef.current) return;
     setLoaded(true);
@@ -85,8 +89,13 @@ export function RecordsTab({
       setMessage(storageErrorMessage(selfCareResult.error));
       return;
     }
+    if (!notToDoResult.ok) {
+      setMessage(storageErrorMessage(notToDoResult.error));
+      return;
+    }
     setRecords(recordsResult.value);
     setSelfCareItems(selfCareResult.value);
+    setNotToDoItems(notToDoResult.value);
     setMessage(null);
   }, []);
 
@@ -232,6 +241,10 @@ export function RecordsTab({
               label: COPY.doneToday,
               value: formatSelfCareSummary(record, selfCareItems),
             },
+            {
+              label: COPY.notToDoAction,
+              value: formatNotToDoSummary(record, notToDoItems),
+            },
             { label: COPY.memo, value: record.note },
           ].filter((line) => isMeaningfulSummaryValue(line.value));
 
@@ -334,7 +347,11 @@ export function RecordsTab({
           </DialogHeader>
           {detailRecord && (
             <div className="space-y-3 text-base">
-              {buildRecordSummaryLines(detailRecord, selfCareItems).map(
+              {buildRecordSummaryLines(
+                detailRecord,
+                selfCareItems,
+                notToDoItems
+              ).map(
                 ({ label, value }) => (
                   <div key={label}>
                     <span className="text-muted-foreground">
