@@ -15,6 +15,13 @@ import { SelfCareTab } from "@/components/tabs/selfcare-tab";
 import { ReflectionTab } from "@/components/tabs/reflection-tab";
 import { trackTabViewed } from "@/lib/analytics";
 import { useKeyboardInset } from "@/lib/keyboard-scroll";
+import {
+  DEFAULT_RECORD_FORM_SECTIONS,
+  getRecordFormSections,
+  shouldShowSelfCareTab,
+  subscribeRecordFormSections,
+  type RecordFormSections,
+} from "@/lib/record-form-sections";
 import { resetScrollPosition } from "@/lib/utils";
 import type { AppTab } from "@/lib/types";
 
@@ -28,9 +35,23 @@ export function AppShell() {
   const [activeTab, setActiveTab] = useState<AppTab>("today");
   const [recordDate, setRecordDate] = useState<string | undefined>();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [recordFormSections, setRecordFormSections] =
+    useState<RecordFormSections>(DEFAULT_RECORD_FORM_SECTIONS);
 
   useEffect(() => {
     void repository.runStorageMigrations();
+  }, []);
+
+  useEffect(() => {
+    const applySections = (sections: RecordFormSections) => {
+      setRecordFormSections(sections);
+      if (!shouldShowSelfCareTab(sections)) {
+        setActiveTab((tab) => (tab === "selfcare" ? "today" : tab));
+      }
+    };
+
+    applySections(getRecordFormSections());
+    return subscribeRecordFormSections(applySections);
   }, []);
 
   useEffect(() => {
@@ -63,6 +84,7 @@ export function AppShell() {
 
   const showActionBarPadding = activeTab === "today" && !todaySavedView;
   const mainPaddingBottom = showActionBarPadding ? "pb-page" : "pb-nav pb-safe";
+  const showSelfCareTab = shouldShowSelfCareTab(recordFormSections);
 
   return (
     <div className="min-h-dvh bg-background">
@@ -93,7 +115,7 @@ export function AppShell() {
             onDataImported={bumpRefresh}
           />
         )}
-        {activeTab === "selfcare" && (
+        {activeTab === "selfcare" && showSelfCareTab && (
           <SelfCareTab onDataChange={bumpRefresh} />
         )}
         {activeTab === "reflection" && <ReflectionTab refreshKey={refreshKey} />}
@@ -101,7 +123,9 @@ export function AppShell() {
       </main>
       <BottomNav
         activeTab={activeTab}
+        showSelfCare={showSelfCareTab}
         onTabChange={(tab) => {
+          if (tab === "selfcare" && !showSelfCareTab) return;
           if (tab !== "today") {
             setRecordDate(undefined);
             setTodaySavedView(false);

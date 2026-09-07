@@ -5,6 +5,7 @@ import {
   RECORD_FORM_SECTION_OPTIONS,
   getRecordFormSections,
   saveRecordFormSections,
+  shouldShowSelfCareTab,
   subscribeRecordFormSections,
   toggleRecordFormSection,
 } from "./record-form-sections";
@@ -22,18 +23,33 @@ describe("記録画面に出す項目の設定", () => {
       details: false,
       warningSign: false,
       doneToday: false,
+      notToDo: false,
       goal: false,
     });
   });
 
-  it("カスタム入力で切り替えられる項目は5つ", () => {
+  it("カスタム入力で切り替えられる項目は6つ", () => {
     expect(RECORD_FORM_SECTION_OPTIONS.map((option) => option.key)).toEqual([
       "selfCareSuggestion",
       "details",
       "warningSign",
       "doneToday",
+      "notToDo",
       "goal",
     ]);
+  });
+
+  it("旧設定にやらないことがなくても非表示として読み込む", () => {
+    localStorage.setItem(
+      STORAGE_KEYS.recordFormSections,
+      JSON.stringify({ doneToday: true, details: true })
+    );
+
+    expect(getRecordFormSections()).toMatchObject({
+      doneToday: true,
+      details: true,
+      notToDo: false,
+    });
   });
 
   it("ONにすると端末内へ残り、次に開いたときも残っている", () => {
@@ -110,5 +126,32 @@ describe("記録画面に出す項目の設定", () => {
     unsubscribe();
     saveRecordFormSections(DEFAULT_RECORD_FORM_SECTIONS);
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("セルフケアタブの表示条件", () => {
+  it("できたことかやらないことの少なくとも一方が選択された場合だけ表示する", () => {
+    expect(shouldShowSelfCareTab(DEFAULT_RECORD_FORM_SECTIONS)).toBe(false);
+    expect(
+      shouldShowSelfCareTab({
+        ...DEFAULT_RECORD_FORM_SECTIONS,
+        selfCareSuggestion: true,
+        details: true,
+        warningSign: true,
+        goal: true,
+      })
+    ).toBe(false);
+    expect(
+      shouldShowSelfCareTab({
+        ...DEFAULT_RECORD_FORM_SECTIONS,
+        doneToday: true,
+      })
+    ).toBe(true);
+    expect(
+      shouldShowSelfCareTab({
+        ...DEFAULT_RECORD_FORM_SECTIONS,
+        notToDo: true,
+      })
+    ).toBe(true);
   });
 });

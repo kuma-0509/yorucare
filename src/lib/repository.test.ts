@@ -513,3 +513,92 @@ describe("すべての記録を削除", () => {
     });
   });
 });
+
+describe("やらないことの保存", () => {
+  it("できることと同じ名前でも独立して追加・編集・削除できる", async () => {
+    const selfCare = await typedRepository.addSelfCareItem("夜は仕事を開かない");
+    const notToDo = await typedRepository.addNotToDoItem("夜は仕事を開かない");
+    expect(selfCare.ok && notToDo.ok).toBe(true);
+    if (!selfCare.ok || !notToDo.ok) return;
+
+    const updated = await typedRepository.updateNotToDoItem(
+      notToDo.value.id,
+      "夜はメールを開かない"
+    );
+    expect(updated.ok).toBe(true);
+
+    const date = "2026-09-07";
+    const { date: _date, ...emptyForm } = createEmptyRecordForm(date);
+    await typedRepository.saveRecord(date, {
+      ...emptyForm,
+      notToDoIds: [notToDo.value.id],
+    });
+
+    expect((await typedRepository.deleteNotToDoItem(notToDo.value.id)).ok).toBe(
+      true
+    );
+    await expect(typedRepository.getAllNotToDoItems()).resolves.toEqual({
+      ok: true,
+      value: [],
+    });
+    const record = await typedRepository.getRecordByDate(date);
+    expect(record.ok).toBe(true);
+    if (record.ok) expect(record.value?.notToDoIds).toEqual([]);
+
+    const selfCareItems = await typedRepository.getAllSelfCareItems();
+    expect(selfCareItems.ok).toBe(true);
+    if (selfCareItems.ok) {
+      expect(selfCareItems.value.map((item) => item.id)).toContain(
+        selfCare.value.id
+      );
+    }
+  });
+
+  it("バックアップの書き出しと復元で登録簿と記録の選択を維持する", async () => {
+    const date = "2026-09-07";
+    const added = await typedRepository.addNotToDoItem("残業しない");
+    expect(added.ok).toBe(true);
+    if (!added.ok) return;
+
+    const { date: _date, ...emptyForm } = createEmptyRecordForm(date);
+    await typedRepository.saveRecord(date, {
+      ...emptyForm,
+      notToDoIds: [added.value.id],
+    });
+    const exported = await typedRepository.buildExportPayload();
+    expect(exported.ok).toBe(true);
+    if (!exported.ok) return;
+
+    localStorage.clear();
+    const imported = await typedRepository.importBackup(
+      JSON.stringify(exported.value)
+    );
+    expect(imported).toEqual({
+      ok: true,
+      value: { recordCount: 1, selfCareCount: 0, notToDoCount: 1 },
+    });
+    const record = await typedRepository.getRecordByDate(date);
+    expect(record.ok).toBe(true);
+    if (record.ok) expect(record.value?.notToDoIds).toEqual([added.value.id]);
+    await expect(typedRepository.getAllNotToDoItems()).resolves.toEqual({
+      ok: true,
+      value: [added.value],
+    });
+  });
+
+  it("追加前のバックアップは空のやらないこととして復元できる", async () => {
+    const imported = await typedRepository.importBackup(
+      JSON.stringify({
+        version: 1,
+        exportedAt: "2026-09-07T00:00:00.000Z",
+        records: [],
+        selfCareItems: [],
+      })
+    );
+
+    expect(imported).toEqual({
+      ok: true,
+      value: { recordCount: 0, selfCareCount: 0, notToDoCount: 0 },
+    });
+  });
+});

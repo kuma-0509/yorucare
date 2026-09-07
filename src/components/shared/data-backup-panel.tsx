@@ -73,7 +73,7 @@ export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
     setPendingImport(null);
     if (result.ok) {
       setMessage(
-        `バックアップを読み込みました（記録 ${result.value.recordCount} 件・できること ${result.value.selfCareCount} 件）。`
+        `バックアップを読み込みました（記録 ${result.value.recordCount} 件・できること ${result.value.selfCareCount} 件・やらないこと ${result.value.notToDoCount} 件）。`
       );
       onImported?.();
     } else {

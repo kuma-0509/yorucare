@@ -7,6 +7,7 @@ import { getTodayString } from "./dates";
 import {
   EXPORT_VERSION,
   parseExportPayload,
+  parseNotToDoJson,
   parseRecordsJson,
   parseReturnDate,
   parseSelfCareJson,
@@ -15,7 +16,7 @@ import {
 } from "./schemas";
 import { calculateSleepMinutes } from "./sleep";
 import { err, ok, type Result } from "./result";
-import type { DailyRecord, SelfCareItem } from "./types";
+import type { DailyRecord, NotToDoItem, SelfCareItem } from "./types";
 
 const IMPORT_ROLLBACK_KEY = "yorucare_import_rollback";
 
@@ -27,11 +28,13 @@ export type SaveRecordInput = Omit<
 export type ImportSummary = {
   recordCount: number;
   selfCareCount: number;
+  notToDoCount: number;
 };
 
 export type StorageHealth = {
   records: DailyRecord[];
   selfCare: SelfCareItem[];
+  notToDo: NotToDoItem[];
 };
 
 /**
@@ -50,6 +53,10 @@ export interface Repository {
   addSelfCareItem(title: string): Promise<Result<SelfCareItem>>;
   updateSelfCareItem(id: string, title: string): Promise<Result<SelfCareItem>>;
   deleteSelfCareItem(id: string): Promise<Result<void>>;
+  getAllNotToDoItems(): Promise<Result<NotToDoItem[]>>;
+  addNotToDoItem(title: string): Promise<Result<NotToDoItem>>;
+  updateNotToDoItem(id: string, title: string): Promise<Result<NotToDoItem>>;
+  deleteNotToDoItem(id: string): Promise<Result<void>>;
   /** 積み重ねの起点として本人が設定した復職日。未設定なら null */
   getReturnDate(): Promise<Result<string | null>>;
   /** 復職日を設定する。null を渡すと未設定へ戻す */
@@ -123,6 +130,22 @@ function readSelfCareItems(): Result<SelfCareItem[]> {
   }
 }
 
+function readNotToDoItems(): Result<NotToDoItem[]> {
+  if (!isBrowser()) return ok([]);
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.notToDo);
+    if (!raw) return ok([]);
+    const parsed = JSON.parse(raw) as unknown;
+    const result = parseNotToDoJson(parsed);
+    if (!result.success) {
+      return err({ code: "CORRUPTED", key: STORAGE_KEYS.notToDo });
+    }
+    return ok(result.data);
+  } catch {
+    return err({ code: "CORRUPTED", key: STORAGE_KEYS.notToDo });
+  }
+}
+
 function writeRecords(records: DailyRecord[]): Result<void> {
   const parsed = parseRecordsJson(records);
   if (!parsed.success) {
@@ -155,15 +178,37 @@ function writeSelfCareItems(items: SelfCareItem[]): Result<void> {
   return result;
 }
 
+function writeNotToDoItems(items: NotToDoItem[]): Result<void> {
+  const parsed = parseNotToDoJson(items);
+  if (!parsed.success) {
+    return err({
+      code: "VALIDATION_FAILED",
+      message: "やらないことの形式が正しくないため保存できませんでした。",
+    });
+  }
+
+  const result = writeRaw(STORAGE_KEYS.notToDo, JSON.stringify(parsed.data));
+  if (result.ok) {
+    writeRaw(STORAGE_KEYS.schemaVersion, String(STORAGE_SCHEMA_VERSION));
+  }
+  return result;
+}
+
 const localStorageRepository: LocalStorageRepository = {
   async getStorageHealth(): Promise<Result<StorageHealth>> {
     const records = readRecords();
     if (!records.ok) return records;
     const selfCare = readSelfCareItems();
     if (!selfCare.ok) return selfCare;
+    const notToDo = readNotToDoItems();
+    if (!notToDo.ok) return notToDo;
     return ok({
-      records: records.value,
+      records: records.value.map((record) => ({
+        ...record,
+        notToDoIds: record.notToDoIds ?? [],
+      })),
       selfCare: selfCare.value,
+      notToDo: notToDo.value,
     });
   },
 
@@ -203,6 +248,7 @@ const localStorageRepository: LocalStorageRepository = {
       warningTags: data.warningTags,
       warningNote: data.warningNote,
       selfCareIds: data.selfCareIds,
+      notToDoIds: data.notToDoIds ?? existing?.notToDoIds ?? [],
       selfCareMemo: data.selfCareMemo,
       selfCareFeeling: data.selfCareFeeling,
       note: data.note,
@@ -343,6 +389,75 @@ const localStorageRepository: LocalStorageRepository = {
     );
   },
 
+  async getAllNotToDoItems(): Promise<Result<NotToDoItem[]>> {
+    return readNotToDoItems();
+  },
+
+  async addNotToDoItem(title: string): Promise<Result<NotToDoItem>> {
+    const itemsResult = readNotToDoItems();
+    if (!itemsResult.ok) return itemsResult;
+
+    const now = new Date().toISOString();
+    const item: NotToDoItem = {
+      id: generateId(),
+      title: title.trim(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    const writeResult = writeNotToDoItems([...itemsResult.value, item]);
+    if (!writeResult.ok) return writeResult;
+    return ok(item);
+  },
+
+  async updateNotToDoItem(
+    id: string,
+    title: string
+  ): Promise<Result<NotToDoItem>> {
+    const itemsResult = readNotToDoItems();
+    if (!itemsResult.ok) return itemsResult;
+
+    const index = itemsResult.value.findIndex((item) => item.id === id);
+    if (index === -1) {
+      return err({
+        code: "VALIDATION_FAILED",
+        message: "項目が見つかりませんでした。",
+      });
+    }
+
+    const updated: NotToDoItem = {
+      ...itemsResult.value[index],
+      title: title.trim(),
+      updatedAt: new Date().toISOString(),
+    };
+    const items = [...itemsResult.value];
+    items[index] = updated;
+    const writeResult = writeNotToDoItems(items);
+    if (!writeResult.ok) return writeResult;
+    return ok(updated);
+  },
+
+  async deleteNotToDoItem(id: string): Promise<Result<void>> {
+    const itemsResult = readNotToDoItems();
+    if (!itemsResult.ok) return itemsResult;
+
+    const writeItems = writeNotToDoItems(
+      itemsResult.value.filter((item) => item.id !== id)
+    );
+    if (!writeItems.ok) return writeItems;
+
+    const recordsResult = readRecords();
+    if (!recordsResult.ok) return recordsResult;
+
+    return writeRecords(
+      recordsResult.value.map((record) => ({
+        ...record,
+        notToDoIds: (record.notToDoIds ?? []).filter(
+          (notToDoId) => notToDoId !== id
+        ),
+      }))
+    );
+  },
+
   async getReturnDate(): Promise<Result<string | null>> {
     if (!isBrowser()) return ok(null);
     try {
@@ -381,6 +496,8 @@ const localStorageRepository: LocalStorageRepository = {
     if (!records.ok) return records;
     const selfCare = readSelfCareItems();
     if (!selfCare.ok) return selfCare;
+    const notToDo = readNotToDoItems();
+    if (!notToDo.ok) return notToDo;
     const returnDate = await localStorageRepository.getReturnDate();
     if (!returnDate.ok) return returnDate;
 
@@ -388,8 +505,12 @@ const localStorageRepository: LocalStorageRepository = {
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
       returnDate: returnDate.value,
-      records: records.value,
+      records: records.value.map((record) => ({
+        ...record,
+        notToDoIds: record.notToDoIds ?? [],
+      })),
       selfCareItems: selfCare.value,
+      notToDoItems: notToDo.value,
     });
   },
 
@@ -430,6 +551,8 @@ const localStorageRepository: LocalStorageRepository = {
     if (!recordsWrite.ok) return recordsWrite;
     const selfCareWrite = writeSelfCareItems(payload.selfCareItems);
     if (!selfCareWrite.ok) return selfCareWrite;
+    const notToDoWrite = writeNotToDoItems(payload.notToDoItems);
+    if (!notToDoWrite.ok) return notToDoWrite;
     // 復職日を持たない書き出しからの取り込みでは、既定値の null で未設定へ戻す。
     // 端末に残った前の設定が、取り込んだ記録の起点として残らないようにする。
     return localStorageRepository.saveReturnDate(payload.returnDate);
@@ -483,6 +606,7 @@ const localStorageRepository: LocalStorageRepository = {
     return ok({
       recordCount: parsed.data.records.length,
       selfCareCount: parsed.data.selfCareItems.length,
+      notToDoCount: parsed.data.notToDoItems.length,
     });
   },
 
@@ -519,10 +643,15 @@ const localStorageRepository: LocalStorageRepository = {
 
     const records = readRecords();
     const selfCare = readSelfCareItems();
+    const notToDo = readNotToDoItems();
     if (!records.ok) return records;
     if (!selfCare.ok) return selfCare;
+    if (!notToDo.ok) return notToDo;
 
-    const hasData = records.value.length > 0 || selfCare.value.length > 0;
+    const hasData =
+      records.value.length > 0 ||
+      selfCare.value.length > 0 ||
+      notToDo.value.length > 0;
     if (storedVersion === null && !hasData) {
       // 新規ユーザー。版だけ記録しておく。
       return writeRaw(
@@ -534,7 +663,9 @@ const localStorageRepository: LocalStorageRepository = {
     // 正規化済みの値を書き戻し、保存形を最新スキーマに揃える。
     const recordsWrite = writeRecords(records.value);
     if (!recordsWrite.ok) return recordsWrite;
-    return writeSelfCareItems(selfCare.value);
+    const selfCareWrite = writeSelfCareItems(selfCare.value);
+    if (!selfCareWrite.ok) return selfCareWrite;
+    return writeNotToDoItems(notToDo.value);
   },
 };
 
@@ -555,6 +686,7 @@ export function createEmptyRecordForm(date: string): Omit<
     warningTags: [],
     warningNote: "",
     selfCareIds: [],
+    notToDoIds: [],
     selfCareMemo: "",
     selfCareFeeling: null,
     note: "",
@@ -579,6 +711,7 @@ export function recordToFormState(
     warningTags: [...record.warningTags],
     warningNote: record.warningNote,
     selfCareIds: [...record.selfCareIds],
+    notToDoIds: [...(record.notToDoIds ?? [])],
     selfCareMemo: record.selfCareMemo,
     selfCareFeeling: record.selfCareFeeling,
     note: record.note,
@@ -600,6 +733,7 @@ export function isRecordEmpty(
     form.warningTags.length === 0 &&
     !form.warningNote &&
     form.selfCareIds.length === 0 &&
+    (form.notToDoIds?.length ?? 0) === 0 &&
     !form.selfCareMemo &&
     form.selfCareFeeling === null &&
     !form.note &&
@@ -626,6 +760,7 @@ export function isDailyRecordEmpty(record: DailyRecord): boolean {
     warningTags: record.warningTags,
     warningNote: record.warningNote,
     selfCareIds: record.selfCareIds,
+    notToDoIds: record.notToDoIds ?? [],
     selfCareMemo: record.selfCareMemo,
     selfCareFeeling: record.selfCareFeeling,
     note: record.note,

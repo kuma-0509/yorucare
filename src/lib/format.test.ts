@@ -83,4 +83,21 @@ describe("buildRecordSummaryLines", () => {
     const lines = buildRecordSummaryLines(record, []);
     expect(lines).toContainEqual({ label: "気分", value: "まあまあ良い" });
   });
+
+  it("選んだやらないことを名前で返す", () => {
+    const record = makeRecord({ notToDoIds: ["n1"] });
+    const lines = buildRecordSummaryLines(record, [], [
+      {
+        id: "n1",
+        title: "夜は仕事を開かない",
+        createdAt: "2026-09-07T00:00:00.000Z",
+        updatedAt: "2026-09-07T00:00:00.000Z",
+      },
+    ]);
+
+    expect(lines).toContainEqual({
+      label: "やらないこと",
+      value: "夜は仕事を開かない",
+    });
+  });
 });

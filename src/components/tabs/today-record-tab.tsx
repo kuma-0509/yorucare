@@ -76,15 +76,23 @@ import {
   isMoodLabelSelected,
 } from "@/lib/mood-labels";
 import {
+  addNotToDoItem,
   addSelfCareItem,
   getAllRecords,
+  getAllNotToDoItems,
   getRecordByDate,
   initSelfCareIfEmpty,
   recordToFormState,
   saveRecord,
 } from "@/lib/storage";
 import type { AppTab } from "@/lib/types";
-import type { DailyRecord, MoodLabelCategory, MoodLabelEntry, SelfCareItem } from "@/lib/types";
+import type {
+  DailyRecord,
+  MoodLabelCategory,
+  MoodLabelEntry,
+  NotToDoItem,
+  SelfCareItem,
+} from "@/lib/types";
 import { ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 const MAX_MOOD_LABELS = 3;
@@ -117,6 +125,7 @@ export function TodayRecordTab({
     recordToFormState(null, today)
   );
   const [selfCareItems, setSelfCareItems] = useState<SelfCareItem[]>([]);
+  const [notToDoItems, setNotToDoItems] = useState<NotToDoItem[]>([]);
   const [moodLimitMessage, setMoodLimitMessage] = useState("");
   const [customMoodInput, setCustomMoodInput] = useState("");
   const [customMoodError, setCustomMoodError] = useState("");
@@ -127,10 +136,13 @@ export function TodayRecordTab({
   const [showMemo, setShowMemo] = useState(false);
   const [newSelfCareTitle, setNewSelfCareTitle] = useState("");
   const [showAddSelfCare, setShowAddSelfCare] = useState(false);
+  const [newNotToDoTitle, setNewNotToDoTitle] = useState("");
+  const [showAddNotToDo, setShowAddNotToDo] = useState(false);
   const [goalToReview, setGoalToReview] = useState<string | null>(null);
   const [formLoading, setFormLoading] = useState(true);
   const [formLoadError, setFormLoadError] = useState<string | null>(null);
   const [addingSelfCare, setAddingSelfCare] = useState(false);
+  const [addingNotToDo, setAddingNotToDo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [liveMessage, setLiveMessage] = useState<string | null>(null);
   // 記録画面に出す項目の設定。既定はすべてOFFで、ヘッダーのカスタム入力から足す。
@@ -172,13 +184,19 @@ export function TodayRecordTab({
 
   useEffect(() => {
     let active = true;
-    void initSelfCareIfEmpty().then((result) => {
+    void Promise.all([initSelfCareIfEmpty(), getAllNotToDoItems()]).then(
+      ([selfCareResult, notToDoResult]) => {
       if (!active) return;
-      if (!result.ok) {
-        setLiveMessage(storageErrorMessage(result.error));
+      if (!selfCareResult.ok) {
+        setLiveMessage(storageErrorMessage(selfCareResult.error));
         return;
       }
-      setSelfCareItems(result.value);
+      if (!notToDoResult.ok) {
+        setLiveMessage(storageErrorMessage(notToDoResult.error));
+        return;
+      }
+      setSelfCareItems(selfCareResult.value);
+      setNotToDoItems(notToDoResult.value);
     });
     return () => {
       active = false;
@@ -316,6 +334,19 @@ export function TodayRecordTab({
     });
   };
 
+  const toggleNotToDo = (id: string) => {
+    setForm((prev) => {
+      const current = prev.notToDoIds ?? [];
+      const selected = current.includes(id);
+      return {
+        ...prev,
+        notToDoIds: selected
+          ? current.filter((notToDoId) => notToDoId !== id)
+          : [...current, id],
+      };
+    });
+  };
+
   /**
    * 自分メンテの案を「できること」へ登録し、その日の実施として選ぶ。
    * 同じ名前がすでにあれば登録し直さず、辞書が二重にならないようにする。
@@ -364,6 +395,25 @@ export function TodayRecordTab({
     }));
     setNewSelfCareTitle("");
     setShowAddSelfCare(false);
+  };
+
+  const handleAddNotToDoInline = async () => {
+    const title = newNotToDoTitle.trim();
+    if (!title || addingNotToDo) return;
+    setAddingNotToDo(true);
+    const result = await addNotToDoItem(title);
+    setAddingNotToDo(false);
+    if (!result.ok) {
+      setLiveMessage(storageErrorMessage(result.error));
+      return;
+    }
+    setNotToDoItems((items) => [...items, result.value]);
+    setForm((prev) => ({
+      ...prev,
+      notToDoIds: [...(prev.notToDoIds ?? []), result.value.id],
+    }));
+    setNewNotToDoTitle("");
+    setShowAddNotToDo(false);
   };
 
   const handleSave = async () => {
@@ -438,7 +488,11 @@ export function TodayRecordTab({
   }
 
   if (showSaved && savedRecord) {
-    const lines = buildRecordSummaryLines(savedRecord, selfCareItems);
+    const lines = buildRecordSummaryLines(
+      savedRecord,
+      selfCareItems,
+      notToDoItems
+    );
 
     return (
       <div className="flex flex-col gap-3">
@@ -1002,6 +1056,80 @@ export function TodayRecordTab({
                   }
                 />
               </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {sections.notToDo && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {targetDate === today
+                ? COPY.notToDoToday
+                : COPY.notToDoAction}
+            </CardTitle>
+            <CardDescription>
+              負担を減らすために、やらないと決めたことを選べます。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {notToDoItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                「{COPY.tab.selfCare}」タブで登録すると、ここから選べます。
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {notToDoItems.map((item) => (
+                  <ChipButton
+                    key={item.id}
+                    selected={(form.notToDoIds ?? []).includes(item.id)}
+                    onClick={() => toggleNotToDo(item.id)}
+                  >
+                    {item.title}
+                  </ChipButton>
+                ))}
+              </div>
+            )}
+
+            {showAddNotToDo ? (
+              <div className="space-y-2 rounded-xl border-2 border-dashed p-4">
+                <Input
+                  value={newNotToDoTitle}
+                  onChange={(event) => setNewNotToDoTitle(event.target.value)}
+                  maxLength={MAX_SELF_CARE_TITLE_LENGTH}
+                  placeholder="新しいやらないことの名前"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    className="flex-1"
+                    onClick={() => void handleAddNotToDoInline()}
+                    disabled={addingNotToDo}
+                  >
+                    {addingNotToDo ? "追加中…" : COPY.add}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAddNotToDo(false)}
+                  >
+                    {COPY.cancel}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="soft"
+                className="w-full"
+                onClick={() => setShowAddNotToDo(true)}
+              >
+                <Plus className="h-4 w-4" />
+                {targetDate === today
+                  ? `${COPY.notToDoToday}を追加`
+                  : `${COPY.notToDoAction}を追加`}
+              </Button>
             )}
           </CardContent>
         </Card>

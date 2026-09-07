@@ -19,6 +19,7 @@ export type RecordFormSectionKey =
   | "details"
   | "warningSign"
   | "doneToday"
+  | "notToDo"
   | "goal";
 
 export type RecordFormSections = Record<RecordFormSectionKey, boolean>;
@@ -50,6 +51,11 @@ export const RECORD_FORM_SECTION_OPTIONS: {
     description: "「できること」から、その日にできたことを選べます",
   },
   {
+    key: "notToDo",
+    label: COPY.notToDoAction,
+    description: "「やらないこと」から、その日にやらないと決めたことを選べます",
+  },
+  {
     key: "goal",
     label: COPY.goal.sectionName,
     description: "翌日の小さな目標と、前日の目標のふりかえり",
@@ -64,6 +70,7 @@ export const DEFAULT_RECORD_FORM_SECTIONS: RecordFormSections = {
   details: false,
   warningSign: false,
   doneToday: false,
+  notToDo: false,
   goal: false,
 };
 
@@ -121,6 +128,11 @@ export function toggleRecordFormSection(
 ): RecordFormSections {
   saveRecordFormSections({ ...getRecordFormSections(), [key]: enabled });
   return getRecordFormSections();
+}
+
+/** 2つのセルフケア入力のどちらかを使う場合だけ第3ペインを表示する */
+export function shouldShowSelfCareTab(sections: RecordFormSections): boolean {
+  return sections.doneToday || sections.notToDo;
 }
 
 /** 設定が変わったら呼び出す。戻り値を呼ぶと購読をやめる */
