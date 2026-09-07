@@ -232,6 +232,7 @@ export function RecordsTab({
               label: COPY.doneToday,
               value: formatSelfCareSummary(record, selfCareItems),
             },
+            { label: COPY.memo, value: record.note },
           ].filter((line) => isMeaningfulSummaryValue(line.value));
 
           return (
@@ -472,7 +473,7 @@ function RecordPreviewLine({
   value: string;
 }) {
   return (
-    <p>
+    <p className="whitespace-pre-wrap break-words">
       <span className="text-muted-foreground">{label}：</span>
       {value}
     </p>
