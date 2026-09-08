@@ -60,6 +60,7 @@ import {
   getStateLevelFromScore,
 } from "@/lib/state-level";
 import { getGoalToReview } from "@/lib/goal";
+import { returnAfterWorkLabel } from "@/lib/return-day";
 import {
   DEFAULT_RECORD_FORM_SECTIONS,
   getRecordFormSections,
@@ -81,6 +82,7 @@ import {
   getAllRecords,
   getAllNotToDoItems,
   getRecordByDate,
+  getReturnDate,
   initSelfCareIfEmpty,
   recordToFormState,
   saveRecord,
@@ -107,6 +109,38 @@ interface TodayRecordTabProps {
   onNavigateTab: (tab: AppTab, options?: { recordDate?: string }) => void;
   refreshKey?: number;
   onSavedViewChange?: (showing: boolean) => void;
+}
+
+function RecordScreenHeader({
+  title,
+  returnDayLabel,
+  description,
+}: {
+  title: string;
+  returnDayLabel: string | null;
+  description?: string;
+}) {
+  return (
+    <header>
+      {returnDayLabel !== null && (
+        <p className="text-base font-semibold tracking-tight text-foreground">
+          {returnDayLabel}
+        </p>
+      )}
+      <h1
+        className={
+          returnDayLabel !== null ? "mt-1 text-xl font-bold" : "text-xl font-bold"
+        }
+      >
+        {title}
+      </h1>
+      {description !== undefined && (
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          {description}
+        </p>
+      )}
+    </header>
+  );
 }
 
 export function TodayRecordTab({
@@ -145,6 +179,7 @@ export function TodayRecordTab({
   const [addingNotToDo, setAddingNotToDo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [liveMessage, setLiveMessage] = useState<string | null>(null);
+  const [returnDate, setReturnDate] = useState<string | null>(null);
   // 記録画面に出す項目の設定。既定はすべてOFFで、ヘッダーのカスタム入力から足す。
   // 端末内の設定は最初の描画では読まず、開いたあとで反映する
   const [sections, setSections] = useState<RecordFormSections>(
@@ -217,6 +252,17 @@ export function TodayRecordTab({
   useEffect(() => {
     void loadForm(targetDate);
   }, [targetDate, loadForm, refreshKey]);
+
+  useEffect(() => {
+    let active = true;
+    void getReturnDate().then((result) => {
+      if (!active) return;
+      if (result.ok) setReturnDate(result.value);
+    });
+    return () => {
+      active = false;
+    };
+  }, [refreshKey]);
 
   useEffect(() => {
     onSavedViewChange?.(showSaved);
@@ -443,6 +489,7 @@ export function TodayRecordTab({
     targetDate === today
       ? "今日の記録"
       : `${formatDisplayDate(targetDate)}の記録`;
+  const returnDayLabel = returnAfterWorkLabel(returnDate, targetDate);
 
   const showWarningTags =
     sections.warningSign &&
@@ -460,10 +507,11 @@ export function TodayRecordTab({
   if (formLoading) {
     return (
       <div className="space-y-4 pb-4" aria-busy="true">
-        <header>
-          <h1 className="text-xl font-bold">{recordTitle}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">読み込み中…</p>
-        </header>
+        <RecordScreenHeader
+          title={recordTitle}
+          returnDayLabel={returnDayLabel}
+          description="読み込み中…"
+        />
       </div>
     );
   }
@@ -471,9 +519,10 @@ export function TodayRecordTab({
   if (formLoadError) {
     return (
       <div className="space-y-4 pb-4">
-        <header>
-          <h1 className="text-xl font-bold">{recordTitle}</h1>
-        </header>
+        <RecordScreenHeader
+          title={recordTitle}
+          returnDayLabel={returnDayLabel}
+        />
         <div
           className="rounded-2xl border-2 border-destructive/40 bg-destructive/5 px-4 py-3"
           role="alert"
@@ -561,12 +610,11 @@ export function TodayRecordTab({
   return (
     <>
     <div className="space-y-4">
-      <header>
-        <h1 className="text-xl font-bold">{recordTitle}</h1>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          気分だけ選んで保存してもOKです。
-        </p>
-      </header>
+      <RecordScreenHeader
+        title={recordTitle}
+        returnDayLabel={returnDayLabel}
+        description="気分だけ選んで保存してもOKです。"
+      />
 
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {weekDates.map((d) => (
