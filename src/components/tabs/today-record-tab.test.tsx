@@ -11,7 +11,8 @@ import {
 import { TodayRecordTab } from "./today-record-tab";
 import { ok } from "@/lib/result";
 import { COPY } from "@/lib/copy";
-import { getTodayString } from "@/lib/dates";
+import { formatDatePickerLabel, getTodayString, getYesterdayString } from "@/lib/dates";
+import { STORAGE_KEYS } from "@/lib/constants";
 import {
   toggleRecordFormSection,
   type RecordFormSectionKey,
@@ -77,6 +78,19 @@ function makeItem(id: string, title: string): SelfCareItem {
     createdAt: "2026-07-01T00:00:00.000Z",
     updatedAt: "2026-07-01T00:00:00.000Z",
   };
+}
+
+/** 今日を基準にした日付 */
+function daysAgo(offset: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - offset);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+}
+
+function daysFromNow(offset: number): string {
+  return daysAgo(-offset);
 }
 
 /** 「眠れない」を選んだ「しんどい」日にだけ出る案 */
@@ -354,3 +368,91 @@ describe("同じ名前の「できること」があるとき", () => {
     expect(addSelfCareItem).not.toHaveBeenCalled();
   });
 });
+
+describe("復職後の日数目", () => {
+  function stubForm() {
+    const today = getTodayString();
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(ok(date === today ? makeRecord(today) : null))
+    );
+  }
+
+  it("復職日を設定していれば、今日の記録の上に復職後日数目を出す", async () => {
+    stubForm();
+    localStorage.setItem(STORAGE_KEYS.returnDate, daysAgo(7));
+
+    renderTab();
+
+    const heading = await screen.findByRole("heading", { name: "今日の記録" });
+    const header = heading.closest("header");
+    expect(header).toBeTruthy();
+    expect(within(header!).getByText("復職後8日目")).toBeTruthy();
+  });
+
+  it("復職当日は1日目と出す", async () => {
+    stubForm();
+    localStorage.setItem(STORAGE_KEYS.returnDate, getTodayString());
+
+    renderTab();
+
+    const heading = await screen.findByRole("heading", { name: "今日の記録" });
+    expect(within(heading.closest("header")!).getByText("復職後1日目")).toBeTruthy();
+  });
+
+  it("復職日が未設定なら日数目を出さない", async () => {
+    stubForm();
+
+    renderTab();
+
+    expect(await screen.findByRole("heading", { name: "今日の記録" })).toBeTruthy();
+    expect(screen.queryByText(/復職後\d+日目/)).toBeNull();
+  });
+
+  it("復職日が未来なら日数目を出さない", async () => {
+    stubForm();
+    localStorage.setItem(STORAGE_KEYS.returnDate, daysFromNow(1));
+
+    renderTab();
+
+    expect(await screen.findByRole("heading", { name: "今日の記録" })).toBeTruthy();
+    expect(screen.queryByText(/復職後\d+日目/)).toBeNull();
+  });
+
+  it("日付を切り替えると、その日の序数に変わる", async () => {
+    stubForm();
+    localStorage.setItem(STORAGE_KEYS.returnDate, daysAgo(7));
+
+    renderTab();
+
+    expect(await screen.findByText("復職後8日目")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "昨日" }));
+
+    expect(await screen.findByText("復職後7日目")).toBeTruthy();
+    expect(screen.queryByText("復職後8日目")).toBeNull();
+    expect(getYesterdayString()).not.toBe(getTodayString());
+  });
+
+  it("復職日前の日付では日数目を出さない", async () => {
+    stubForm();
+    localStorage.setItem(STORAGE_KEYS.returnDate, daysAgo(2));
+
+    renderTab();
+
+    expect(await screen.findByText("復職後3日目")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "昨日" }));
+    expect(await screen.findByText("復職後2日目")).toBeTruthy();
+
+    // 6日前は復職日より前
+    fireEvent.click(
+      screen.getByRole("button", { name: formatDatePickerLabel(daysAgo(6)) })
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText(/復職後\d+日目/)).toBeNull();
+    });
+  });
+});
+

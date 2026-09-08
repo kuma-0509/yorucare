@@ -87,3 +87,7 @@ export function updateNotToDoItem(
 export function deleteNotToDoItem(id: string): Promise<Result<void>> {
   return repository.deleteNotToDoItem(id);
 }
+
+export function getReturnDate(): Promise<Result<string | null>> {
+  return repository.getReturnDate();
+}
