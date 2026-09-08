@@ -274,10 +274,16 @@ APIは次の4つに限定する。
 
 次はいつでも着手してよい。すべてフラグOFF・本番画面から到達不可、ダミーデータのみで行う。
 
-- 本人記録用Neonプロジェクトの作成とマイグレーション
-- Managed Better Authの有効化（新規登録を無効にし、検証用アドレスだけを登録する）
-- 保存・復元・削除APIと暗号化処理
-- 画面と表示テスト、結合テスト
+| 範囲 | 状況 |
+| --- | --- |
+| 本人記録用のテーブル定義とマイグレーション | 実装済み（`db/migrations/0002_user_data_snapshots.sql`、`pnpm db:user-data:setup`） |
+| スナップショットの暗号化・復号・親鍵の入れ替え | 実装済み（`src/lib/server/user-data-crypto.ts`） |
+| 保存・取り出し・削除・端末登録のAPI | 実装済み（`src/app/api/cloud/`） |
+| 端末側の送信・取り出し・復元の判断 | 実装済み（`src/lib/cloud-sync.ts`、`src/lib/cloud-sync-state.ts`） |
+| Managed Better Authの有効化とセッション検証 | 未実装。`src/lib/server/cloud-session.ts` に組み込む口だけ用意してある |
+| クラウド保存の設定画面と復元画面 | 未実装 |
+
+`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` が `true` でない限り、APIは存在しない扱い（404）で応え、DBへ接続しない。フラグを立てても、セッション検証が未実装のあいだは401しか返らない。Preview環境でダミーデータを通す場合だけ、`USER_DATA_DEV_OWNER_ID` で所有者IDを固定できる。この抜け道は `VERCEL_ENV=production` では無視する。
 
 ### 11.2 公開の入口を開ける条件
 
