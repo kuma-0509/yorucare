@@ -154,6 +154,11 @@ export const STORAGE_KEYS = {
   recordFormSections: "yorucare_record_form_sections",
   /** 積み重ねを数える起点として本人が設定した復職日。未設定なら最初の記録日を使う */
   returnDate: "yorucare_return_date",
+  /**
+   * クラウドバックアップの端末側の状態。端末の識別子、最終預け日時、
+   * 別端末へ引き継がれた日時を持つ。記録本文は入れない
+   */
+  cloudSync: "yorucare_cloud_sync",
 } as const;
 
 /** 利用者向けふりかえりタブに表示する予定機能（短く） */
