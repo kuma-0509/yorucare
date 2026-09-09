@@ -10,6 +10,8 @@ const store = vi.hoisted(() => ({
   deleteAllUserData: vi.fn(),
 }));
 
+// 削除前の再認証の判定（`cloud-reauth.ts`）はここで置き換えない。テスト用の
+// 置き換えでAPIの守りが消えないよう、判定は本物のまま通す
 vi.mock("@/lib/server/cloud-session", () => ({ getCloudSession }));
 vi.mock("@/lib/server/user-data-store", async () => {
   const actual = await vi.importActual<
@@ -250,6 +252,32 @@ describe("/api/cloud/snapshot", () => {
     expect((await DELETE(request("DELETE"))).status).toBe(204);
     expect((await DELETE(request("DELETE"))).status).toBe(204);
     expect(store.deleteAllUserData).toHaveBeenCalledTimes(2);
+  });
+
+  describe("削除の前の再認証", () => {
+    beforeEach(() => {
+      getCloudSession.mockResolvedValue({
+        ownerId: "owner-1",
+        // 本人確認から十分に時間が経っている状態
+        verifiedAt: new Date(Date.now() - 60 * 60 * 1000),
+      });
+    });
+
+    it("本人確認から時間が経っていたら消さずに断る", async () => {
+      const response = await DELETE(request("DELETE"));
+      expect(response.status).toBe(403);
+      await expect(response.json()).resolves.toEqual({
+        ok: false,
+        reason: "reauth_required",
+      });
+      expect(store.deleteAllUserData).not.toHaveBeenCalled();
+    });
+
+    it("断るときも読み書きは従来どおり続けられる", async () => {
+      store.getLatestSnapshot.mockResolvedValue(null);
+      expect((await GET(request("GET"))).status).toBe(404);
+      expect((await PUT(request("PUT", await uploadBody()))).status).toBe(200);
+    });
   });
 
   it("保存先が未設定なら503を返す", async () => {

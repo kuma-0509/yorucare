@@ -159,6 +159,11 @@ export const STORAGE_KEYS = {
    * 別端末へ引き継がれた日時を持つ。記録本文は入れない
    */
   cloudSync: "yorucare_cloud_sync",
+  /**
+   * クラウド保存への同意。匿名分析の同意（analyticsConsent）とは別に持つ。
+   * 一方をONにしても、もう一方は変わらない
+   */
+  cloudBackupConsent: "yorucare_cloud_backup_consent",
 } as const;
 
 /** 利用者向けふりかえりタブに表示する予定機能（短く） */

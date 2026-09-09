@@ -16,6 +16,9 @@ vi.mock("@/components/shared/anonymous-analytics-panel", () => ({
 vi.mock("@/components/shared/data-backup-panel", () => ({
   DataBackupPanel: () => null,
 }));
+vi.mock("@/components/shared/cloud-backup-panel", () => ({
+  CloudBackupPanel: () => null,
+}));
 
 beforeEach(() => {
   localStorage.clear();

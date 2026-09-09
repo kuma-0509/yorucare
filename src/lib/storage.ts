@@ -2,6 +2,7 @@
  * @deprecated 直接の localStorage 操作は repository 経由に統一。
  * 既存 import 互換のための薄いラッパー。
  */
+import { backupAfterSave } from "./cloud-sync";
 import { repository } from "./repository";
 import type { Result } from "./result";
 import type { DailyRecord, NotToDoItem, SelfCareItem } from "./types";
@@ -26,14 +27,18 @@ export function getRecordByDate(
   return repository.getRecordByDate(date);
 }
 
-export function saveRecord(
+export async function saveRecord(
   date: string,
   data: Omit<
     DailyRecord,
     "id" | "date" | "sleepMinutes" | "createdAt" | "updatedAt"
   > & { id?: string }
 ): Promise<Result<DailyRecord>> {
-  return repository.saveRecord(date, data);
+  const result = await repository.saveRecord(date, data);
+  // 端末への保存が終わってから預け直す。結果は待たないので、記録の保存は
+  // これまでどおりの速さで完了する
+  if (result.ok) backupAfterSave();
+  return result;
 }
 
 export function deleteRecord(date: string): Promise<Result<void>> {

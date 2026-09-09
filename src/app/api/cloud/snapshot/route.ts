@@ -5,6 +5,7 @@ import {
   snapshotChecksum,
 } from "@/lib/cloud-backup";
 import { parseExportPayload, STORAGE_SCHEMA_VERSION } from "@/lib/schemas";
+import { isRecentlyVerified } from "@/lib/server/cloud-reauth";
 import { getCloudSession } from "@/lib/server/cloud-session";
 import {
   deleteAllUserData,
@@ -42,13 +43,16 @@ function isSameOrigin(request: Request): boolean {
 
 async function requireOwner(
   request: Request
-): Promise<{ ok: true; ownerId: string } | { ok: false; status: number }> {
+): Promise<
+  | { ok: true; ownerId: string; verifiedAt: Date }
+  | { ok: false; status: number }
+> {
   if (!isCloudBackupEnabled()) return { ok: false, status: 404 };
   if (!isSameOrigin(request)) return { ok: false, status: 403 };
 
   const session = await getCloudSession(request);
   if (!session) return { ok: false, status: 401 };
-  return { ok: true, ownerId: session.ownerId };
+  return { ok: true, ownerId: session.ownerId, verifiedAt: session.verifiedAt };
 }
 
 /** 最新のスナップショットを返す。復元画面だけが呼ぶ */
@@ -153,10 +157,20 @@ export async function PUT(request: Request): Promise<NextResponse> {
   }
 }
 
-/** クラウド停止と退会で使う。何度呼んでも成功として扱う */
+/**
+ * クラウド停止と退会で使う。何度呼んでも成功として扱う。
+ *
+ * 取り返しのつかない操作なので、直近の本人確認を求める。古いCookieが
+ * 残っているだけの状態では消させない（`docs/account-cloud-storage-decision.md`
+ * 4節・9節）。
+ */
 export async function DELETE(request: Request): Promise<NextResponse> {
   const owner = await requireOwner(request);
   if (!owner.ok) return errorResponse(owner.status);
+
+  if (!isRecentlyVerified({ verifiedAt: owner.verifiedAt })) {
+    return errorResponse(403, { ok: false, reason: "reauth_required" });
+  }
 
   try {
     await deleteAllUserData(owner.ownerId);

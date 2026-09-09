@@ -65,6 +65,25 @@ export function formatShortDate(dateStr: string): string {
   return `${Number(m)}/${Number(d)}`;
 }
 
+/**
+ * 「9月8日 22:14」の形。クラウドへ最後に預けた日時のように、日付だけでは
+ * 足りない場面で使う。端末の時計に合わせて表示する
+ */
+export function formatDateTimeLabel(isoString: string): string {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${hours}:${minutes}`;
+}
+
+/** 「9月3日」の形。引き継ぎの案内のように、日付だけを示す場面で使う */
+export function formatDateLabel(isoString: string): string {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
+}
+
 export type ChartPeriod = "week" | "month" | "6months" | "year";
 
 const PERIOD_DAYS: Record<ChartPeriod, number> = {

@@ -1,62 +1,90 @@
 # Handoff
 
-日付: 2026-09-08
-担当チャット: 17件目
+日付: 2026-09-09
+担当チャット: 18件目
 
 ## 今回実装したタスク
 
-- DEVELOPMENT_BOARD.md 66行目「クラウドバックアップと復元が未実装で、端末を失うと記録が戻らない」のうち、残っていた「認証基盤のセッション検証の組み込み」を実装した。
-- `src/lib/server/cloud-session.ts` の `getCloudSession` に、Managed Better Auth（`@neondatabase/auth`）を使った実際のセッション検証を実装した。HttpOnly Cookieの検証はSDKの `auth.getSession()` に任せ（Next.jsのリクエストコンテキストからCookieを読むため、Route Handler内で引数なしに呼べる）、検証済みユーザーの `user.id` を `ownerId`、セッションの `createdAt` を `verifiedAt`（直近の本人確認時刻）として返す。
-- 認証方式はEmail OTP（6桁コード）だけを使う。サインアップ専用の画面・APIは作らず、`authClient.signIn.emailOtp()` が未登録メールアドレスに対して自動でアカウントを作る挙動（better-authの `email-otp` プラグインの既定動作）をアプリ側で防ぐため、`USER_DATA_ALLOWED_EMAILS`（運営者が用意した許可済みメールアドレス一覧）との突き合わせを追加した。**設計判断の理由は次節「引き継ぎ事項・注意点」の1番目を参照。**
-- 検証に必要な最小限の画面として `/cloud-login`（メールアドレス→6桁コード→ログイン、ログアウト）を実装した。`docs/account-cloud-storage-decision.md` の他の画面（設定・復元）は対象外。
-- クライアントSDKからのリクエストを受ける `/api/auth/[...path]` を追加した。両方とも `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` が `true` でない限り404を返し、本番画面から到達できない状態を維持している。
+クラウド保存の**設定画面と復元画面**（`docs/account-cloud-storage-decision.md` 4節・9節、11.1節の最後の未実装項目）。ロジックは前回までに揃っていたため、その上に画面を載せた。フラグOFF・本番画面から到達不可のまま。
+
+前提として、Neon Consoleの設定作業（前回の手順書5.1〜5.7）は**まだ実施されていない**ことをユーザーに確認済み。したがって実機での通し確認は行っておらず、検証は自動テストのみ。
+
+### 画面の置き場所
+
+ユーザーと相談し、記録タブ（これまで）の中のカードとした。既存の「データのバックアップ」「匿名の利用状況」と同じ並びに置いてある。JSONバックアップの導線がすぐ隣にあり、復元時に必須となるファイル保存へ繋げやすいため。
+
+### 実装した要件（4節・9節の項番に対応）
+
+1. **有効化前の説明** … 短い要約5行と、折りたたんだ詳細7項目（預けるもの／場所／見られる人／期間／消し方／やめ方／消したあとに残るもの）。
+2. **アカウント作成とアップロードの分離** … ログイン導線は `/cloud-login` へのリンクだけ。`pushSnapshot` は同意（`cloud-consent.ts`）が無いと1件も送らない。ログインしただけでは送らないことをテストで固定した。
+3. **有効化の直前の件数表示** … 記録・できること・やらないことの件数と期間だけを出す。記録の中身は画面にも出さない（テストで固定）。
+4. **同意の分離** … `yorucare_cloud_backup_consent` を匿名分析とは別の鍵で持つ。片方を変えても他方が変わらないことをテストで固定した。
+5. **最終預け日時** … 「最後にクラウドに預けた：9月8日 22:14」。送信失敗は画面に出さない。
+6. **何日も預けられていないときの案内** … `evaluateSyncNotice` が `stale` を返したときだけ出す。
+7. **引き継がれた端末の案内** … 文言はユーザーに確認して確定（説明を厚めにする案を採用）。引き継いだ日付、記録が消えていないこと、預け直す方法の3文。
+8. **復元画面** … `planRestore` の結果で出し分ける。`choice_required` では件数と期間を並べ、`requiresLocalBackup` が真なのでJSONバックアップを保存するまで両方の選択肢を押せないようにした。
+9. **停止と退会** … 確認の画面を挟み、どちらも削除APIを呼ぶ。再認証については下記。
+10. **記録保存後の自動送信** … `src/lib/storage.ts` の `saveRecord` 成功後に `backupAfterSave()` を呼ぶ。結果は待たない。送れなくても記録の保存は成功のまま（テストで固定）。
+
+### 実装中に見つけて直したこと
+
+- **削除前の再認証がどのAPIでも実施されていなかった。** `isRecentlyVerified` は定義とテストはあったが、呼び出し元が無かった。4節・8.2節が「削除は再認証後」と定めているため、`DELETE /api/cloud/snapshot` で必須にし、古い場合は削除せず `403`（`reason: "reauth_required"`）を返すようにした。判定は `src/lib/server/cloud-reauth.ts` へ切り出してある（認証基盤を読み込まない純粋な関数にし、テストでセッションを差し替えてもこの守りが消えないようにするため）。
+- **記録が1件も無い端末に復元の導線が無かった。** 機種変更の直後がまさにこの状態で、このままでは預けた控えへたどり着けず、機能の目的が果たせない。まだ預けていない状態の画面にも「クラウドから戻す」を置いた。
+- **再認証を求めるとき、確認の画面が開いたままだと再ログインの導線が裏に隠れていた。** 応答を受けたら確認の画面を閉じてから案内するようにした。
 
 ## 変更ファイル
 
-- `src/lib/server/neon-auth.ts`: Managed Better Authのサーバーインスタンスを作る唯一の場所（新規）
-- `src/lib/server/cloud-session.ts`: `getCloudSession` の実装（Cookie検証・許可リスト突き合わせ・`verifiedAt`）
-- `src/lib/server/cloud-session.test.ts`: 単体テスト（新規）
-- `src/lib/cloud-auth-client.ts`: クライアント側のManaged Better Auth SDKインスタンス（新規）
-- `src/app/api/auth/[...path]/route.ts`: クライアントSDKからの認証リクエストの受け口（新規、フラグOFFで404）
-- `src/app/api/auth/[...path]/route.test.ts`: 上記の単体テスト（新規）
-- `src/app/cloud-login/layout.tsx`, `src/app/cloud-login/page.tsx`: ログイン確認用の最小画面（新規、フラグOFFで404）
-- `package.json`, `pnpm-lock.yaml`: `@neondatabase/auth` を追加
-- `.env.example`: `NEON_AUTH_BASE_URL`、`NEON_AUTH_COOKIE_SECRET`、`USER_DATA_ALLOWED_EMAILS` を追記
-- `docs/DEVELOPMENT_BOARD.md`: 66行目を更新（引き続き「進行中」。残りは画面とConsole設定）
-- `docs/account-cloud-storage-decision.md`: 11.1節の状況を更新し、新規登録抑止に関する公式資料との食い違いと対応方針を追記、15節に決定記録を追加
-- `docs/handoff/latest.md`: 本ファイル
+- `src/lib/cloud-consent.ts`（新規）: クラウド保存の同意。匿名分析とは別の鍵で持つ
+- `src/lib/cloud-consent.test.ts`（新規）: 同意が別々であることの単体テスト
+- `src/lib/server/cloud-reauth.ts`（新規）: 直近の本人確認の判定（何にも依存しない）
+- `src/components/shared/cloud-backup-panel.tsx`（新規）: 設定画面
+- `src/components/shared/cloud-backup-panel.test.tsx`（新規）: 表示テスト18件
+- `src/components/shared/cloud-restore-dialog.tsx`（新規）: 復元画面
+- `src/components/shared/cloud-restore-dialog.test.tsx`（新規）: 表示テスト9件
+- `src/lib/cloud-auto-backup.test.ts`（新規）: 保存後の自動送信のテスト
+- `src/lib/cloud-sync.ts`: 送信前の同意確認、`backupAfterSave`、`deleteCloudData` の戻り値を4状態へ
+- `src/lib/cloud-sync.test.ts`: 同意していなければ送らない、再認証を求められる場合を追加
+- `src/lib/server/cloud-session.ts`: `isRecentlyVerified` を `cloud-reauth.ts` へ移し、再輸出
+- `src/app/api/cloud/snapshot/route.ts`: 削除の前に直近の本人確認を必須化
+- `src/app/api/cloud/snapshot/route.test.ts`: 再認証の単体テストを追加
+- `src/lib/storage.ts`: `saveRecord` 成功後に `backupAfterSave()`
+- `src/lib/constants.ts`: `cloudBackupConsent` の鍵を追加
+- `src/lib/copy.ts`: `cloudBackup` の文言一式
+- `src/lib/dates.ts`: `formatDateTimeLabel`、`formatDateLabel`
+- `src/components/tabs/records-tab.tsx` / `.test.tsx`: 設定画面を配置
+- `docs/DEVELOPMENT_BOARD.md`、`docs/account-cloud-storage-decision.md`、`docs/handoff/latest.md`
 
 ## 検証結果
 
 - `pnpm lint`: 成功（警告・エラーなし）
-- `pnpm test`: 成功（54 test files / 529 tests）。既存の `src/app/api/cloud/**/route.test.ts` 28件は無改修のまま全件成功し、所有者IDを本文から受け取らない性質を維持していることを確認した
-- `pnpm build`: 成功（Compiled successfully、型チェック、静的ページ生成を通過）。`/cloud-login` と `/api/auth/[...path]` はビルド時点で `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` 未設定のため、想定どおり到達不可の状態でビルドされている
+- `pnpm exec tsc --noEmit`: 成功
+- `pnpm test`: 成功（58 test files / 571 tests）。前回の529件から42件増。既存の `src/app/api/cloud/**/route.test.ts` は所有者IDを本文から受け取らない性質を保ったまま通っている
+- `pnpm build`: 成功。`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` 未設定でビルドしており、設定画面は何も描画せず、APIと `/cloud-login` は到達不可のまま
+- **実機確認は未実施**（Neon Consoleの設定が未着手のため）
 
 ## 自動レビュー指摘
 
-- PRは未作成（このチャットの時点ではpushのみ）。指摘0件（該当PRなし）
+- PRは未作成（pushのみ）。指摘0件（該当PRなし）
 
-## 次のタスク候補
+## 次にやること
 
-- `docs/phase2-plan.md` の優先順位に基づく次点候補は「クラウド保存の設定画面と復元画面」（`docs/account-cloud-storage-decision.md` 11.1節の最後の未実装項目）。初回アップロード、継続バックアップの表示、復元時の選択画面（端末とクラウド両方にある場合はJSONバックアップ必須）、クラウド停止・全件削除・退会の導線を含む。フラグOFF・本番到達不可のまま進められる。
+1. **Neon Consoleの設定**（下記5節の手順書。ユーザー作業）。これが済むまでPreview環境でも通し確認ができない。
+2. Console設定後、Preview環境で `/cloud-login` からログイン →記録タブの「クラウドに預ける」→預ける→別端末で復元、までを**ダミーデータで**通す。
+3. 同意文面と研究・安全管理手続きの確認（未着手・担当と期限が未定）。**これが済むまでフラグを開けない。**
 
 ## 引き継ぎ事項・注意点
 
-1. **新規登録の抑止について、公式資料と設計前提が食い違っていた。** `docs/account-cloud-storage-decision.md` は「Console設定で新規登録の可否を切り替えられる」という前提だったが、Managed Better Authの認証フロー公式ドキュメント（`https://neon.com/docs/auth/authentication-flow`、2026-09-08確認）には次のように明記されている。
+1. **退会時に認証アカウントそのものは削除していない。** 8.2節は退会を「全セッション失効、本人記録削除、認証アカウント削除の順」と定めているが、今回の実装はクラウド上の本人データ削除とサインアウトまで。Managed Better AuthのSDKには `delete-user` の経路が存在するものの、better-auth本体ではサーバー側で明示的に有効化が必要な機能であり、Managed Better AuthはNeon側がホストしているため、アプリのコードから有効化できるかを確認できなかった。ベータの記載と実装が食い違う可能性があるため、**動作を確かめずに呼び出すことはしていない**。公開前に、Console上またはSDKで認証アカウントを削除できるかを確認し、できない場合は運営者が手作業で削除する手順を決める必要がある。
 
-   > "Anyone can sign up for your application by default. Support for restricted signups is coming soon."
+2. **文言はすべて `src/lib/copy.ts` の `cloudBackup` に置いた。** 「保存先はシンガポール」「運営者は読めない」「あなたが消すまで預かる」など、事実として説明している箇所がある。Neonの契約・保存国・再委託先の確認（11.2節）の結果と食い違う場合は、文言も一緒に直す必要がある。
 
-   Email OTPプラグインのConsole設定ページにも「サインアップ無効化」に相当する項目の記載は無かった。better-authの `email-otp` プラグイン自体には `disableSignUp` オプションが存在する（`node_modules/better-auth` のソースで確認済み）が、Managed Better Authはこのプラグインの実体をNeon側でホストしており、アプリのコードからオプションを渡す経路が無い。Consoleにこれを設定する項目があるかどうかは、今回のドキュメント調査だけでは確認できなかった。
-   ユーザーに確認のうえ、**アプリ側にも許可リスト制限を追加する方針**で進めた。`getCloudSession` は、Managed Better Authで検証済みのメールアドレスが `USER_DATA_ALLOWED_EMAILS`（環境変数、カンマ区切り）に含まれる場合だけ `ownerId` を返す。一覧が未設定なら誰も通さない（フェイルクローズ）。
-   **次のチャット（またはユーザー）へのお願い**: Neon Consoleを実際に開き、「新規登録だけを止めて既存ユーザーのログインは許可する」設定が本当に存在するか確認してほしい。存在する場合はそちらも有効にする（アプリ側の許可リストは二重の防御として残してよい）。存在しない場合は、今回実装したアプリ側の許可リストが唯一の防御になるため、`USER_DATA_ALLOWED_EMAILS` の運用（誰が・いつ更新するか）を決める必要がある。
+3. **説明文はフラグOFFでも本番のJavaScriptに含まれる。** 画面は描画されないため到達はできないが、文字列そのものはビルド結果に入る。到達不可という条件は満たしているが、「まだ公開していない機能の説明文が読める状態にある」ことは認識しておいてほしい。
 
-2. **`@neondatabase/auth`（0.5.0-beta）の `peerDependencies` は `next: >=16.0.0` を要求しているが、本リポジトリは `next@15.5.18` のまま。** `pnpm install` は警告のみで成功し、`pnpm build` も型チェックを含めて成功した。今回使った機能（`createNeonAuth().getSession()` をRoute Handler内で呼ぶ、`authApiHandler` 相当の `.handler()`）はNext 15でも動作した。ただし `auth.middleware()`（`proxy.ts` 経由のルート保護、Next 16向けの新しい規約）は今回使っておらず、未検証。将来Next.jsを16へ上げるかどうかは本タスクの範囲外なので判断していない。
+4. **同意を記録するのは端末内だけ。** `yorucare_cloud_backup_consent` はこの端末のlocalStorageにあり、クラウドには送っていない。別の端末でログインしても、その端末で改めて同意の操作が要る。
 
-3. **`getCloudSession` の `verifiedAt` は、better-authのセッション作成時刻（`session.createdAt`）を採用した。** これはサインイン（OTP検証）が成功した第間の時刻で、better-auth本体がセッションの「新しさ」判定に使う標準的なフィールドと同じ考え方（公式ドキュメント上に明示的な「reauth」専用フィールドは見当たらなかった）。Cookie自体は既定で長期間（better-authの既定は7日、自動延長あり）有効なため、`isRecentlyVerified` の10分判定は「セッションが作られてから10分」を意味し、「Cookieが有効かどうか」とは別の軸である点は変わっていない。
+5. **`deleteCloudData` の戻り値を真偽値から4状態（`off` / `deleted` / `reauth_required` / `failed`）へ変えた。** 呼び出し元は設定画面だけなので影響範囲は閉じているが、今後この関数を使うときは注意すること。
 
-4. **`/cloud-login` と `/api/auth/[...path]` は `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` で404ゲートしている。** これは `NEXT_PUBLIC_` 環境変数なのでビルド時に値が埋め込まれる。Vercelでフラグを有効にしてこの画面を確認したい場合、環境変数を設定してから**再デプロイ（再ビルド）が必要**（デプロイ後の値変更だけでは反映されない）。これは既存の `/api/cloud/*` も含め、このリポジトリの `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` の使い方全般に元から当てはまる性質で、今回新しく生まれた制約ではない。
-
-5. **Neon Consoleでの作業手順（ユーザー作業分）**
+6. **Neon Consoleでの作業手順（ユーザー作業分・前回から未実施）**
 
    以下はユーザー（Neon Consoleの操作担当）向けの手順。ダミーデータでの検証のみを想定し、実データは使わない。
 

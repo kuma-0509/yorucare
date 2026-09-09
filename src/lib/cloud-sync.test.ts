@@ -10,6 +10,7 @@ import {
   requiresLocalBackup,
   summarizePayload,
 } from "./cloud-sync";
+import { saveCloudBackupConsent } from "./cloud-consent";
 import { readCloudSyncState, writeCloudSyncState } from "./cloud-sync-state";
 import type { ExportPayload } from "./schemas";
 
@@ -63,6 +64,8 @@ describe("cloud-sync", () => {
     fetchMock.mockReset();
     localStorage.clear();
     process.env.NEXT_PUBLIC_CLOUD_BACKUP_ENABLED = "true";
+    // 送信を伴うテストの前提。同意していない場合は別のテストで確かめる
+    saveCloudBackupConsent(true);
     writeCloudSyncState({
       deviceId: DEVICE_ID,
       lastSyncedAt: null,
@@ -83,6 +86,18 @@ describe("cloud-sync", () => {
   describe("預ける", () => {
     it("入口が閉じていれば送信しない", async () => {
       delete process.env.NEXT_PUBLIC_CLOUD_BACKUP_ENABLED;
+      await expect(pushSnapshot("{}")).resolves.toEqual({ status: "off" });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("同意していなければ1件も送らない", async () => {
+      saveCloudBackupConsent(false);
+      await expect(pushSnapshot("{}")).resolves.toEqual({ status: "off" });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("まだ同意を決めていなければ1件も送らない", async () => {
+      localStorage.clear();
       await expect(pushSnapshot("{}")).resolves.toEqual({ status: "off" });
       expect(fetchMock).not.toHaveBeenCalled();
     });
@@ -256,10 +271,17 @@ describe("cloud-sync", () => {
 
     it("削除は204のときだけ成功として扱う", async () => {
       fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
-      await expect(deleteCloudData()).resolves.toBe(true);
+      await expect(deleteCloudData()).resolves.toBe("deleted");
 
       fetchMock.mockResolvedValue(new Response(null, { status: 503 }));
-      await expect(deleteCloudData()).resolves.toBe(false);
+      await expect(deleteCloudData()).resolves.toBe("failed");
+    });
+
+    it("本人確認から時間が経っていたら、消さずに再ログインを求める", async () => {
+      fetchMock.mockResolvedValue(
+        jsonResponse(403, { ok: false, reason: "reauth_required" })
+      );
+      await expect(deleteCloudData()).resolves.toBe("reauth_required");
     });
   });
 
