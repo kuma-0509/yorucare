@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { LiveRegion } from "@/components/shared/live-region";
 import {
   buildAiShareText,
+  createAiShareTextFileBlob,
+  formatAiSharePeriodLimitHint,
   type AiShareField,
   type AiShareTextResult,
 } from "@/lib/ai-share-text";
@@ -190,9 +192,7 @@ export function AiSharePanel({
 
   const handleDownload = () => {
     if (!preview || !confirmed || busy) return;
-    const blob = new Blob([preview.text], {
-      type: "text/plain;charset=utf-8",
-    });
+    const blob = createAiShareTextFileBlob(preview.text);
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -248,7 +248,7 @@ export function AiSharePanel({
           </div>
         </div>
         <p className="text-xs leading-relaxed text-muted-foreground">
-          一度に共有できる期間は7日間までです。
+          {formatAiSharePeriodLimitHint()}
         </p>
 
         <fieldset className="space-y-3">

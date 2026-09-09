@@ -13,6 +13,7 @@ import { ok } from "@/lib/result";
 import { COPY } from "@/lib/copy";
 import { formatDatePickerLabel, getTodayString, getYesterdayString } from "@/lib/dates";
 import { STORAGE_KEYS } from "@/lib/constants";
+import { rememberLastSleepTimes } from "@/lib/last-sleep-times";
 import {
   toggleRecordFormSection,
   type RecordFormSectionKey,
@@ -232,6 +233,69 @@ describe("カスタム入力による表示の切り替え", () => {
     )) as HTMLInputElement;
     expect(start.value).toBe("23:30");
     expect(screen.queryByText(COPY.detailSection)).toBeNull();
+  });
+});
+
+describe("寝た時間・起きた時間の初期値", () => {
+  it("空の新規入力は直近の時刻を出し、既存記録は保存値を優先する", async () => {
+    const yesterday = getYesterdayString();
+    rememberLastSleepTimes("23:30", "07:00");
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(
+        ok(
+          date === yesterday
+            ? makeRecord(yesterday, {
+                sleepStart: "21:45",
+                sleepEnd: "06:10",
+              })
+            : null
+        )
+      )
+    );
+
+    renderTab();
+
+    const start = (await screen.findByLabelText(
+      COPY.sleep.startLabel
+    )) as HTMLInputElement;
+    const end = screen.getByLabelText(COPY.sleep.endLabel) as HTMLInputElement;
+    expect(start.value).toBe("23:30");
+    expect(end.value).toBe("07:00");
+
+    fireEvent.change(start, { target: { value: "00:15" } });
+    expect(start.value).toBe("00:15");
+
+    fireEvent.click(screen.getByRole("button", { name: "昨日" }));
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(COPY.sleep.startLabel) as HTMLInputElement)
+          .value
+      ).toBe("21:45");
+    });
+    expect(
+      (screen.getByLabelText(COPY.sleep.endLabel) as HTMLInputElement).value
+    ).toBe("06:10");
+  });
+
+  it("保存済みの日で時刻が空欄なら、直近の初期値で上書きしない", async () => {
+    const today = getTodayString();
+    rememberLastSleepTimes("23:30", "07:00");
+    initSelfCareIfEmpty.mockResolvedValue(ok([]));
+    getRecordByDate.mockImplementation((date: string) =>
+      Promise.resolve(ok(date === today ? makeRecord(today) : null))
+    );
+
+    renderTab();
+
+    const start = (await screen.findByLabelText(
+      COPY.sleep.startLabel
+    )) as HTMLInputElement;
+    expect(start.value).toBe("");
+    expect(
+      (screen.getByLabelText(COPY.sleep.endLabel) as HTMLInputElement).value
+    ).toBe("");
   });
 });
 

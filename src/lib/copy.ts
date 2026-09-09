@@ -120,6 +120,14 @@ export const COPY = {
   returnAfterWork: {
     label: "復職後{n}日目",
   },
+  /**
+   * 生成AIなどへの端末内テキスト共有。{n} は一度に出せる日数の上限。
+   * サーバー送信や対人共有リンクの説明には使わない。
+   */
+  aiShare: {
+    periodLimitHint: "一度に共有できる期間は{n}日間までです。",
+    periodLimitError: "共有できる期間は{n}日間までです。",
+  },
 
   /**
    * 期間の報告書。数値はアプリが確定させ、文章の穴だけを LLM が埋める。

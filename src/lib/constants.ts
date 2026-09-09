@@ -159,6 +159,11 @@ export const STORAGE_KEYS = {
    * 別端末へ引き継がれた日時を持つ。記録本文は入れない
    */
   cloudSync: "yorucare_cloud_sync",
+  /**
+   * 直近に保存した寝た時間・起きた時間。記録がない日の初期値だけに使い、
+   * 記録本体や送信対象には含めない
+   */
+  lastSleepTimes: "yorucare_last_sleep_times",
 } as const;
 
 /** 利用者向けふりかえりタブに表示する予定機能（短く） */

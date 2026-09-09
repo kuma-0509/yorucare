@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildAiShareText } from "./ai-share-text";
+import {
+  buildAiShareText,
+  createAiShareTextFileBlob,
+  formatAiSharePeriodLimitError,
+  formatAiSharePeriodLimitHint,
+  MAX_SHARE_DAYS,
+} from "./ai-share-text";
 import type { DailyRecord, SelfCareItem } from "./types";
 
 function makeRecord(overrides: Partial<DailyRecord> = {}): DailyRecord {
@@ -78,18 +84,33 @@ describe("buildAiShareText", () => {
     expect(result.text).toContain("自由記述の内容");
   });
 
-  it("7日を超える期間を拒否する", () => {
+  it("7日を超える期間も30日以内なら受け付ける", () => {
     const result = buildAiShareText({
-      records: [makeRecord()],
+      records: [makeRecord({ date: "2026-07-08" })],
       selfCareItems,
       startDate: "2026-07-01",
       endDate: "2026-07-08",
       fields: ["mood"],
     });
 
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.recordCount).toBe(1);
+    expect(result.text).toContain("対象期間: 2026年7月1日〜2026年7月8日");
+  });
+
+  it("30日を超える期間を拒否する", () => {
+    const result = buildAiShareText({
+      records: [makeRecord()],
+      selfCareItems,
+      startDate: "2026-07-01",
+      endDate: "2026-07-31",
+      fields: ["mood"],
+    });
+
     expect(result).toEqual({
       ok: false,
-      message: "共有できる期間は7日間までです。",
+      message: "共有できる期間は30日間までです。",
     });
   });
 
@@ -124,5 +145,54 @@ describe("セルフケアの感想の扱い", () => {
     expect(result.text).not.toContain("感想");
     expect(result.text).not.toContain("合わなかった");
     expect(result.text).not.toContain("やってよかった");
+  });
+});
+
+describe("共有テキストの期間上限と保存ファイル", () => {
+  it("上限の文言は定数と一致する", () => {
+    expect(MAX_SHARE_DAYS).toBe(30);
+    expect(formatAiSharePeriodLimitHint()).toBe(
+      "一度に共有できる期間は30日間までです。"
+    );
+    expect(formatAiSharePeriodLimitError()).toBe(
+      "共有できる期間は30日間までです。"
+    );
+  });
+
+  it("ちょうど30日は受け付ける", () => {
+    const result = buildAiShareText({
+      records: [makeRecord({ date: "2026-07-30" })],
+      selfCareItems,
+      startDate: "2026-07-01",
+      endDate: "2026-07-30",
+      fields: ["mood"],
+    });
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("保存ファイルはUTF-8 BOM付きで、本文の日本語は変わらない", async () => {
+    const result = buildAiShareText({
+      records: [makeRecord()],
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-21",
+      fields: ["mood"],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.text.startsWith("\uFEFF")).toBe(false);
+    expect(result.text).toContain("ヨルケア");
+
+    const bytes = new Uint8Array(
+      await createAiShareTextFileBlob(result.text).arrayBuffer()
+    );
+    expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+
+    const decoded = new TextDecoder("utf-8").decode(bytes.slice(3));
+    expect(decoded).toBe(result.text);
+    expect(decoded).toContain("ヨルケア");
+    expect(decoded).toContain("気分・状態");
   });
 });

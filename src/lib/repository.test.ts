@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { STORAGE_KEYS } from "./constants";
+import { getLastSleepTimes } from "./last-sleep-times";
 import {
   createEmptyRecordForm,
   repository,
@@ -105,6 +106,37 @@ describe("Repository の非同期境界", () => {
       expect(loaded.value?.moodScore).toBe(4);
       expect(loaded.value?.date).toBe(date);
     }
+  });
+
+  it("寝た時間・起きた時間を保存すると、次の新規入力用の初期値として端末内に残る", async () => {
+    const date = "2026-07-26";
+    const { date: _date, ...emptyForm } = createEmptyRecordForm(date);
+
+    const saved = await typedRepository.saveRecord(date, {
+      ...emptyForm,
+      sleepStart: "23:15",
+      sleepEnd: "06:45",
+    });
+    expect(saved.ok).toBe(true);
+    expect(getLastSleepTimes()).toEqual({
+      sleepStart: "23:15",
+      sleepEnd: "06:45",
+    });
+
+    const emptySave = await typedRepository.saveRecord(date, emptyForm);
+    expect(emptySave.ok).toBe(true);
+    expect(getLastSleepTimes()).toEqual({
+      sleepStart: "23:15",
+      sleepEnd: "06:45",
+    });
+
+    const exported = await typedRepository.buildExportPayload();
+    expect(exported.ok).toBe(true);
+    if (!exported.ok) return;
+    expect(JSON.stringify(exported.value)).not.toContain("23:15");
+    expect(JSON.stringify(exported.value)).not.toContain(
+      STORAGE_KEYS.lastSleepTimes
+    );
   });
 
   it("壊れた保存データを Result のエラーとして返す", async () => {
