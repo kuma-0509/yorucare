@@ -280,10 +280,18 @@ APIは次の4つに限定する。
 | スナップショットの暗号化・復号・親鍵の入れ替え | 実装済み（`src/lib/server/user-data-crypto.ts`） |
 | 保存・取り出し・削除・端末登録のAPI | 実装済み（`src/app/api/cloud/`） |
 | 端末側の送信・取り出し・復元の判断 | 実装済み（`src/lib/cloud-sync.ts`、`src/lib/cloud-sync-state.ts`） |
-| Managed Better Authの有効化とセッション検証 | 未実装。`src/lib/server/cloud-session.ts` に組み込む口だけ用意してある |
+| Managed Better Authの有効化とセッション検証 | 実装済み（`src/lib/server/neon-auth.ts`、`src/lib/server/cloud-session.ts`、`src/app/api/auth/[...path]/route.ts`）。ログイン確認用の最小画面も実装済み（`src/app/cloud-login/`、フラグOFFのあいだは404） |
 | クラウド保存の設定画面と復元画面 | 未実装 |
 
-`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` が `true` でない限り、APIは存在しない扱い（404）で応え、DBへ接続しない。フラグを立てても、セッション検証が未実装のあいだは401しか返らない。Preview環境でダミーデータを通す場合だけ、`USER_DATA_DEV_OWNER_ID` で所有者IDを固定できる。この抜け道は `VERCEL_ENV=production` では無視する。
+`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` が `true` でない限り、APIは存在しない扱い（404）で応え、DBへ接続しない。Preview環境でダミーデータを通す場合だけ、`USER_DATA_DEV_OWNER_ID` で所有者IDを固定できる。この抜け道は `VERCEL_ENV=production` では無視する。
+
+#### 新規登録の抑止について（2026-09-08、実装時に確認）
+
+Managed Better Authの認証フローの公式ドキュメントは次のように明記しており、Console設定だけで新規登録を確実に止められる保証が無い（本節の設計当初の想定と食い違う）。
+
+> "Anyone can sign up for your application by default. Support for restricted signups is coming soon."
+
+このため、Console側の設定に加えて、`getCloudSession` がアプリ側でも `USER_DATA_ALLOWED_EMAILS`（運営者が用意した参加者のメールアドレス一覧）と突き合わせる二重の防御を実装した。一覧が未設定のときは誰もログインできない（フェイルクローズ）。Console側の新規登録抑止設定が実際に効くかどうかは別途確認が要る（`docs/handoff/latest.md` 参照）。
 
 ### 11.2 公開の入口を開ける条件
 
@@ -349,6 +357,7 @@ Managed Better Authの無料枠、ログイン方式、別プロジェクトを�
 | 2026-07-26 | 複数端末同期を含むフル構成を確定し、本番実装はGate 3まで保留する | 需要が未確認のまま高コスト・高リスクな投資を行わないため |
 | 2026-09-08 | バックアップと復元だけの最小構成へ縮小し、フラグOFFのまま実装に着手できるようにする | 投資額とデータ喪失リスクの大半を占める同期の競合処理を外し、既存のJSONバックアップの仕組みを再利用できるため |
 | 2026-09-08 | ログイン方式をマジックリンクからEmail OTP（6桁コード）へ変更する | リンク方式は自前のメール事業者が必須と公式に明記されており、事業者を1社増やすと確認先と手続きの重さが増すため |
+| 2026-09-08 | 新規登録の抑止をConsole設定だけに委ねず、アプリ側（`getCloudSession`）でも許可済みメールアドレス一覧との突き合わせを行う | 公式ドキュメントが新規登録の制限を「近日対応」と明記しており、Console設定だけで確実に止められる保証がないため |
 
 ## 16. 公式資料
 
