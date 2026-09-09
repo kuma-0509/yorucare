@@ -4,7 +4,9 @@ import {
   writeCloudSyncState,
   type CloudSyncState,
 } from "./cloud-sync-state";
+import { SAMPLE_SELF_CARE } from "./constants";
 import { parseExportPayload, type ExportPayload } from "./schemas";
+import type { SelfCareItem } from "./types";
 
 /**
  * 端末とクラウドのやり取り。
@@ -198,6 +200,8 @@ export type SnapshotSummary = {
   /** 記録がある期間。1件もなければ null */
   firstDate: string | null;
   lastDate: string | null;
+  /** 復職日が設定されているか */
+  hasReturnDate: boolean;
 };
 
 /** 件数と期間だけを取り出す。本文は取り出さない */
@@ -209,7 +213,40 @@ export function summarizePayload(payload: ExportPayload): SnapshotSummary {
     notToDoCount: payload.notToDoItems.length,
     firstDate: dates[0] ?? null,
     lastDate: dates[dates.length - 1] ?? null,
+    hasReturnDate: payload.returnDate !== null,
   };
+}
+
+/**
+ * 「できること」が初期見本のままかどうか。
+ *
+ * 見本は記録画面を開いた時点で自動で入るため、1件も書いていない端末にも
+ * 必ず5件ある。これを本人の持ち物として数えると、機種変更のたびに
+ * 「見本5件を守るための選択画面」が出てしまい、肝心の復元が遠くなる。
+ * 本人が1つでも足した・直した・消した時点で見本ではなくなる。
+ */
+function isUntouchedSampleSelfCare(items: SelfCareItem[]): boolean {
+  if (items.length !== SAMPLE_SELF_CARE.length) return false;
+  const titles = items.map((item) => item.title).sort();
+  const samples = [...SAMPLE_SELF_CARE].sort();
+  return titles.every((title, index) => title === samples[index]);
+}
+
+/**
+ * その控えに、失うと本人が困るものが1つも入っていないか。
+ *
+ * 記録の件数だけで判断すると、記録は0件でも「できること」を整えただけの
+ * 端末や、「やらないこと」や復職日を設定した端末を空とみなし、確認なしに
+ * 上書きしてしまう。残るすべての項目で判断する。
+ */
+export function isEmptyPayload(payload: ExportPayload): boolean {
+  return (
+    payload.records.length === 0 &&
+    payload.notToDoItems.length === 0 &&
+    payload.returnDate === null &&
+    (payload.selfCareItems.length === 0 ||
+      isUntouchedSampleSelfCare(payload.selfCareItems))
+  );
 }
 
 export type RestorePlan =
@@ -233,7 +270,7 @@ export function planRestore(
   cloud: ExportPayload | null
 ): RestorePlan {
   const localSummary = summarizePayload(local);
-  const hasLocal = localSummary.recordCount > 0;
+  const hasLocal = !isEmptyPayload(local);
 
   if (!cloud) {
     return hasLocal
@@ -242,7 +279,7 @@ export function planRestore(
   }
 
   const cloudSummary = summarizePayload(cloud);
-  const hasCloud = cloudSummary.recordCount > 0;
+  const hasCloud = !isEmptyPayload(cloud);
 
   if (!hasLocal && !hasCloud) return { kind: "nothing_to_do" };
   if (!hasLocal) return { kind: "restore_cloud", cloud: cloudSummary };

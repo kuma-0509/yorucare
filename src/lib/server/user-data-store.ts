@@ -40,6 +40,19 @@ export class UserDataConflictError extends Error {
   }
 }
 
+/**
+ * 控えは残っているのに、どの世代も復号できなかったとき。
+ *
+ * 「まだ何も預けていない」と同じ扱いにすると、端末が空だと思い込んで
+ * 上書きしてしまい、鍵の設定を直せば読めたはずの控えを失う。
+ */
+export class UserDataUnreadableError extends Error {
+  constructor() {
+    super("Stored snapshots exist but none could be decrypted.");
+    this.name = "UserDataUnreadableError";
+  }
+}
+
 export type StoredSnapshot = {
   generation: number;
   schemaVersion: number;
@@ -293,6 +306,10 @@ export async function getLatestSnapshot(
       continue;
     }
   }
+
+  // 行が1つも無いのは「まだ預けていない」。行はあるのに1つも開けないのは
+  // 別の状態で、上書きさせずに知らせる必要がある。
+  if (rows.length > 0) throw new UserDataUnreadableError();
 
   return null;
 }

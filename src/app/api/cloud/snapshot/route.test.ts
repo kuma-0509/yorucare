@@ -10,7 +10,17 @@ const store = vi.hoisted(() => ({
   deleteAllUserData: vi.fn(),
 }));
 
-vi.mock("@/lib/server/cloud-session", () => ({ getCloudSession }));
+// 実SDKはNext.jsのサーバー専用APIを読み込むため、境界で差し替える
+vi.mock("@neondatabase/auth/next/server", () => ({
+  createNeonAuth: vi.fn(() => ({ getSession: vi.fn() })),
+}));
+
+vi.mock("@/lib/server/cloud-session", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/lib/server/cloud-session")
+  >("@/lib/server/cloud-session");
+  return { ...actual, getCloudSession };
+});
 vi.mock("@/lib/server/user-data-store", async () => {
   const actual = await vi.importActual<
     typeof import("@/lib/server/user-data-store")
@@ -250,6 +260,42 @@ describe("/api/cloud/snapshot", () => {
     expect((await DELETE(request("DELETE"))).status).toBe(204);
     expect((await DELETE(request("DELETE"))).status).toBe(204);
     expect(store.deleteAllUserData).toHaveBeenCalledTimes(2);
+  });
+
+  describe("全件削除の再認証", () => {
+    it("本人確認から10分を過ぎていると削除しない", async () => {
+      getCloudSession.mockResolvedValue({
+        ownerId: "owner-1",
+        verifiedAt: new Date(Date.now() - 11 * 60 * 1000),
+      });
+
+      const response = await DELETE(request("DELETE"));
+      expect(response.status).toBe(403);
+      await expect(response.json()).resolves.toMatchObject({
+        reason: "reauth_required",
+      });
+      expect(store.deleteAllUserData).not.toHaveBeenCalled();
+    });
+
+    it("10分以内に本人確認していれば削除する", async () => {
+      getCloudSession.mockResolvedValue({
+        ownerId: "owner-1",
+        verifiedAt: new Date(Date.now() - 9 * 60 * 1000),
+      });
+
+      expect((await DELETE(request("DELETE"))).status).toBe(204);
+      expect(store.deleteAllUserData).toHaveBeenCalledTimes(1);
+    });
+
+    it("読み書きは古いセッションでも続けられる", async () => {
+      getCloudSession.mockResolvedValue({
+        ownerId: "owner-1",
+        verifiedAt: new Date(Date.now() - 60 * 60 * 1000),
+      });
+
+      const response = await PUT(request("PUT", await uploadBody()));
+      expect(response.status).toBe(200);
+    });
   });
 
   it("保存先が未設定なら503を返す", async () => {

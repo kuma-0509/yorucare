@@ -5,7 +5,11 @@ import {
   snapshotChecksum,
 } from "@/lib/cloud-backup";
 import { parseExportPayload, STORAGE_SCHEMA_VERSION } from "@/lib/schemas";
-import { getCloudSession } from "@/lib/server/cloud-session";
+import {
+  getCloudSession,
+  isRecentlyVerified,
+  type CloudSession,
+} from "@/lib/server/cloud-session";
 import {
   deleteAllUserData,
   getActiveDevice,
@@ -42,13 +46,16 @@ function isSameOrigin(request: Request): boolean {
 
 async function requireOwner(
   request: Request
-): Promise<{ ok: true; ownerId: string } | { ok: false; status: number }> {
+): Promise<
+  | { ok: true; ownerId: string; session: CloudSession }
+  | { ok: false; status: number }
+> {
   if (!isCloudBackupEnabled()) return { ok: false, status: 404 };
   if (!isSameOrigin(request)) return { ok: false, status: 403 };
 
   const session = await getCloudSession(request);
   if (!session) return { ok: false, status: 401 };
-  return { ok: true, ownerId: session.ownerId };
+  return { ok: true, ownerId: session.ownerId, session };
 }
 
 /** 最新のスナップショットを返す。復元画面だけが呼ぶ */
@@ -153,10 +160,20 @@ export async function PUT(request: Request): Promise<NextResponse> {
   }
 }
 
-/** クラウド停止と退会で使う。何度呼んでも成功として扱う */
+/**
+ * クラウド停止と退会で使う。何度呼んでも成功として扱う。
+ *
+ * 取り返しのつかない操作なので、ログイン済みというだけでは実行しない。
+ * 直近10分以内に本人確認をしていない場合は断り、画面側でやり直してもらう。
+ * 置き忘れた端末や乗っ取られたセッションから、控えを全部消せないようにする。
+ */
 export async function DELETE(request: Request): Promise<NextResponse> {
   const owner = await requireOwner(request);
   if (!owner.ok) return errorResponse(owner.status);
+
+  if (!isRecentlyVerified(owner.session)) {
+    return errorResponse(403, { ok: false, reason: "reauth_required" });
+  }
 
   try {
     await deleteAllUserData(owner.ownerId);

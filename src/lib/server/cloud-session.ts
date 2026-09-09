@@ -54,10 +54,13 @@ function allowedEmails(): string[] {
 }
 
 /**
- * 認証済みメールアドレスが許可リストに含まれるか。
+ * メールアドレスが許可リストに含まれるか。
  * 一覧が空（未設定）なら、設定漏れで誰でも通ってしまわないよう誰も通さない。
+ *
+ * セッション検証だけでなく、コードの送信・検証を中継する
+ * `src/app/api/auth/[...path]/route.ts` も、転送する前にここで確かめる。
  */
-function isEmailAllowed(email: string | null | undefined): boolean {
+export function isEmailAllowed(email: string | null | undefined): boolean {
   if (!email) return false;
   const allowed = allowedEmails();
   if (allowed.length === 0) return false;

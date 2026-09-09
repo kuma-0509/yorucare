@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { snapshotChecksum } from "./cloud-backup";
+import { SAMPLE_SELF_CARE } from "./constants";
 import {
   claimThisDevice,
   deleteCloudData,
@@ -15,11 +16,26 @@ import type { ExportPayload } from "./schemas";
 
 const DEVICE_ID = "a".repeat(32);
 
-function payload(dates: string[] = []): ExportPayload {
+type PayloadExtras = {
+  selfCareTitles?: string[];
+  notToDoTitles?: string[];
+  returnDate?: string | null;
+};
+
+function items(titles: string[]): ExportPayload["selfCareItems"] {
+  return titles.map((title, index) => ({
+    id: `item-${index}`,
+    title,
+    createdAt: "2026-09-08T12:00:00.000Z",
+    updatedAt: "2026-09-08T12:00:00.000Z",
+  }));
+}
+
+function payload(dates: string[] = [], extras: PayloadExtras = {}): ExportPayload {
   return {
     version: 1,
     exportedAt: "2026-09-08T12:00:00.000Z",
-    returnDate: null,
+    returnDate: extras.returnDate ?? null,
     records: dates.map((date) => ({
       id: `id-${date}`,
       date,
@@ -42,8 +58,8 @@ function payload(dates: string[] = []): ExportPayload {
       createdAt: "2026-09-08T12:00:00.000Z",
       updatedAt: "2026-09-08T12:00:00.000Z",
     })) as ExportPayload["records"],
-    selfCareItems: [],
-    notToDoItems: [],
+    selfCareItems: items(extras.selfCareTitles ?? []),
+    notToDoItems: items(extras.notToDoTitles ?? []),
   };
 }
 
@@ -273,6 +289,7 @@ describe("cloud-sync", () => {
         notToDoCount: 0,
         firstDate: "2026-09-01",
         lastDate: "2026-09-08",
+        hasReturnDate: false,
       });
     });
 
@@ -310,6 +327,67 @@ describe("cloud-sync", () => {
 
     it("どちらにも記録がなければ何もしない", () => {
       expect(planRestore(payload([]), payload([])).kind).toBe("nothing_to_do");
+    });
+
+    describe("記録以外の持ち物も守る", () => {
+      it("記録が0件でも、本人が足した「できること」があれば選ばせる", () => {
+        const plan = planRestore(
+          payload([], { selfCareTitles: ["散歩する", "湯船につかる"] }),
+          payload(["2026-08-01"])
+        );
+        expect(plan.kind).toBe("choice_required");
+        expect(requiresLocalBackup(plan)).toBe(true);
+      });
+
+      it("記録が0件でも、「やらないこと」があれば選ばせる", () => {
+        const plan = planRestore(
+          payload([], { notToDoTitles: ["夜に返信しない"] }),
+          payload(["2026-08-01"])
+        );
+        expect(plan.kind).toBe("choice_required");
+      });
+
+      it("記録が0件でも、復職日を設定していれば選ばせる", () => {
+        const plan = planRestore(
+          payload([], { returnDate: "2026-04-01" }),
+          payload(["2026-08-01"])
+        );
+        expect(plan.kind).toBe("choice_required");
+      });
+
+      it("見本のままの「できること」は本人の持ち物として数えない", () => {
+        const plan = planRestore(
+          payload([], { selfCareTitles: [...SAMPLE_SELF_CARE] }),
+          payload(["2026-08-01"])
+        );
+        expect(plan.kind).toBe("restore_cloud");
+        expect(requiresLocalBackup(plan)).toBe(false);
+      });
+
+      it("見本から1つでも消していれば本人の持ち物として数える", () => {
+        const plan = planRestore(
+          payload([], { selfCareTitles: SAMPLE_SELF_CARE.slice(1) }),
+          payload(["2026-08-01"])
+        );
+        expect(plan.kind).toBe("choice_required");
+      });
+
+      it("クラウド側が記録0件でも持ち物があれば上書きしない", () => {
+        const plan = planRestore(
+          payload(["2026-09-08"]),
+          payload([], { notToDoTitles: ["夜に返信しない"] })
+        );
+        expect(plan.kind).toBe("choice_required");
+      });
+
+      it("記録以外も空なら、これまでどおり何もしない", () => {
+        expect(
+          planRestore(
+            payload([], { selfCareTitles: [...SAMPLE_SELF_CARE] }),
+            payload([])
+          ).kind
+        ).toBe("nothing_to_do");
+      });
     });
   });
 });
