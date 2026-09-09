@@ -14,6 +14,7 @@ import {
   STORAGE_SCHEMA_VERSION,
   type ExportPayload,
 } from "./schemas";
+import { rememberLastSleepTimes } from "./last-sleep-times";
 import { calculateSleepMinutes } from "./sleep";
 import { err, ok, type Result } from "./result";
 import type { DailyRecord, NotToDoItem, SelfCareItem } from "./types";
@@ -262,6 +263,7 @@ const localStorageRepository: LocalStorageRepository = {
     records.push(record);
     const writeResult = writeRecords(records);
     if (!writeResult.ok) return writeResult;
+    rememberLastSleepTimes(record.sleepStart, record.sleepEnd);
     return ok(record);
   },
 

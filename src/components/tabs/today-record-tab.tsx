@@ -76,9 +76,11 @@ import {
   isDuplicateMoodLabel,
   isMoodLabelSelected,
 } from "@/lib/mood-labels";
+import { mergeLastSleepTimes } from "@/lib/last-sleep-times";
 import {
   addNotToDoItem,
   addSelfCareItem,
+  createEmptyRecordForm,
   getAllRecords,
   getAllNotToDoItems,
   getRecordByDate,
@@ -156,7 +158,7 @@ export function TodayRecordTab({
     initialDate && isWithinLast7Days(initialDate) ? initialDate : today
   );
   const [form, setForm] = useState<FormState>(() =>
-    recordToFormState(null, today)
+    mergeLastSleepTimes(createEmptyRecordForm(today))
   );
   const [selfCareItems, setSelfCareItems] = useState<SelfCareItem[]>([]);
   const [notToDoItems, setNotToDoItems] = useState<NotToDoItem[]>([]);
@@ -203,7 +205,11 @@ export function TodayRecordTab({
       setLiveMessage(message);
       return;
     }
-    setForm(recordToFormState(result.value, date));
+    setForm(
+      result.value
+        ? recordToFormState(result.value, date)
+        : mergeLastSleepTimes(createEmptyRecordForm(date))
+    );
     // 前日を読めなくても記録自体は書けるようにし、ふりかえりだけを出さない
     setGoalToReview(
       previousResult.ok ? getGoalToReview(previousResult.value) : null

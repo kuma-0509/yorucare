@@ -5,6 +5,7 @@ import {
   getMoodLabel,
   getWarningLabel,
 } from "./format";
+import { COPY } from "./copy";
 import { formatMoodLabelsDisplay } from "./mood-labels";
 import type { DailyRecord, SelfCareItem } from "./types";
 
@@ -40,7 +41,29 @@ interface BuildAiShareTextInput {
 }
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const MAX_SHARE_DAYS = 7;
+/** 生成AI等へのテキスト共有で、一度に選べる暦日数の上限（開始日と終了日を含む） */
+export const MAX_SHARE_DAYS = 30;
+const UTF8_BOM = new Uint8Array([0xef, 0xbb, 0xbf]);
+
+export function formatAiSharePeriodLimitHint(): string {
+  return COPY.aiShare.periodLimitHint.replace("{n}", String(MAX_SHARE_DAYS));
+}
+
+export function formatAiSharePeriodLimitError(): string {
+  return COPY.aiShare.periodLimitError.replace("{n}", String(MAX_SHARE_DAYS));
+}
+
+/**
+ * 端末の標準ビューアが日本語として開けるよう、UTF-8 BOM 付きのファイルにする。
+ * 画面上の全文確認とコピーへ渡す文字列は、呼び出し側でこの関数を通さない。
+ */
+export function createAiShareTextFileBlob(text: string): Blob {
+  const body = new TextEncoder().encode(text);
+  const bytes = new Uint8Array(UTF8_BOM.length + body.length);
+  bytes.set(UTF8_BOM, 0);
+  bytes.set(body, UTF8_BOM.length);
+  return new Blob([bytes], { type: "text/plain;charset=utf-8" });
+}
 
 function parseCalendarDate(value: string): number | null {
   if (!DATE_PATTERN.test(value)) return null;
@@ -147,7 +170,7 @@ export function buildAiShareText({
   if (days > MAX_SHARE_DAYS) {
     return {
       ok: false,
-      message: "共有できる期間は7日間までです。",
+      message: formatAiSharePeriodLimitError(),
     };
   }
 

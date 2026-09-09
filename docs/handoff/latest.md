@@ -1,136 +1,59 @@
 # Handoff
 
-日付: 2026-09-08
-担当チャット: 17件目
+日付: 2026-09-09
+担当チャット: 18件目
 
 ## 今回実装したタスク
 
-- DEVELOPMENT_BOARD.md 66行目「クラウドバックアップと復元が未実装で、端末を失うと記録が戻らない」のうち、残っていた「認証基盤のセッション検証の組み込み」を実装した。
-- `src/lib/server/cloud-session.ts` の `getCloudSession` に、Managed Better Auth（`@neondatabase/auth`）を使った実際のセッション検証を実装した。HttpOnly Cookieの検証はSDKの `auth.getSession()` に任せ（Next.jsのリクエストコンテキストからCookieを読むため、Route Handler内で引数なしに呼べる）、検証済みユーザーの `user.id` を `ownerId`、セッションの `createdAt` を `verifiedAt`（直近の本人確認時刻）として返す。
-- 認証方式はEmail OTP（6桁コード）だけを使う。サインアップ専用の画面・APIは作らず、`authClient.signIn.emailOtp()` が未登録メールアドレスに対して自動でアカウントを作る挙動（better-authの `email-otp` プラグインの既定動作）をアプリ側で防ぐため、`USER_DATA_ALLOWED_EMAILS`（運営者が用意した許可済みメールアドレス一覧）との突き合わせを追加した。**設計判断の理由は次節「引き継ぎ事項・注意点」の1番目を参照。**
-- 検証に必要な最小限の画面として `/cloud-login`（メールアドレス→6桁コード→ログイン、ログアウト）を実装した。`docs/account-cloud-storage-decision.md` の他の画面（設定・復元）は対象外。
-- クライアントSDKからのリクエストを受ける `/api/auth/[...path]` を追加した。両方とも `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` が `true` でない限り404を返し、本番画面から到達できない状態を維持している。
+- 記録画面の寝た時間・起きた時間が毎回空欄から始まる
+- 「テキストファイルを保存」で書き出した共有テキストが端末で文字化けする
+- 生成AIなどへの共有で、一度に出せる期間が7日間までに限られている
+
+未着手だった3件を実装し、最新 `main`（クラウド認証の追加後）へ載せ直したうえで `docs/DEVELOPMENT_BOARD.md` を `完了 2026-09-09` に更新した。Claude / Codex が `main` 側の未着手のまま再実装しないようにするため、管理表の結果をこのPRに含める。クラウド関連の課題の進捗は変えていない。
+
+睡眠時刻は、その日の記録がまだないときだけ直近に保存した HH:mm を初期値にする。保存済みの日は保存値を優先し、空欄の保存済み記録は直近値で上書きしない。値は `yorucare_last_sleep_times` に端末内だけ残し、バックアップ書き出しと匿名イベントには載せない。両方空欄の保存では以前の初期値を消さない。
+
+共有テキストの `.txt` 保存だけ UTF-8 BOM（`EF BB BF`）を付ける。画面上の全文確認とコピーは BOM なしのまま。期間上限は 30 日（開始日と終了日を含む）に揃え、画面案内・生成エラー・`docs/sharing-decision.md`・実機チェック D-11 / D-16 を同じ上限へ合わせた。対人共有リンクの有効期限（最大7日）は変更していない。
 
 ## 変更ファイル
 
-- `src/lib/server/neon-auth.ts`: Managed Better Authのサーバーインスタンスを作る唯一の場所（新規）
-- `src/lib/server/cloud-session.ts`: `getCloudSession` の実装（Cookie検証・許可リスト突き合わせ・`verifiedAt`）
-- `src/lib/server/cloud-session.test.ts`: 単体テスト（新規）
-- `src/lib/cloud-auth-client.ts`: クライアント側のManaged Better Auth SDKインスタンス（新規）
-- `src/app/api/auth/[...path]/route.ts`: クライアントSDKからの認証リクエストの受け口（新規、フラグOFFで404）
-- `src/app/api/auth/[...path]/route.test.ts`: 上記の単体テスト（新規）
-- `src/app/cloud-login/layout.tsx`, `src/app/cloud-login/page.tsx`: ログイン確認用の最小画面（新規、フラグOFFで404）
-- `package.json`, `pnpm-lock.yaml`: `@neondatabase/auth` を追加
-- `.env.example`: `NEON_AUTH_BASE_URL`、`NEON_AUTH_COOKIE_SECRET`、`USER_DATA_ALLOWED_EMAILS` を追記
-- `docs/DEVELOPMENT_BOARD.md`: 66行目を更新（引き続き「進行中」。残りは画面とConsole設定）
-- `docs/account-cloud-storage-decision.md`: 11.1節の状況を更新し、新規登録抑止に関する公式資料との食い違いと対応方針を追記、15節に決定記録を追加
-- `docs/handoff/latest.md`: 本ファイル
+- `src/lib/last-sleep-times.ts` / `src/lib/last-sleep-times.test.ts`: 直近の睡眠時刻の端末内保存
+- `src/lib/constants.ts`: `lastSleepTimes` キー（既存の `cloudSync` キーは維持）
+- `src/lib/repository.ts` / `src/lib/repository.test.ts`: 保存成功時に直近時刻を残す。書き出しに含めない
+- `src/components/tabs/today-record-tab.tsx` / `src/components/tabs/today-record-tab.test.tsx`: 新規入力と既存記録の表示
+- `src/lib/ai-share-text.ts` / `src/lib/ai-share-text.test.ts`: 30日上限と BOM 付き保存 Blob
+- `src/lib/copy.ts`: 期間上限の文言
+- `src/components/shared/ai-share-panel.tsx` / `src/components/shared/ai-share-panel.test.tsx`: 案内・保存
+- `docs/sharing-decision.md` / `docs/phase2-plan.md` / `docs/smartphone-test-checklist.md` / `docs/DEVELOPMENT_BOARD.md` / `docs/handoff/latest.md`
 
 ## 検証結果
 
-自動レビューの指摘を直した後に取り直した値。
-
-- `pnpm lint`: 成功（警告・エラーなし）
-- `pnpm test`: 成功（55 test files / 548 tests）。既存の `src/app/api/cloud/**/route.test.ts` 28件は無改修のまま全件成功し、所有者IDを本文から受け取らない性質を維持していることを確認した
-- `pnpm build`: 成功（Compiled successfully、型チェック、静的ページ生成を通過）。`/cloud-login` と `/api/auth/[...path]` はビルド時点で `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` 未設定のため、想定どおり到達不可の状態でビルドされている
+- pnpm lint: 成功（警告・エラーなし）
+- pnpm test: 成功（58 test files / 576 tests）
+- pnpm build: 成功（Compiled successfully、型チェック、静的ページ生成を通過）
+- GitHub Actions `build-and-test`: PR #48 の実装コミットで成功
+- ブラウザ確認: 昨日（記録なし）に直近の 23:30 / 07:00 が入ること、今日の保存値は上書きされないこと、31日の指定で期間エラーになること、1日分の全文に日本語と睡眠が出ること、保存した `.txt` が UTF-8 BOM 付きで日本語として読めることを確認した
+- 公開URLでの確認は、このPRが `main` へ入った後に行う
 
 ## 自動レビュー指摘
 
-PR #49 で自動レビュー（`chatgpt-codex-connector`）から4件。**4件とも自分で再現条件を確かめたうえで、同じPRで直した。見送りは0件。**
-
-| 優先度 | 指摘 | 確かめた結果 | 対応 |
-| --- | --- | --- | --- |
-| P1 | 復元の空判定が記録件数だけを見ている（`src/lib/cloud-sync.ts`） | 再現した。記録0件でも「できること」「やらないこと」「復職日」を持つ端末を空とみなし、確認もJSONバックアップも求めずに上書きしていた | `isEmptyPayload` を追加し、残るすべての項目で判断する。ただし「できること」の初期見本5件は記録画面を開いた時点で自動で入るため、見本のままなら本人の持ち物として数えない（数えると機種変更のたびに不要な選択画面が出て、肝心の復元が遠くなる）。本人が1つでも足す・直す・消すと見本ではなくなる |
-| P1 | 許可リストの照合がコードの送信・検証より後（`src/app/api/auth/[...path]/route.ts`） | 再現した。一覧に無い人でもコードを受け取ってアカウントを作れ、記録は読めないがメールアドレスが認証基盤に残り送信量も消費されていた | POSTの本文にメールアドレスがあれば、転送前に許可リストと照合する。一覧が未設定なら誰も通さない。メールアドレスを含まない要求（サインアウト等）はそのまま通す |
-| P2 | 全件削除が直近10分以内の本人確認を求めていない（`src/app/api/cloud/snapshot/route.ts`） | 再現した。`isRecentlyVerified` は実装済みだが呼ばれておらず、古いセッションから控えを全部消せた | DELETE で `isRecentlyVerified` を確かめ、過ぎていれば `reauth_required` として断る。読み書きは古いセッションでも続けられる |
-| P2 | 復号できない控えを「まだ預けていない」と同じ扱いにしている（`src/lib/server/user-data-store.ts`） | 再現した。鍵の入れ替え途中などで全世代が開けないと、端末が空と判断して上書きしてしまい、設定を直せば読めたはずの控えを失う | 行があるのに1つも開けない場合は `UserDataUnreadableError` を投げる。APIは503を返し、端末側は「取り出せない」として扱う |
-
-追加した回帰テストは19件（合計548件）。指摘のうち、画面側の案内文（許可リストに無いメールアドレスのときも「時間をおいてもう一度」と出る）は直接の指摘ではないが、上記P1の対応で表面化するため、開発管理表へ課題として追加した。
+- PR #48: レビューコメント 0件（確認済み）
+- 前チャットの PR #49 の自動レビュー4件は、いずれも同じPRで対応済み。見送りは0件
 
 ## 次のタスク候補
 
-- `docs/phase2-plan.md` の優先順位に基づく次点候補は「クラウド保存の設定画面と復元画面」（`docs/account-cloud-storage-decision.md` 11.1節の最後の未実装項目）。初回アップロード、継続バックアップの表示、復元時の選択画面（端末とクラウド両方にある場合はJSONバックアップ必須）、クラウド停止・全件削除・退会の導線を含む。フラグOFF・本番到達不可のまま進められる。
+- クラウド保存の設定画面と復元画面（`docs/account-cloud-storage-decision.md` 11.1節の最後の未実装。管理表の「クラウドバックアップと復元」は `進行中`）
+- フラグOFF・本番到達不可のまま進められる。睡眠・共有の3件は再実装しない
 
 ## 引き継ぎ事項・注意点
 
-1. **新規登録の抑止について、公式資料と設計前提が食い違っていた。** `docs/account-cloud-storage-decision.md` は「Console設定で新規登録の可否を切り替えられる」という前提だったが、Managed Better Authの認証フロー公式ドキュメント（`https://neon.com/docs/auth/authentication-flow`、2026-09-08確認）には次のように明記されている。
+- 直近の睡眠時刻は記録本体・バックアップ・送信対象に含めない。全削除でも消さない（カスタム入力や復職日と同じ端末内設定）
+- 共有の初期選択期間は従来どおり直近7日。上限だけ30日
+- Gate 4の期限付きリンクと、履歴上の「最大7日間で実装した」完了行は、今回の30日変更の対象外
+- 前チャット（クラウド認証）の注意点は維持する。要約は次のとおり。詳細な Neon Console 手順は `origin/main` の `docs/handoff/latest.md`（2026-09-08）と `docs/account-cloud-storage-decision.md` を読む
 
-   > "Anyone can sign up for your application by default. Support for restricted signups is coming soon."
-
-   Email OTPプラグインのConsole設定ページにも「サインアップ無効化」に相当する項目の記載は無かった。better-authの `email-otp` プラグイン自体には `disableSignUp` オプションが存在する（`node_modules/better-auth` のソースで確認済み）が、Managed Better Authはこのプラグインの実体をNeon側でホストしており、アプリのコードからオプションを渡す経路が無い。Consoleにこれを設定する項目があるかどうかは、今回のドキュメント調査だけでは確認できなかった。
-   ユーザーに確認のうえ、**アプリ側にも許可リスト制限を追加する方針**で進めた。`getCloudSession` は、Managed Better Authで検証済みのメールアドレスが `USER_DATA_ALLOWED_EMAILS`（環境変数、カンマ区切り）に含まれる場合だけ `ownerId` を返す。一覧が未設定なら誰も通さない（フェイルクローズ）。
-   **次のチャット（またはユーザー）へのお願い**: Neon Consoleを実際に開き、「新規登録だけを止めて既存ユーザーのログインは許可する」設定が本当に存在するか確認してほしい。存在する場合はそちらも有効にする（アプリ側の許可リストは二重の防御として残してよい）。存在しない場合は、今回実装したアプリ側の許可リストが唯一の防御になるため、`USER_DATA_ALLOWED_EMAILS` の運用（誰が・いつ更新するか）を決める必要がある。
-
-2. **`@neondatabase/auth`（0.5.0-beta）の `peerDependencies` は `next: >=16.0.0` を要求しているが、本リポジトリは `next@15.5.18` のまま。** `pnpm install` は警告のみで成功し、`pnpm build` も型チェックを含めて成功した。今回使った機能（`createNeonAuth().getSession()` をRoute Handler内で呼ぶ、`authApiHandler` 相当の `.handler()`）はNext 15でも動作した。ただし `auth.middleware()`（`proxy.ts` 経由のルート保護、Next 16向けの新しい規約）は今回使っておらず、未検証。将来Next.jsを16へ上げるかどうかは本タスクの範囲外なので判断していない。
-
-3. **`getCloudSession` の `verifiedAt` は、better-authのセッション作成時刻（`session.createdAt`）を採用した。** これはサインイン（OTP検証）が成功した第間の時刻で、better-auth本体がセッションの「新しさ」判定に使う標準的なフィールドと同じ考え方（公式ドキュメント上に明示的な「reauth」専用フィールドは見当たらなかった）。Cookie自体は既定で長期間（better-authの既定は7日、自動延長あり）有効なため、`isRecentlyVerified` の10分判定は「セッションが作られてから10分」を意味し、「Cookieが有効かどうか」とは別の軸である点は変わっていない。
-
-4. **`/cloud-login` と `/api/auth/[...path]` は `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` で404ゲートしている。** これは `NEXT_PUBLIC_` 環境変数なのでビルド時に値が埋め込まれる。Vercelでフラグを有効にしてこの画面を確認したい場合、環境変数を設定してから**再デプロイ（再ビルド）が必要**（デプロイ後の値変更だけでは反映されない）。これは既存の `/api/cloud/*` も含め、このリポジトリの `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` の使い方全般に元から当てはまる性質で、今回新しく生まれた制約ではない。
-
-5. **Neon Consoleでの作業手順（ユーザー作業分）**
-
-   以下はユーザー（Neon Consoleの操作担当）向けの手順。ダミーデータでの検証のみを想定し、実データは使わない。
-
-   ### 5.1 本人記録用のNeonプロジェクトを新規作成する
-
-   - 匿名分析用プロジェクトとは別に、新しいNeonプロジェクトを作成する。
-   - リージョンは `aws-ap-southeast-1`（シンガポール）を選択する。
-
-   ### 5.2 Managed Better Auth（旧Neon Auth）を有効化する
-
-   - 作成したプロジェクトのConsoleで Auth を有効化する（`npx neon@latest init` を使うか、Console上の「Enable Auth」から行う）。
-   - 有効化後に払い出される「Auth base URL」を控える（`NEON_AUTH_BASE_URL` に使う）。
-
-   ### 5.3 Email OTPだけを有効にする
-
-   - Console の **Settings → Auth** で次を設定する。
-     - 「Sign-up and Sign-in with Email」を有効にする。
-     - 「Verify at Sign-up」を有効にする。
-     - 「Verification method」を **Verification code**（6桁コード）にする。
-   - パスワードログイン、Google/MicrosoftなどのSNSログイン、組織機能は有効にしない（既定でOFFのはずだが、ONになっていないか確認する）。
-   - **新規登録を止める設定が実際にあるか確認してほしい。** 今回のドキュメント調査では見つけられなかった（上記「引き継ぎ事項・注意点」1番を参照）。あれば有効にする。無ければ、アプリ側の `USER_DATA_ALLOWED_EMAILS` だけが防御になるので、その旨を認識しておいてほしい。
-   - マジックリンクは有効にしない（Email OTPだけを使う）。
-
-   ### 5.4 参加者を事前登録する（新規登録を閉じる場合）
-
-   - 「新規登録を止める設定」がある場合、その運用に従って、参加予定者のメールアドレスをConsole側で事前登録する。
-   - 事前登録の有無にかかわらず、アプリ側の許可リストとして次の環境変数にも同じメールアドレスをカンマ区切りで設定する（`USER_DATA_ALLOWED_EMAILS`）。
-
-   ### 5.5 環境変数を設定する（Vercel、対象はPreview環境）
-
-   ```
-   NEON_AUTH_BASE_URL=（5.2で控えたAuth base URL）
-   NEON_AUTH_COOKIE_SECRET=（下記コマンドで生成）
-   USER_DATA_ALLOWED_EMAILS=検証用ダミーアカウントのメールアドレス（カンマ区切り）
-   USER_DATA_DATABASE_URL=（本人記録用プロジェクトのSQL接続文字列、実行時ロール）
-   USER_DATA_KEK=（既存手順どおり。未設定ならここで生成）
-   NEXT_PUBLIC_CLOUD_BACKUP_ENABLED=true　　※Preview環境の変数としてのみ設定し、Productionには設定しない
-   ```
-
-   `NEON_AUTH_COOKIE_SECRET` の生成コマンド:
-
-   ```
-   node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"
-   ```
-
-   `USER_DATA_KEK` の生成コマンド（`.env.example` と同じ、未設定の場合のみ）:
-
-   ```
-   node -e "console.log('v1:' + require('node:crypto').randomBytes(32).toString('base64'))"
-   ```
-
-   ### 5.6 `pnpm db:user-data:setup` を実行する
-
-   - `USER_DATA_DATABASE_URL`（マイグレーション用ロールの接続文字列）をローカルまたはCIの環境変数に設定したうえで実行する。
-   - 実行後、実行時ロールに必要な `SELECT`/`INSERT`/`UPDATE`/`DELETE` だけが付与されていることを確認する（`docs/account-cloud-storage-decision.md` 6.2節）。
-
-   ### 5.7 Preview環境でだけ動作確認する
-
-   - 上記5.5の環境変数をPreview環境にだけ設定し、Productionには設定しないことを再確認する（`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` を含む）。
-   - Preview環境をデプロイし直す（`NEXT_PUBLIC_` 変数はビルド時に埋め込まれるため、変数追加後の再デプロイが必須）。
-   - デプロイされたPreview URLの `/cloud-login` を開く。
-     1. `USER_DATA_ALLOWED_EMAILS` に含めたダミーメールアドレスを入力し、コードを送る。
-     2. 届いた6桁コードで「ログインする」を押し、「ログイン済みです」の表示になることを確認する。
-     3. 許可リストに含まれていないメールアドレスでは、コード検証後もログインできない（=許可リストの突き合わせで弾かれる）ことを確認する。
-     4. 「ログアウトする」でサインアウトし、再度未ログイン状態の画面に戻ることを確認する。
-   - 確認が終わったら、`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` をPreview環境からも外す（または `false` にする）ことを推奨する。次のタスク（設定・復元画面）の実装が終わるまでは、検証以外の目的でONにし続けない。
+1. Managed Better Auth は公式資料上「Anyone can sign up by default. Support for restricted signups is coming soon.」。アプリ側の `USER_DATA_ALLOWED_EMAILS` が防御。一覧未設定なら誰も通さない。Neon Console に新規登録停止があるかは未確認
+2. `@neondatabase/auth` は Next.js 16 以上を要求するが、本アプリは 15.5.18。現在使っている機能は動作している
+3. `verifiedAt` はセッション作成時刻。10分判定は「セッションが作られてから10分」
+4. `/cloud-login` と `/api/auth/[...path]` は `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` で404。`NEXT_PUBLIC_` はビルド時埋め込みなので、Preview確認には再デプロイが必要。Production には立てない
+5. Neon Console 作業（ダミーデータのみ）: 本人記録用プロジェクトを `aws-ap-southeast-1` で新規作成 → Auth 有効化 → Email OTP（6桁コード）のみ → `USER_DATA_ALLOWED_EMAILS` と Preview 専用の環境変数 → `pnpm db:user-data:setup` → Preview の `/cloud-login` で確認。Production に `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` を設定しない
