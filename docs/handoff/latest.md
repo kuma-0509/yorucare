@@ -29,7 +29,7 @@
 ## 検証結果
 
 - pnpm lint: 成功（警告・エラーなし）
-- pnpm test: 成功（実装時 50 files / 459 tests。rebase 後は最新 `main` の件数に合わせて再実行する）
+- pnpm test: 成功（58 test files / 576 tests）
 - pnpm build: 成功（Compiled successfully、型チェック、静的ページ生成を通過）
 - GitHub Actions `build-and-test`: PR #48 の実装コミットで成功
 - ブラウザ確認: 昨日（記録なし）に直近の 23:30 / 07:00 が入ること、今日の保存値は上書きされないこと、31日の指定で期間エラーになること、1日分の全文に日本語と睡眠が出ること、保存した `.txt` が UTF-8 BOM 付きで日本語として読めることを確認した
