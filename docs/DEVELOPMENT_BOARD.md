@@ -129,4 +129,4 @@
 
 PR
 
-作成後に追記する
+https://github.com/kuma-0509/yorucare/pull/52

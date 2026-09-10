@@ -26,6 +26,7 @@
 - pnpm lint: 成功（警告・エラーなし）
 - pnpm test: 成功（60 test files / 586 tests）
 - pnpm build: 成功（Compiled successfully、型チェック、静的ページ生成を通過）
+- PR: https://github.com/kuma-0509/yorucare/pull/52
 
 ## 次のタスク候補
 
