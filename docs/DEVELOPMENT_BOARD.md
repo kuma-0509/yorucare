@@ -112,5 +112,5 @@
 
 次回候補: YC-MON-REQUIRED-CHECKS（担当者の GitHub 設定が必要。エージェントだけでは完了できない場合は保留にする）またはクラウド保存の設定・復元画面（フラグOFFのまま）
 
-PR: 作成後に追記
+PR: https://github.com/kuma-0509/yorucare/pull/57
 
