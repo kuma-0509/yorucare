@@ -81,6 +81,36 @@
 | 認証基盤のパッケージが要求するNext.jsの版が、本アプリの版より新しい | パッケージの `peerDependencies` は Next.js 16 以上を要求するが、本アプリは 15.5.18。インストール、型チェック、テスト、本番ビルドはいずれも成功し、現在使っている機能は動作している。公式に支援される組み合わせではないため、認証まわりで想定外の挙動が出た場合は最初にここを疑う。Next.js の版を上げるかどうかは別途判断する | 未着手 | — |
 | 再認証だけを行う導線がなく、10分を過ぎると入り直しになる | クラウド上の全件削除は、直近10分以内に本人確認をしていない場合にAPIが断るようにした。画面側の受け皿がまだ無いため、クラウド保存の設定画面を作るときに、記録を保ったまま本人確認だけをやり直す導線を用意する | 未着手 | — |
 | ログイン画面が、許可リストに無いメールアドレスのときも「時間をおいてもう一度」と案内する | 許可リストに無い場合と、通信や送信の失敗とで案内を分ける。入力し間違えた本人が、待ち続けずに気づけるようにする。運営者へ問い合わせる先も案内に含めるかどうかは、クラウド保存の設定画面を作るときにあわせて決める | 未着手 | — |
-| Secret Scanの結果を秘密値に触れず定期監査で確認する経路が未確立 | 2026-09-10日次監査、YC-MON-SECRET-RESULT、重大度：未評価（結果未確認）。[Secret scanning](https://github.com/kuma-0509/yorucare/security/secret-scanning)とPush protectionは有効だが、秘密値を含む生APIは監査対象外。値を返さない件数・状態・確認日時の証跡を用意し、取得不能と0件を区別して監視できることを確認する | 未着手 | — |
+| Secret Scanの結果を秘密値に触れず定期監査で確認する経路が未確立 | 2026-09-10日次監査、YC-MON-SECRET-RESULT、重大度：未評価（結果未確認）。[Secret scanning](https://github.com/kuma-0509/yorucare/security/secret-scanning)とPush protectionは有効だが、秘密値を含む生APIは監査対象外。値を返さない件数・状態・確認日時の証跡を `pnpm security:secret-scan` で残す。取得不能と0件を区別し、警告本文は破棄することをテストで固定する。手順は `docs/security-monitoring.md` | 完了 | 2026-09-10 |
 | Code scanningの解析結果を定期監査で確認できない | 2026-09-10日次監査、YC-MON-CODE-SCAN、重大度：未評価（結果未確認）。[Code scanning](https://github.com/kuma-0509/yorucare/security/code-scanning)の解析メタデータ取得は404・no analysis found。機能設定と解析の実行有無を担当者が確認し、採用する静的解析の対象SHA・実行結果・日時を非機密の証跡として残す。解析なしを問題0件として扱わない | 未着手 | — |
 | 公開候補の最新変更に対する必須CI合格を強制する設定を確認・整備する必要がある | 2026-09-10日次監査、YC-MON-REQUIRED-CHECKS、重大度：Medium（運用制御の不足）。GitHub取得結果ではbranchProtectionRulesと[rulesets](https://github.com/kuma-0509/yorucare/settings/rules)が空。[PR #50](https://github.com/kuma-0509/yorucare/pull/50)の先頭e91d64aにはbuild-and-test結果がなく、古いSHAの成功では代用できない。最新変更に対応するCI証跡と起動条件を確認し、必須チェック・承認・公開条件を担当者が整備して未実行・失敗時のブロックを検証する。[PR #34](https://github.com/kuma-0509/yorucare/pull/34)の開発手順統一と関連付け、実設定の証跡を残す | 未着手 | — |
+
+## 実行履歴
+
+### 2026-09-10
+
+実施タスク: Secret Scanの結果を秘密値に触れず定期監査で確認する経路が未確立
+
+選択理由: P0の監視欠落。同一優先度の中で、秘密値を読まずに件数と取得不能を区別できる経路がコードで固定でき、GitHub設定の変更を要しないため。
+
+実装内容: `pnpm security:secret-scan` で件数・状態・確認日時だけを出す。警告本文は破棄し、取得不能を0件と書かないことをテストで固定した。
+
+変更ファイル: `src/lib/secret-scan-status.ts` / `src/lib/secret-scan-status.test.ts` / `scripts/secret-scan-status.mjs` / `docs/security-monitoring.md` / `package.json` / `docs/DEVELOPMENT_BOARD.md` / `docs/handoff/latest.md`
+
+検証結果:
+
+- lint: 成功（警告・エラーなし）
+- test: 成功（60 files / 614 tests）
+- build: 成功
+- `pnpm security:secret-scan`: この環境のトークンは HTTP 403。件数は出さず取得不能と表示した
+
+セキュリティレビュー: 問題なし
+
+詳細: 秘密値を含む生API応答を証跡に残さない。403を0件にしない。新しい依存関係なし。警告本文が混入した場合は破棄するテストを追加した。
+
+残課題: 権限付きトークンでの実件数確認は運営者が行う。Code scanning の解析証跡（YC-MON-CODE-SCAN）と必須CI（YC-MON-REQUIRED-CHECKS）は未着手。ログイン確認の許可リスト外案内は PR #51 / #52 が未マージ。
+
+次回候補: YC-MON-REQUIRED-CHECKS（担当者の GitHub 設定が必要。エージェントだけでは完了できない場合は保留にする）またはクラウド保存の設定・復元画面（フラグOFFのまま）
+
+PR: 作成後に追記
+
