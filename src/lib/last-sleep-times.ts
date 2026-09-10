@@ -71,6 +71,16 @@ export function rememberLastSleepTimes(
   }
 }
 
+/** すべての記録の削除や取り込み成功時に、前のデータセットの時刻が残らないよう消す */
+export function clearLastSleepTimes(): void {
+  if (!isBrowser()) return;
+  try {
+    localStorage.removeItem(STORAGE_KEYS.lastSleepTimes);
+  } catch {
+    // 消せなくても記録本体の削除・取り込みは止めない
+  }
+}
+
 /** 記録がまだない日のフォームへ、直近の時刻を初期値として入れる */
 export function mergeLastSleepTimes<
   T extends { sleepStart: string | null; sleepEnd: string | null },

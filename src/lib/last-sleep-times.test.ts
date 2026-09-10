@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { STORAGE_KEYS } from "./constants";
 import {
+  clearLastSleepTimes,
   getLastSleepTimes,
   mergeLastSleepTimes,
   rememberLastSleepTimes,
@@ -77,6 +78,16 @@ describe("直近の寝た時間・起きた時間", () => {
     });
 
     expect(() => rememberLastSleepTimes("23:00", "07:00")).not.toThrow();
+    expect(getLastSleepTimes()).toEqual({
+      sleepStart: null,
+      sleepEnd: null,
+    });
+  });
+
+  it("消せる", () => {
+    rememberLastSleepTimes("23:00", "07:00");
+    clearLastSleepTimes();
+    expect(localStorage.getItem(STORAGE_KEYS.lastSleepTimes)).toBeNull();
     expect(getLastSleepTimes()).toEqual({
       sleepStart: null,
       sleepEnd: null,

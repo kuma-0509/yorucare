@@ -14,7 +14,7 @@ import {
   STORAGE_SCHEMA_VERSION,
   type ExportPayload,
 } from "./schemas";
-import { rememberLastSleepTimes } from "./last-sleep-times";
+import { rememberLastSleepTimes, clearLastSleepTimes } from "./last-sleep-times";
 import { calculateSleepMinutes } from "./sleep";
 import { err, ok, type Result } from "./result";
 import type { DailyRecord, NotToDoItem, SelfCareItem } from "./types";
@@ -292,6 +292,8 @@ const localStorageRepository: LocalStorageRepository = {
       // 共有端末で使い終わったときに記録だけ消えても意味がないため、
       // 「すべての記録を削除」ではこちらも一緒に消す。
       clearCompletionLog();
+      // 直近の寝た時間・起きた時間も、前の人の時刻が残らないよう消す。
+      clearLastSleepTimes();
       return ok(undefined);
     } catch {
       return err({
@@ -601,6 +603,11 @@ const localStorageRepository: LocalStorageRepository = {
       await localStorageRepository.clearImportRollback();
       return applied;
     }
+
+    // 直近の睡眠時刻はバックアップに含めない。取り込み前の端末の初期値が
+    // 取り込んだ記録の新規入力へ混ざらないよう、成功したときだけ消す。
+    // 失敗して戻す経路は applyImport を使うため、こちらでは消さない。
+    clearLastSleepTimes();
 
     // 取り込み成功後は退避データを残さない（容量の二重消費を防ぐ）
     await localStorageRepository.clearImportRollback();

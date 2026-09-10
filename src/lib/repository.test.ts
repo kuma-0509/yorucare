@@ -538,11 +538,82 @@ describe("すべての記録を削除", () => {
     expect(localStorage.getItem(STORAGE_KEYS.completionLog)).toBeNull();
   });
 
+  it("直近の睡眠時刻の初期値も一緒に消す", async () => {
+    localStorage.setItem(
+      STORAGE_KEYS.lastSleepTimes,
+      JSON.stringify({ sleepStart: "23:00", sleepEnd: "07:00" })
+    );
+
+    await typedRepository.deleteAllRecords();
+
+    expect(localStorage.getItem(STORAGE_KEYS.lastSleepTimes)).toBeNull();
+  });
+
   it("演出の記録が無くても失敗しない", async () => {
     await expect(typedRepository.deleteAllRecords()).resolves.toEqual({
       ok: true,
       value: undefined,
     });
+  });
+});
+
+describe("バックアップ取り込みと直近の睡眠時刻", () => {
+  const lastTimes = JSON.stringify({ sleepStart: "23:00", sleepEnd: "07:00" });
+
+  it("取り込みが成功したら初期値を消す", async () => {
+    localStorage.setItem(STORAGE_KEYS.lastSleepTimes, lastTimes);
+
+    const result = await typedRepository.importBackup(
+      JSON.stringify({
+        version: 1,
+        exportedAt: "2026-09-09T00:00:00.000Z",
+        records: [],
+        selfCareItems: [],
+      })
+    );
+
+    expect(result.ok).toBe(true);
+    expect(localStorage.getItem(STORAGE_KEYS.lastSleepTimes)).toBeNull();
+  });
+
+  it("ファイルが壊れていて取り込み前に失敗したら初期値は残す", async () => {
+    localStorage.setItem(STORAGE_KEYS.lastSleepTimes, lastTimes);
+
+    const result = await typedRepository.importBackup("{壊れた");
+
+    expect(result.ok).toBe(false);
+    expect(localStorage.getItem(STORAGE_KEYS.lastSleepTimes)).toBe(lastTimes);
+  });
+
+  it("適用に失敗して戻したときは初期値は残す", async () => {
+    localStorage.setItem(STORAGE_KEYS.lastSleepTimes, lastTimes);
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    vi.spyOn(localStorage, "setItem").mockImplementation((key, value) => {
+      if (key === STORAGE_KEYS.selfCare && String(value).includes("取り込み用")) {
+        throw new Error("quota");
+      }
+      originalSetItem(key, value);
+    });
+
+    const result = await typedRepository.importBackup(
+      JSON.stringify({
+        version: 1,
+        exportedAt: "2026-09-09T00:00:00.000Z",
+        records: [],
+        selfCareItems: [
+          {
+            id: "s1",
+            title: "取り込み用",
+            createdAt: "2026-09-01T00:00:00.000Z",
+            updatedAt: "2026-09-01T00:00:00.000Z",
+          },
+        ],
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    expect(localStorage.getItem(STORAGE_KEYS.lastSleepTimes)).toBe(lastTimes);
+    vi.restoreAllMocks();
   });
 });
 
