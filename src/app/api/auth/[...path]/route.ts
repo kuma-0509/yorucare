@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isCloudBackupEnabled } from "@/lib/cloud-backup";
+import { EMAIL_NOT_ALLOWED_CODE } from "@/lib/cloud-login-errors";
 import { isEmailAllowed } from "@/lib/server/cloud-session";
 import { getNeonAuth } from "@/lib/server/neon-auth";
 
@@ -31,6 +32,21 @@ function notFoundResponse(): NextResponse {
 function forbiddenResponse(): NextResponse {
   return NextResponse.json(
     { ok: false },
+    { status: 403, headers: { "Cache-Control": "no-store" } }
+  );
+}
+
+/**
+ * 許可リスト拒否。本文に安定トークンを載せ、画面が通信失敗と区別できるようにする。
+ * メールアドレスは返さない。
+ */
+function emailNotAllowedResponse(): NextResponse {
+  return NextResponse.json(
+    {
+      ok: false,
+      code: EMAIL_NOT_ALLOWED_CODE,
+      message: EMAIL_NOT_ALLOWED_CODE,
+    },
     { status: 403, headers: { "Cache-Control": "no-store" } }
   );
 }
@@ -72,7 +88,7 @@ async function withAuthHandler(
   }
 
   const email = extractEmail(body);
-  if (email !== null && !isEmailAllowed(email)) return forbiddenResponse();
+  if (email !== null && !isEmailAllowed(email)) return emailNotAllowedResponse();
 
   return handler.POST(
     new Request(request.url, {
