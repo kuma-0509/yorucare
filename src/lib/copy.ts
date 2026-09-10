@@ -143,6 +143,9 @@ export const COPY = {
   aiShare: {
     periodLimitHint: "一度に共有できる期間は{n}日間までです。",
     periodLimitError: "共有できる期間は{n}日間までです。",
+    saveCsv: "CSVファイルを保存",
+    savedCsv:
+      "CSVファイルを保存しました。不要になったファイルは端末から削除してください。",
   },
 
   /**

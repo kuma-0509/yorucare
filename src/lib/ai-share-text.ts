@@ -32,13 +32,34 @@ export type AiShareTextResult =
       message: string;
     };
 
-interface BuildAiShareTextInput {
+export type AiShareCsvResult =
+  | {
+      ok: true;
+      csv: string;
+      recordCount: number;
+      filename: string;
+    }
+  | {
+      ok: false;
+      message: string;
+    };
+
+interface BuildAiShareInput {
   records: DailyRecord[];
   selfCareItems: SelfCareItem[];
   startDate: string;
   endDate: string;
   fields: AiShareField[];
 }
+
+const SHARE_FIELD_LABELS: Record<AiShareField, string> = {
+  mood: "気分・状態",
+  sleep: "睡眠",
+  medication: "服薬",
+  warning: "しんどさのサイン",
+  selfCare: "セルフケア",
+  notes: "自由記述",
+};
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 /** 生成AI等へのテキスト共有で、一度に選べる暦日数の上限（開始日と終了日を含む） */
@@ -54,15 +75,23 @@ export function formatAiSharePeriodLimitError(): string {
 }
 
 /**
- * 端末の標準ビューアが日本語として開けるよう、UTF-8 BOM 付きのファイルにする。
+ * 端末の標準ビューアや表計算ソフトが日本語として開けるよう、UTF-8 BOM 付きにする。
  * 画面上の全文確認とコピーへ渡す文字列は、呼び出し側でこの関数を通さない。
  */
-export function createAiShareTextFileBlob(text: string): Blob {
+function createUtf8BomFileBlob(text: string, type: string): Blob {
   const body = new TextEncoder().encode(text);
   const bytes = new Uint8Array(UTF8_BOM.length + body.length);
   bytes.set(UTF8_BOM, 0);
   bytes.set(body, UTF8_BOM.length);
-  return new Blob([bytes], { type: "text/plain;charset=utf-8" });
+  return new Blob([bytes], { type });
+}
+
+export function createAiShareTextFileBlob(text: string): Blob {
+  return createUtf8BomFileBlob(text, "text/plain;charset=utf-8");
+}
+
+export function createAiShareCsvFileBlob(csv: string): Blob {
+  return createUtf8BomFileBlob(csv, "text/csv;charset=utf-8");
 }
 
 function parseCalendarDate(value: string): number | null {
@@ -117,46 +146,51 @@ function formatSelfCare(
   return parts.join("／");
 }
 
-function buildRecordLines(
+function formatShareFieldValue(
   record: DailyRecord,
-  selfCareItems: SelfCareItem[],
-  fields: Set<AiShareField>
-): string[] {
-  const lines = [`■ ${formatCalendarDate(record.date)}`];
-
-  if (fields.has("mood")) {
-    lines.push(`- 気分・状態: ${formatMood(record)}`);
+  field: AiShareField,
+  selfCareItems: SelfCareItem[]
+): string {
+  switch (field) {
+    case "mood":
+      return formatMood(record);
+    case "sleep":
+      return formatSleepSummary(record);
+    case "medication":
+      return getMedicationLabel(record.medication);
+    case "warning":
+      return formatWarning(record);
+    case "selfCare":
+      return formatSelfCare(record, selfCareItems);
+    case "notes":
+      return record.note.trim() ? indentMultiline(record.note) : "未入力";
   }
-  if (fields.has("sleep")) {
-    lines.push(`- 睡眠: ${formatSleepSummary(record)}`);
-  }
-  if (fields.has("medication")) {
-    lines.push(`- 服薬: ${getMedicationLabel(record.medication)}`);
-  }
-  if (fields.has("warning")) {
-    lines.push(`- しんどさのサイン: ${formatWarning(record)}`);
-  }
-  if (fields.has("selfCare")) {
-    lines.push(`- セルフケア: ${formatSelfCare(record, selfCareItems)}`);
-  }
-  if (fields.has("notes")) {
-    lines.push(
-      `- 自由記述: ${
-        record.note.trim() ? indentMultiline(record.note) : "未入力"
-      }`
-    );
-  }
-
-  return lines;
 }
 
-export function buildAiShareText({
+function escapeCsvField(value: string): string {
+  if (/[",\r\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+type AiShareSelection =
+  | {
+      ok: true;
+      selectedRecords: DailyRecord[];
+      selectedFields: Set<AiShareField>;
+    }
+  | {
+      ok: false;
+      message: string;
+    };
+
+function selectAiShareRecords({
   records,
-  selfCareItems,
   startDate,
   endDate,
   fields,
-}: BuildAiShareTextInput): AiShareTextResult {
+}: Omit<BuildAiShareInput, "selfCareItems">): AiShareSelection {
   const start = parseCalendarDate(startDate);
   const end = parseCalendarDate(endDate);
   if (start === null || end === null || start > end) {
@@ -193,6 +227,46 @@ export function buildAiShareText({
     };
   }
 
+  return { ok: true, selectedRecords, selectedFields };
+}
+
+function buildRecordLines(
+  record: DailyRecord,
+  selfCareItems: SelfCareItem[],
+  fields: Set<AiShareField>
+): string[] {
+  const lines = [`■ ${formatCalendarDate(record.date)}`];
+
+  for (const field of AI_SHARE_FIELDS) {
+    if (!fields.has(field)) continue;
+    lines.push(
+      `- ${SHARE_FIELD_LABELS[field]}: ${formatShareFieldValue(
+        record,
+        field,
+        selfCareItems
+      )}`
+    );
+  }
+
+  return lines;
+}
+
+export function buildAiShareText({
+  records,
+  selfCareItems,
+  startDate,
+  endDate,
+  fields,
+}: BuildAiShareInput): AiShareTextResult {
+  const selection = selectAiShareRecords({
+    records,
+    startDate,
+    endDate,
+    fields,
+  });
+  if (!selection.ok) return selection;
+
+  const { selectedRecords, selectedFields } = selection;
   const sections = selectedRecords.map((record) =>
     buildRecordLines(record, selfCareItems, selectedFields).join("\n")
   );
@@ -219,5 +293,42 @@ export function buildAiShareText({
     text,
     recordCount: selectedRecords.length,
     filename: `yorucare-ai-share-${startDate}-${endDate}.txt`,
+  };
+}
+
+export function buildAiShareCsv({
+  records,
+  selfCareItems,
+  startDate,
+  endDate,
+  fields,
+}: BuildAiShareInput): AiShareCsvResult {
+  const selection = selectAiShareRecords({
+    records,
+    startDate,
+    endDate,
+    fields,
+  });
+  if (!selection.ok) return selection;
+
+  const { selectedRecords, selectedFields } = selection;
+  const columns = AI_SHARE_FIELDS.filter((field) => selectedFields.has(field));
+  const header = ["日付", ...columns.map((field) => SHARE_FIELD_LABELS[field])];
+  const rows = selectedRecords.map((record) => [
+    record.date,
+    ...columns.map((field) =>
+      formatShareFieldValue(record, field, selfCareItems)
+    ),
+  ]);
+
+  const csv = [header, ...rows]
+    .map((row) => row.map(escapeCsvField).join(","))
+    .join("\r\n");
+
+  return {
+    ok: true,
+    csv,
+    recordCount: selectedRecords.length,
+    filename: `yorucare-ai-share-${startDate}-${endDate}.csv`,
   };
 }

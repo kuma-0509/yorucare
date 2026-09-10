@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildAiShareCsv,
   buildAiShareText,
+  createAiShareCsvFileBlob,
   createAiShareTextFileBlob,
   formatAiSharePeriodLimitError,
   formatAiSharePeriodLimitHint,
@@ -146,6 +148,23 @@ describe("セルフケアの感想の扱い", () => {
     expect(result.text).not.toContain("合わなかった");
     expect(result.text).not.toContain("やってよかった");
   });
+
+  it("感想をCSVにも出さない", () => {
+    const result = buildAiShareCsv({
+      records: [makeRecord({ selfCareFeeling: "notFit" })],
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-21",
+      fields: ["selfCare"],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.csv).toContain("深呼吸");
+    expect(result.csv).not.toContain("感想");
+    expect(result.csv).not.toContain("合わなかった");
+    expect(result.csv).not.toContain("やってよかった");
+  });
 });
 
 describe("共有テキストの期間上限と保存ファイル", () => {
@@ -194,5 +213,112 @@ describe("共有テキストの期間上限と保存ファイル", () => {
     expect(decoded).toBe(result.text);
     expect(decoded).toContain("ヨルケア");
     expect(decoded).toContain("気分・状態");
+  });
+});
+
+describe("buildAiShareCsv", () => {
+  it("選んだ項目だけを日付順の表にする", () => {
+    const result = buildAiShareCsv({
+      records: [
+        makeRecord({ id: "r2", date: "2026-07-22", moodScore: 3 }),
+        makeRecord(),
+      ],
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-22",
+      fields: ["mood", "sleep"],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.filename).toBe("yorucare-ai-share-2026-07-21-2026-07-22.csv");
+    expect(result.recordCount).toBe(2);
+
+    const lines = result.csv.split("\r\n");
+    expect(lines[0]).toBe("日付,気分・状態,睡眠");
+    expect(lines[1]).toBe("2026-07-21,まあまあ良い,23:00〜07:00（8時間）");
+    expect(lines[2]).toBe("2026-07-22,ふつう,23:00〜07:00（8時間）");
+    expect(result.csv).not.toContain("服薬");
+    expect(result.csv).not.toContain("自由記述");
+    expect(result.csv).not.toContain("自由記述の内容");
+  });
+
+  it("カンマや改行を含むメモはCSVとして壊さない", () => {
+    const result = buildAiShareCsv({
+      records: [
+        makeRecord({
+          note: '午前は安静, 午後は散歩\n"少し"疲れた',
+        }),
+      ],
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-21",
+      fields: ["notes"],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.csv).toBe(
+      '日付,自由記述\r\n2026-07-21,"午前は安静, 午後は散歩 / ""少し""疲れた"'
+    );
+  });
+
+  it("選んでいないセンシティブ項目は列にも値にも出さない", () => {
+    const result = buildAiShareCsv({
+      records: [makeRecord()],
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-21",
+      fields: ["mood"],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.csv).not.toContain("服薬");
+    expect(result.csv).not.toContain("しんどさ");
+    expect(result.csv).not.toContain("深呼吸");
+    expect(result.csv).not.toContain("自由記述の内容");
+    expect(result.csv).not.toContain("感想");
+  });
+
+  it("30日を超える期間を拒否する", () => {
+    const result = buildAiShareCsv({
+      records: [makeRecord()],
+      selfCareItems,
+      startDate: "2026-07-01",
+      endDate: "2026-07-31",
+      fields: ["mood"],
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      message: "共有できる期間は30日間までです。",
+    });
+  });
+});
+
+describe("CSV保存ファイル", () => {
+  it("UTF-8 BOM付きで、表計算ソフト向けのCSV本文は変わらない", async () => {
+    const result = buildAiShareCsv({
+      records: [makeRecord()],
+      selfCareItems,
+      startDate: "2026-07-21",
+      endDate: "2026-07-21",
+      fields: ["mood"],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.csv.startsWith("\uFEFF")).toBe(false);
+
+    const bytes = new Uint8Array(
+      await createAiShareCsvFileBlob(result.csv).arrayBuffer()
+    );
+    expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+
+    const decoded = new TextDecoder("utf-8").decode(bytes.slice(3));
+    expect(decoded).toBe(result.csv);
+    expect(decoded).toContain("気分・状態");
+    expect(decoded).toContain("まあまあ良い");
   });
 });
