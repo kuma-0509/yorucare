@@ -1,44 +1,43 @@
 # Handoff
 
 日付: 2026-09-10
-担当チャット: 19件目
+担当チャット: 20件目
 
 ## 今回実装したタスク
 
-- 記録一覧が1日ごとのカードで、日付を横断して見比べにくい
-- 「これまで」を直近7日の表（行＝日付、列＝気分・睡眠・メモなど）に変えた。未記録の日は空欄の行として並べ、メモは省略せず改行を保つ。詳しく見る・編集・記録をつける操作は日付列から到達できる。値がある任意項目（気持ち・お薬・しんどさのサイン・できたこと・やらないこと）だけ列を足す。スマホでは日付列を固定したまま左右に動かせる。
-- `docs/DEVELOPMENT_BOARD.md` の当該行は `完了 2026-09-10`。メモ一覧の完了行は、表示面をカードから表のセルへ合わせて更新した（完了日はそのまま 2026-09-07）。クラウド関連の課題の進捗は変えていない。
+- 生成AIなどへ共有で、表計算ソフト向けのCSVを保存できない
+- 「これまで」の「生成AIなどへ共有」で、全文確認後に選んだ期間・項目だけをUTF-8（BOM付き）のCSVとして保存できるようにした。テキストの全文確認・コピー・txt保存は変えていない。CSVは日付列と選んだ項目の列だけの表で、選んでいない項目は出さない。画面上の全文とコピーへはBOMを付けない。
+- `docs/DEVELOPMENT_BOARD.md` の当該行は `完了 2026-09-10`。クラウド関連の課題の進捗は変えていない。
 
 ## 変更ファイル
 
-- `src/lib/records-table.ts` / `src/lib/records-table.test.ts`: 直近7日の表データ（列の出し分けとセル値）
-- `src/components/records/records-table.tsx`: 表UI（日付列固定、操作はテキストボタン）
-- `src/components/tabs/records-tab.tsx` / `src/components/tabs/records-tab.test.tsx`: カード一覧を表に置き換え、メモ表示の結合テストを表セルへ変更
-- `src/lib/dates.ts` / `src/lib/dates.test.ts`: 表用の短い日付
-- `src/lib/copy.ts`: 表の見出し・案内
-- `docs/DEVELOPMENT_BOARD.md` / `docs/smartphone-test-checklist.md` / `docs/handoff/latest.md` / `README.md` / `scripts/run-phase1-checklist.mjs`
+- `src/lib/ai-share-text.ts` / `src/lib/ai-share-text.test.ts`: 共有テキストとCSVの共通選択、CSV生成、UTF-8 BOM付きBlob
+- `src/components/shared/ai-share-panel.tsx` / `src/components/shared/ai-share-panel.test.tsx`: 「CSVファイルを保存」ボタンと確認後だけの保存
+- `src/lib/copy.ts`: CSV保存のボタン名と完了案内
+- `docs/sharing-decision.md` / `docs/smartphone-test-checklist.md`: `.csv`保存を代替操作と実機項目 D-17 に追加
+- `docs/DEVELOPMENT_BOARD.md` / `docs/handoff/latest.md`
 
 ## 検証結果
 
 - pnpm lint: 成功（警告・エラーなし）
-- pnpm test: 成功（59 test files / 589 tests）
-- pnpm build: このチャットでは未実行。型チェックは変更ファイルに新規エラーなし（既存の `ai-share-panel.test.tsx` の Blob 型エラーは今回の対象外）
-- ブラウザ確認: スマホ幅（390）で7行の表、メモ列への横スクロール、詳しく見る、未記録日の「この日の記録をつける」から書くタブへ遷移することを確認した
-- 公開URLでの確認は、このPRが `main` へ入った後に行う
+- pnpm test: 成功（59 test files / 596 tests）
+- pnpm build: このチャットでは未実行。GitHub Actions の `CI / build-and-test` は成功
+- ブラウザ確認: 確認前はCSV保存が押せないこと、確認後に `yorucare-ai-share-*.csv` が保存されること、日本語が読めること、選んでいない項目が列に出ないことを確認した
+- 公開URLでの確認は、このPRが `main` へ入った後に行う。プレビューは PR #56 の Vercel Preview
 
 ## 自動レビュー指摘
 
-- PR #54: レビューコメント 0件（確認済み）
+- PR #56: レビューコメント 0件（確認済み）
 
 ## 次のタスク候補
 
 - クラウド保存の設定画面と復元画面（`docs/account-cloud-storage-decision.md` 11.1節の最後の未実装。管理表の「クラウドバックアップと復元」は `進行中`）
-- 記録一覧の表形式は再実装しない
+- CSV保存は再実装しない。公開URLでの見え方確認だけが残る
 
 ## 引き継ぎ事項・注意点
 
-- 「これまで」は直近7日の表。1日ごとのカードには戻していない
-- メモは表のセルへ省略せず改行付きで出す。空のメモは「—」
-- コア列は日付・気分・睡眠・メモ。任意項目は直近7日のいずれかに値があるときだけ列を足す
-- 実機チェック D 章は表形式に合わせて更新済み。D-7 は8日前が一覧に出ないこと（7日分はすべて編集可）
-- 前チャット（睡眠初期値・共有BOM・30日上限）の注意点は維持する。詳細は `docs/account-cloud-storage-decision.md` と、必要なら git 履歴の 2026-09-09 handoff を読む
+- CSVは全文確認後だけ保存できる。期間上限は30日、初期選択は気分・状態と睡眠
+- CSVの列は `日付` と選んだ共有項目だけ。セル値は共有テキストと同じ整形（改行は ` / `）。感想は出さない
+- 保存ファイルだけUTF-8 BOMを付ける。画面上の全文確認とコピーはBOMなし
+- 実機チェック D-13 にCSVボタンを追加し、D-17 をCSV保存の確認項目にした
+- 「これまで」の表形式、睡眠初期値、共有テキストのBOM、30日上限の注意点は維持する
