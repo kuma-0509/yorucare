@@ -18,23 +18,15 @@ import { DataBackupPanel } from "@/components/shared/data-backup-panel";
 import { AnonymousAnalyticsPanel } from "@/components/shared/anonymous-analytics-panel";
 import { AiSharePanel } from "@/components/shared/ai-share-panel";
 import { LiveRegion } from "@/components/shared/live-region";
+import { RecordsTable } from "@/components/records/records-table";
 import {
   formatDisplayDate,
   getLast7Days,
   isWithinLast7Days,
 } from "@/lib/dates";
-import {
-  formatNotToDoSummary,
-  formatSelfCareSummary,
-  formatSleepSummary,
-  getMedicationLabel,
-  getMoodLabel,
-  getWarningLabel,
-  buildRecordSummaryLines,
-  isMeaningfulSummaryValue,
-} from "@/lib/format";
-import { formatMoodLabelsDisplay } from "@/lib/mood-labels";
+import { buildRecordSummaryLines } from "@/lib/format";
 import { COPY } from "@/lib/copy";
+import { buildRecordsTable } from "@/lib/records-table";
 import { storageErrorMessage } from "@/lib/result";
 import {
   deleteAllRecords,
@@ -42,7 +34,6 @@ import {
   getAllRecords,
   getAllNotToDoItems,
   initSelfCareIfEmpty,
-  isDailyRecordEmpty,
 } from "@/lib/storage";
 import type { AppTab } from "@/lib/types";
 import type { DailyRecord, NotToDoItem, SelfCareItem } from "@/lib/types";
@@ -103,6 +94,13 @@ export function RecordsTab({
     void reload();
   }, [refreshKey, reload]);
 
+  const table = buildRecordsTable({
+    daysNewestFirst: [...days].reverse(),
+    records,
+    selfCareItems,
+    notToDoItems,
+  });
+
   const getRecord = (date: string) =>
     records.find((r) => r.date === date) ?? null;
 
@@ -157,7 +155,11 @@ export function RecordsTab({
       <header>
         <h1 className="text-xl font-bold">{COPY.tab.records}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          直近7日の記録です。1週間以内ならあとから直せます。
+          {COPY.recordsList.description}
+          {COPY.recordsList.scrollHint}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {COPY.recordsList.emptyGuide}
         </p>
       </header>
 
@@ -170,6 +172,18 @@ export function RecordsTab({
         </div>
       )}
 
+      <RecordsTable
+        columns={table.columns}
+        rows={table.rows}
+        canEditDate={canEditDate}
+        onViewDetail={(date) => {
+          const record = getRecord(date);
+          if (record) setDetailRecord(record);
+        }}
+        onEdit={(date) => onNavigateTab("today", { recordDate: date })}
+        onAdd={(date) => onNavigateTab("today", { recordDate: date })}
+      />
+
       <Card className="bg-muted/60">
         <CardContent className="space-y-2 py-4 text-sm leading-relaxed text-muted-foreground">
           <p>
@@ -180,127 +194,6 @@ export function RecordsTab({
           </p>
         </CardContent>
       </Card>
-
-      <div className="space-y-3">
-        {[...days].reverse().map((date) => {
-          const record = getRecord(date);
-          const hasRecord = record !== null;
-
-          if (!hasRecord) {
-            return (
-              <Card
-                key={date}
-                className="border-dashed bg-muted/50 opacity-90"
-              >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-medium text-muted-foreground">
-                    {formatDisplayDate(date)}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    この日はまだ記録がありません。
-                    <br />
-                    気分だけでも、あとから残せます。
-                  </p>
-                  {canEditDate(date) && (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() =>
-                        onNavigateTab("today", { recordDate: date })
-                      }
-                    >
-                      この日の記録をつける
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          }
-
-          const isEmptySaved = isDailyRecordEmpty(record);
-
-          const previewLines = [
-            { label: "気分", value: getMoodLabel(record.moodScore) },
-            ...(record.moodLabels.length > 0
-              ? [
-                  {
-                    label: "気持ち",
-                    value: formatMoodLabelsDisplay(record.moodLabels),
-                  },
-                ]
-              : []),
-            { label: "睡眠", value: formatSleepSummary(record) },
-            { label: "お薬", value: getMedicationLabel(record.medication) },
-            {
-              label: COPY.warningSign,
-              value: getWarningLabel(record.warningLevel),
-            },
-            {
-              label: COPY.doneToday,
-              value: formatSelfCareSummary(record, selfCareItems),
-            },
-            {
-              label: COPY.notToDoAction,
-              value: formatNotToDoSummary(record, notToDoItems),
-            },
-            { label: COPY.memo, value: record.note },
-          ].filter((line) => isMeaningfulSummaryValue(line.value));
-
-          return (
-            <Card
-              key={date}
-              className={isEmptySaved ? "border-dashed bg-muted/40" : undefined}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle
-                  className={
-                    isEmptySaved
-                      ? "text-base font-medium text-muted-foreground"
-                      : "text-base"
-                  }
-                >
-                  {formatDisplayDate(date)}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {isEmptySaved ? (
-                  <p className="leading-relaxed text-muted-foreground">
-                    保存だけした日です。気分など、あとから足せます。
-                  </p>
-                ) : (
-                  previewLines.map((line) => (
-                    <RecordPreviewLine
-                      key={line.label}
-                      label={line.label}
-                      value={line.value}
-                    />
-                  ))
-                )}
-                <div className="flex flex-col gap-2 pt-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setDetailRecord(record)}
-                  >
-                    詳しく見る
-                  </Button>
-                  {canEditDate(date) && (
-                    <Button
-                      variant="secondary"
-                      onClick={() =>
-                        onNavigateTab("today", { recordDate: date })
-                      }
-                    >
-                      編集する
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
 
       <AiSharePanel records={records} selfCareItems={selfCareItems} />
 
@@ -479,20 +372,5 @@ export function RecordsTab({
       </Dialog>
       <LiveRegion message={message} />
     </div>
-  );
-}
-
-function RecordPreviewLine({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <p className="whitespace-pre-wrap break-words">
-      <span className="text-muted-foreground">{label}：</span>
-      {value}
-    </p>
   );
 }

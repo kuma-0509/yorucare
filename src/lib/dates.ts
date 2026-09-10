@@ -60,6 +60,19 @@ export function formatDisplayDate(dateStr: string): string {
   return base;
 }
 
+/** 一覧表用の短い日付。今日・昨日は接頭辞を付ける */
+export function formatTableDate(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+  const today = getTodayString();
+  const yesterday = getYesterdayString();
+  const base = `${m}/${d}（${weekdays[date.getDay()]}）`;
+  if (dateStr === today) return `今日 ${base}`;
+  if (dateStr === yesterday) return `昨日 ${base}`;
+  return base;
+}
+
 export function formatShortDate(dateStr: string): string {
   const [, m, d] = dateStr.split("-");
   return `${Number(m)}/${Number(d)}`;
