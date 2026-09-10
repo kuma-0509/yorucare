@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, Download, Share2 } from "lucide-react";
+import { Copy, Download, FileSpreadsheet, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,12 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LiveRegion } from "@/components/shared/live-region";
 import {
+  buildAiShareCsv,
   buildAiShareText,
+  createAiShareCsvFileBlob,
   createAiShareTextFileBlob,
   formatAiSharePeriodLimitHint,
   type AiShareField,
   type AiShareTextResult,
 } from "@/lib/ai-share-text";
+import { COPY } from "@/lib/copy";
 import { getLast7Days, getTodayString } from "@/lib/dates";
 import type { DailyRecord, SelfCareItem } from "@/lib/types";
 
@@ -73,7 +76,19 @@ const FIELD_OPTIONS: FieldOption[] = [
 
 const DEFAULT_FIELDS: AiShareField[] = ["mood", "sleep"];
 
-type Preview = Extract<AiShareTextResult, { ok: true }>;
+type Preview = Extract<AiShareTextResult, { ok: true }> & {
+  csv: string;
+  csvFilename: string;
+};
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
 
 export function AiSharePanel({
   records,
@@ -128,7 +143,26 @@ export function AiSharePanel({
       setMessage(result.message);
       return;
     }
-    setPreview(result);
+
+    const csvResult = buildAiShareCsv({
+      records,
+      selfCareItems,
+      startDate,
+      endDate,
+      fields,
+    });
+    if (!csvResult.ok) {
+      setPreview(null);
+      setConfirmed(false);
+      setMessage(csvResult.message);
+      return;
+    }
+
+    setPreview({
+      ...result,
+      csv: csvResult.csv,
+      csvFilename: csvResult.filename,
+    });
     setConfirmed(false);
     setMessage(
       `${result.recordCount}日分のテキストを作りました。内容を確認してください。`
@@ -139,7 +173,7 @@ export function AiSharePanel({
     if (!preview || !confirmed || busy) return;
     if (typeof navigator.share !== "function") {
       setMessage(
-        "このブラウザでは共有先を直接選べません。コピーまたはテキスト保存をご利用ください。"
+        "このブラウザでは共有先を直接選べません。コピーまたはファイル保存をご利用ください。"
       );
       return;
     }
@@ -158,7 +192,7 @@ export function AiSharePanel({
         setMessage("共有をキャンセルしました。");
       } else {
         setMessage(
-          "共有先を開けませんでした。コピーまたはテキスト保存をお試しください。"
+          "共有先を開けませんでした。コピーまたはファイル保存をお試しください。"
         );
       }
     } finally {
@@ -170,7 +204,7 @@ export function AiSharePanel({
     if (!preview || !confirmed || busy) return;
     if (!navigator.clipboard?.writeText) {
       setMessage(
-        "このブラウザではコピーできません。テキスト保存をご利用ください。"
+        "このブラウザではコピーできません。ファイル保存をご利用ください。"
       );
       return;
     }
@@ -183,7 +217,7 @@ export function AiSharePanel({
       );
     } catch {
       setMessage(
-        "コピーできませんでした。テキスト保存をご利用ください。"
+        "コピーできませんでした。ファイル保存をご利用ください。"
       );
     } finally {
       setBusy(false);
@@ -192,16 +226,16 @@ export function AiSharePanel({
 
   const handleDownload = () => {
     if (!preview || !confirmed || busy) return;
-    const blob = createAiShareTextFileBlob(preview.text);
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = preview.filename;
-    anchor.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadBlob(createAiShareTextFileBlob(preview.text), preview.filename);
     setMessage(
       "テキストファイルを保存しました。不要になったファイルは端末から削除してください。"
     );
+  };
+
+  const handleDownloadCsv = () => {
+    if (!preview || !confirmed || busy) return;
+    downloadBlob(createAiShareCsvFileBlob(preview.csv), preview.csvFilename);
+    setMessage(COPY.aiShare.savedCsv);
   };
 
   return (
@@ -332,7 +366,7 @@ export function AiSharePanel({
               </Button>
               {!supportsWebShare && (
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  このブラウザは共有先の直接選択に対応していません。下のコピーまたはテキスト保存をご利用ください。
+                  このブラウザは共有先の直接選択に対応していません。下のコピーまたはファイル保存をご利用ください。
                 </p>
               )}
               <Button
@@ -354,6 +388,16 @@ export function AiSharePanel({
               >
                 <Download className="h-5 w-5" aria-hidden="true" />
                 テキストファイルを保存
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={!confirmed || busy}
+                onClick={handleDownloadCsv}
+              >
+                <FileSpreadsheet className="h-5 w-5" aria-hidden="true" />
+                {COPY.aiShare.saveCsv}
               </Button>
             </div>
           </div>
