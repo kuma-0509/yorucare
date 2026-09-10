@@ -172,17 +172,6 @@ export function RecordsTab({
         </div>
       )}
 
-      <Card className="bg-muted/60">
-        <CardContent className="space-y-2 py-4 text-sm leading-relaxed text-muted-foreground">
-          <p>
-            記録はこの端末のブラウザ内に保存されます。共有端末では、個人情報の入力にご注意ください。不要になった記録は削除できます。
-          </p>
-          <p className="text-xs">
-            レビュー時は、本名・診断名・詳しい服薬名などを必要以上に入力しすぎないようご注意ください。
-          </p>
-        </CardContent>
-      </Card>
-
       <RecordsTable
         columns={table.columns}
         rows={table.rows}
@@ -194,6 +183,17 @@ export function RecordsTab({
         onEdit={(date) => onNavigateTab("today", { recordDate: date })}
         onAdd={(date) => onNavigateTab("today", { recordDate: date })}
       />
+
+      <Card className="bg-muted/60">
+        <CardContent className="space-y-2 py-4 text-sm leading-relaxed text-muted-foreground">
+          <p>
+            記録はこの端末のブラウザ内に保存されます。共有端末では、個人情報の入力にご注意ください。不要になった記録は削除できます。
+          </p>
+          <p className="text-xs">
+            レビュー時は、本名・診断名・詳しい服薬名などを必要以上に入力しすぎないようご注意ください。
+          </p>
+        </CardContent>
+      </Card>
 
       <AiSharePanel records={records} selfCareItems={selfCareItems} />
 
