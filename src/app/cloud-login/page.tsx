@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cloudAuthClient } from "@/lib/cloud-auth-client";
+import { cloudLoginSendFailureReason } from "@/lib/cloud-login-errors";
+import { COPY } from "@/lib/copy";
 
 /**
  * クラウドバックアップの本人確認が動くかどうかだけを確かめる、最小限の画面。
@@ -22,6 +24,12 @@ type Phase =
   | { step: "signed_in" }
   | { step: "enter_email" }
   | { step: "enter_code" };
+
+function sendCodeErrorMessage(error: unknown): string {
+  return cloudLoginSendFailureReason(error) === "not_allowed"
+    ? COPY.cloudLogin.sendNotAllowed
+    : COPY.cloudLogin.sendFailed;
+}
 
 export default function CloudLoginPage() {
   const [phase, setPhase] = useState<Phase>({ step: "checking" });
@@ -56,13 +64,13 @@ export default function CloudLoginPage() {
         type: "sign-in",
       });
       if (sendError) {
-        setError("コードを送れませんでした。時間をおいてもう一度お試しください。");
+        setError(sendCodeErrorMessage(sendError));
         return;
       }
       setCode("");
       setPhase({ step: "enter_code" });
-    } catch {
-      setError("コードを送れませんでした。時間をおいてもう一度お試しください。");
+    } catch (error) {
+      setError(sendCodeErrorMessage(error));
     } finally {
       setBusy(false);
     }
