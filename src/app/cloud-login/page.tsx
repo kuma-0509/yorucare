@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cloudAuthClient } from "@/lib/cloud-auth-client";
+import { cloudLoginSendErrorMessage } from "@/lib/cloud-login-errors";
+import { COPY } from "@/lib/copy";
 
 /**
  * クラウドバックアップの本人確認が動くかどうかだけを確かめる、最小限の画面。
@@ -56,13 +58,13 @@ export default function CloudLoginPage() {
         type: "sign-in",
       });
       if (sendError) {
-        setError("コードを送れませんでした。時間をおいてもう一度お試しください。");
+        setError(cloudLoginSendErrorMessage(sendError));
         return;
       }
       setCode("");
       setPhase({ step: "enter_code" });
-    } catch {
-      setError("コードを送れませんでした。時間をおいてもう一度お試しください。");
+    } catch (sendError) {
+      setError(cloudLoginSendErrorMessage(sendError));
     } finally {
       setBusy(false);
     }
@@ -78,13 +80,13 @@ export default function CloudLoginPage() {
         otp: code,
       });
       if (verifyError) {
-        setError("コードが違うか、期限が切れています。もう一度お試しください。");
+        setError(COPY.cloudLogin.verifyFailed);
         return;
       }
       setCode("");
       setPhase({ step: "signed_in" });
     } catch {
-      setError("コードが違うか、期限が切れています。もう一度お試しください。");
+      setError(COPY.cloudLogin.verifyFailed);
     } finally {
       setBusy(false);
     }
@@ -109,22 +111,21 @@ export default function CloudLoginPage() {
     <main className="mx-auto min-h-[100dvh] max-w-lg space-y-6 px-4 py-8 pb-safe">
       <div>
         <h1 className="text-xl font-medium text-foreground">
-          クラウド保存のログイン確認
+          {COPY.cloudLogin.title}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          本人確認だけを確かめる検証用の画面です。記録の保存や復元はここでは
-          行いません。
+          {COPY.cloudLogin.description}
         </p>
       </div>
 
       {phase.step === "checking" && (
-        <p className="text-sm text-muted-foreground">確認しています…</p>
+        <p className="text-sm text-muted-foreground">{COPY.cloudLogin.checking}</p>
       )}
 
       {phase.step === "signed_in" && (
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-foreground">
-            ログイン済みです。
+            {COPY.cloudLogin.signedIn}
           </p>
           <Button
             type="button"
@@ -132,7 +133,7 @@ export default function CloudLoginPage() {
             onClick={handleSignOut}
             disabled={busy}
           >
-            ログアウトする
+            {COPY.cloudLogin.signOutAction}
           </Button>
         </div>
       )}
@@ -140,7 +141,7 @@ export default function CloudLoginPage() {
       {phase.step === "enter_email" && (
         <form className="space-y-4" onSubmit={handleSendCode}>
           <div className="space-y-2">
-            <Label htmlFor="cloud-login-email">メールアドレス</Label>
+            <Label htmlFor="cloud-login-email">{COPY.cloudLogin.emailLabel}</Label>
             <Input
               id="cloud-login-email"
               type="email"
@@ -151,7 +152,7 @@ export default function CloudLoginPage() {
             />
           </div>
           <Button type="submit" disabled={busy || !email}>
-            コードを送る
+            {COPY.cloudLogin.sendCodeAction}
           </Button>
         </form>
       )}
@@ -159,10 +160,10 @@ export default function CloudLoginPage() {
       {phase.step === "enter_code" && (
         <form className="space-y-4" onSubmit={handleVerifyCode}>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            入力したメールアドレス宛に6桁のコードを送りました。
+            {COPY.cloudLogin.codeSent}
           </p>
           <div className="space-y-2">
-            <Label htmlFor="cloud-login-code">6桁のコード</Label>
+            <Label htmlFor="cloud-login-code">{COPY.cloudLogin.codeLabel}</Label>
             <Input
               id="cloud-login-code"
               inputMode="numeric"
@@ -175,7 +176,7 @@ export default function CloudLoginPage() {
           </div>
           <div className="flex gap-3">
             <Button type="submit" disabled={busy || code.length === 0}>
-              ログインする
+              {COPY.cloudLogin.signInAction}
             </Button>
             <Button
               type="button"
@@ -187,7 +188,7 @@ export default function CloudLoginPage() {
                 setPhase({ step: "enter_email" });
               }}
             >
-              やり直す
+              {COPY.cloudLogin.retryAction}
             </Button>
           </div>
         </form>

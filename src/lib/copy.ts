@@ -231,4 +231,27 @@ export const COPY = {
     flowTitle: "少し、整いました",
     flowSubtitle: "今日の記録をしまいました。また明日、見にきてください。",
   },
+  /**
+   * クラウド保存のログイン確認。フラグOFFのあいだは画面ごと404。
+   * 問い合わせ先は、設定画面を作るときに案内へ含めるかを決める。
+   */
+  cloudLogin: {
+    title: "クラウド保存のログイン確認",
+    description:
+      "本人確認だけを確かめる検証用の画面です。記録の保存や復元はここでは行いません。",
+    checking: "確認しています…",
+    signedIn: "ログイン済みです。",
+    signOutAction: "ログアウトする",
+    emailLabel: "メールアドレス",
+    sendCodeAction: "コードを送る",
+    codeSent: "入力したメールアドレス宛に6桁のコードを送りました。",
+    codeLabel: "6桁のコード",
+    signInAction: "ログインする",
+    retryAction: "やり直す",
+    emailNotAllowed:
+      "このメールアドレスでは進められません。参加登録したアドレスか、打ち間違いがないかを確認してください。",
+    sendFailed:
+      "コードを送れませんでした。時間をおいてもう一度お試しください。",
+    verifyFailed: "コードが違うか、期限が切れています。もう一度お試しください。",
+  },
 } as const;

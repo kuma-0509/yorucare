@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { EMAIL_NOT_ALLOWED_CODE } from "@/lib/cloud-login-errors";
 
 const getNeonAuth = vi.hoisted(() => vi.fn());
 
@@ -109,16 +110,25 @@ describe("/api/auth/[...path]", () => {
 
       expect(response.status).toBe(403);
       expect(handlerPost).not.toHaveBeenCalled();
+      await expect(response.json()).resolves.toEqual({
+        ok: false,
+        code: EMAIL_NOT_ALLOWED_CODE,
+        message: EMAIL_NOT_ALLOWED_CODE,
+      });
     });
 
     it("一覧が未設定なら誰にも送らせない", async () => {
       delete process.env.USER_DATA_ALLOWED_EMAILS;
       const handlerPost = handlerPostMock();
 
-      expect((await POST(otpRequest(ALLOWED_EMAIL), otpContext())).status).toBe(
-        403
-      );
+      const response = await POST(otpRequest(ALLOWED_EMAIL), otpContext());
+      expect(response.status).toBe(403);
       expect(handlerPost).not.toHaveBeenCalled();
+      await expect(response.json()).resolves.toEqual({
+        ok: false,
+        code: EMAIL_NOT_ALLOWED_CODE,
+        message: EMAIL_NOT_ALLOWED_CODE,
+      });
     });
 
     it("大文字や前後の空白が違っても同じものとして扱う", async () => {
