@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   formatChartMonthLabel,
+  formatTableDate,
   getDateRangeForPeriod,
   getLast7Days,
   getMonthRangeForPeriod,
   getPreviousDateString,
+  getTodayString,
+  getYesterdayString,
   isMonthlyChartPeriod,
   toDateString,
   toMonthKey,
@@ -44,6 +47,18 @@ describe("getLast7Days", () => {
     // 昇順であること
     const sorted = [...days].sort();
     expect(days).toEqual(sorted);
+  });
+});
+
+describe("formatTableDate", () => {
+  it("今日と昨日は接頭辞を付け、それ以外は月日と曜日だけにする", () => {
+    expect(formatTableDate(getTodayString()).startsWith("今日 ")).toBe(true);
+    expect(formatTableDate(getYesterdayString()).startsWith("昨日 ")).toBe(
+      true
+    );
+    expect(formatTableDate(getLast7Days()[0])).toMatch(
+      /^\d+\/\d+（[日月火水木金土]）$/
+    );
   });
 });
 

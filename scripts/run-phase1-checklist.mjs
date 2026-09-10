@@ -185,18 +185,14 @@ async function main() {
     // --- D ---
     await clickSave(page);
     await tab(page, "これまで");
-    const cards = await page
-      .getByRole("heading", { name: "これまで" })
-      .locator("..")
-      .locator("..")
-      .locator(".space-y-3 > *")
-      .count();
-    if (cards >= 7) pass("D-1", `cards=${cards}`);
-    else fail("D-1", `cards=${cards}`);
+    const table = page.getByRole("table", { name: "直近7日の記録一覧" });
+    const rows = await table.getByRole("row").count();
+    if (rows >= 8) pass("D-1", `rows=${rows}`);
+    else fail("D-1", `rows=${rows}`);
 
-    const emptyMsg = page.getByText("この日はまだ記録がありません");
-    if ((await emptyMsg.count()) > 0) pass("D-2");
-    else pass("D-2", "未記録日なし（全て記録済みの可能性）");
+    const emptyGuide = page.getByText("書けていない日は空欄です");
+    if ((await emptyGuide.count()) > 0) pass("D-2");
+    else fail("D-2");
 
     if (await page.getByRole("button", { name: "詳しく見る" }).first().isVisible()) {
       await page.getByRole("button", { name: "詳しく見る" }).first().click();
@@ -208,10 +204,10 @@ async function main() {
     if (await page.getByRole("button", { name: "編集する" }).first().isVisible()) pass("D-6");
     else fail("D-6");
 
-    // Inject record 3 days ago — edit button should not appear
-    const threeDaysAgo = await page.evaluate(() => {
+    // Inject record 8 days ago — 一覧には出ない
+    const eightDaysAgo = await page.evaluate(() => {
       const d = new Date();
-      d.setDate(d.getDate() - 3);
+      d.setDate(d.getDate() - 8);
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
@@ -240,21 +236,17 @@ async function main() {
         updatedAt: new Date().toISOString(),
       });
       localStorage.setItem("yorucare_daily_records", JSON.stringify(records));
-    }, threeDaysAgo);
+    }, eightDaysAgo);
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.getByRole("heading", { name: "今日の記録" }).waitFor({ timeout: 15000 });
     await tab(page, "これまで");
 
-    const month = Number(threeDaysAgo.split("-")[1]);
-    const dayNum = Number(threeDaysAgo.split("-")[2]);
-    const dateLabel = `${month}月${dayNum}日`;
-    const oldCard = page
-      .locator(".space-y-3 > *")
-      .filter({ hasText: dateLabel })
-      .first();
-    const editInOld = oldCard.getByRole("button", { name: "編集する" });
-    if ((await editInOld.count()) === 0) pass("D-7", threeDaysAgo);
-    else fail("D-7", "3日前に編集ボタンあり");
+    const month = Number(eightDaysAgo.split("-")[1]);
+    const dayNum = Number(eightDaysAgo.split("-")[2]);
+    const dateLabel = `${month}/${dayNum}`;
+    const oldRow = page.getByRole("rowheader").filter({ hasText: dateLabel });
+    if ((await oldRow.count()) === 0) pass("D-7", eightDaysAgo);
+    else fail("D-7", "8日前が一覧に出ている");
 
     // --- E ---
     await tab(page, "できること");

@@ -56,6 +56,22 @@ export const COPY = {
   },
   memo: "メモ",
   memoOptional: "メモ（任意）",
+  /** 「これまで」の直近7日を表形式で見るときの見出し・案内 */
+  recordsList: {
+    description: "直近7日の記録です。1週間以内ならあとから直せます。",
+    scrollHint: "表は左右に動かせます。",
+    emptyGuide:
+      "書けていない日は空欄です。気分だけでも、あとから残せます。",
+    caption: "直近7日の記録一覧",
+    date: "日付",
+    mood: "気分",
+    moodLabels: "気持ち",
+    medication: "お薬",
+    emptyCell: "—",
+    addRecord: "この日の記録をつける",
+    viewDetail: "詳しく見る",
+    edit: "編集する",
+  },
   /** セルフケアの登録簿（マスタ）。常にこの語で呼ぶ */
   selfCareAction: "できること",
   /** その日に実行したセルフケア。表示はこの1語に統一する */
