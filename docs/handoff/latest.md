@@ -1,7 +1,7 @@
 # Handoff
 
-日付: 2026-09-09
-担当チャット: 18件目
+日付: 2026-09-09（Console設定の実施記録を2026-09-11に追記）
+担当チャット: 18件目（Console設定の実施は19件目）
 
 ## 今回実装したタスク
 
@@ -82,9 +82,10 @@ Neonへ適用する前に、`db/migrations/0002_user_data_snapshots.sql` をロ�
 
 ## 次にやること
 
-1. **Neon Consoleの設定**（下記6節の手順書。ユーザー作業。Claudeはあなたのアカウントへログインできないため代行できない）。これが済むまでPreview環境でも通し確認ができない。詰まりやすい点を6.8節にまとめた。
-2. Console設定後、Preview環境で `/cloud-login` からログイン →記録タブの「クラウドに預ける」→預ける→別端末で復元、までを**ダミーデータで**通す。
+1. ~~**Neon Consoleの設定**（下記6節の手順書）~~ → **2026-09-11に 6.1〜6.6 まで実施済み。** 実際の画面と手順書の食い違いは6節の各項へ反映した。
+2. **6.7 のPreview環境での通し確認が未実施。** `/cloud-login` からログイン → 記録タブの「クラウドに預ける」→ 預ける → 別端末で復元、までを**ダミーデータで**通す。あわせてメールの到達性（届くか・所要時間・迷惑メール判定）を記録する。
 3. 同意文面と研究・安全管理手続きの確認（未着手・担当と期限が未定）。**これが済むまでフラグを開けない。**
+4. **`yorucare_app` ロールのパスワードを作り直す。** 作成時のSQLがNeonのSQLエディタ履歴に残っており、設定手順の途中でVercel側にも平文で保存された時間帯があった（下記「引き継ぎ事項」8番）。公開前に必須。
 
 ## 引き継ぎ事項・注意点
 
@@ -97,43 +98,63 @@ Neonへ適用する前に、`db/migrations/0002_user_data_snapshots.sql` をロ�
 4. **同意を記録するのは端末内だけ。** `yorucare_cloud_backup_consent` はこの端末のlocalStorageにあり、クラウドには送っていない。別の端末でログインしても、その端末で改めて同意の操作が要る。
 
 5. **`deleteCloudData` の戻り値を真偽値から4状態（`off` / `deleted` / `reauth_required` / `failed`）へ変えた。** 呼び出し元は設定画面だけなので影響範囲は閉じているが、今後この関数を使うときは注意すること。
+6. **Neon Consoleでの作業手順（ユーザー作業分）**
 
-6. **Neon Consoleでの作業手順（ユーザー作業分・前回から未実施）**
+   ダミーデータでの検証のみを想定し、実データは使わない。**2026-09-11に6.1〜6.6まで実施した。** 実際の画面が下記と違っていた点は各項に追記してある（Managed Better Authはベータのため、今後も変わりうる）。Consoleの表示を日本語（自動翻訳）にしている場合、項目名が英語ドキュメントと一致しない。本文では「英語表記（画面の日本語表記）」の形で併記する。
 
-   以下はユーザー（Neon Consoleの操作担当）向けの手順。ダミーデータでの検証のみを想定し、実データは使わない。
-
-   ### 5.1 本人記録用のNeonプロジェクトを新規作成する
+   ### 6.1 本人記録用のNeonプロジェクトを新規作成する
 
    - 匿名分析用プロジェクトとは別に、新しいNeonプロジェクトを作成する。
    - リージョンは `aws-ap-southeast-1`（シンガポール）を選択する。
+   - **実施（2026-09-11）**: プロジェクト名 `yorucare-user-data`、リージョン AWS Asia Pacific 1 (Singapore)、Postgres **18**（作成ダイアログの既定）で作成した。検証は PostgreSQL 16 で行っているが、`0002_user_data_snapshots.sql` はテーブル・索引・RLS・ポリシーだけでバージョン依存の構文が無いため、既定の18を採った。
 
-   ### 5.2 Managed Better Auth（旧Neon Auth）を有効化する
+   ### 6.2 Managed Better Auth（旧Neon Auth）を有効化する
 
-   - 作成したプロジェクトのConsoleで Auth を有効化する（`npx neon@latest init` を使うか、Console上の「Enable Auth」から行う）。
-   - 有効化後に払い出される「Auth base URL」を控える（`NEON_AUTH_BASE_URL` に使う）。
+   - **プロジェクト作成ダイアログに「Enable Neon Auth（Neon認証を有効にする）」のトグルがある。** ここでONにすれば、この項目は作成と同時に完了する。`npx neon@latest init` は不要（既存リポジトリに雛形を作ってしまうので実行しないこと）。
+   - 有効化すると、左メニューに **Auth（認証）** が現れる。
+   - Auth base URL は **Auth → Configuration（構成）タブ → Project Info（プロジェクト情報）** の「Auth URL（認証URL）」欄にある。`NEON_AUTH_BASE_URL` には**この欄の表示をそのまま**入れる（`https://<endpoint>.neonauth.<region>.aws.neon.tech/<db>/auth` の形で、末尾のパスまで含める）。`.env.example` のコメント例は `https://xxxxx.neon.tech` とパスの無い形だが、公式リファレンス（`neon.com/docs/auth/reference/nextjs-server`、2026-09-11確認）は「Console に表示される URL」としか書いておらず、パスを削る指示は無い。Console の表示を正とする。
+   - 同じ欄にある JWKS URL は今回使わない。
 
-   ### 5.3 Email OTPだけを有効にする
+   ### 6.3 Email OTPだけを有効にする
 
-   - Console の **Settings → Auth** で次を設定する。
-     - 「Sign-up and Sign-in with Email」を有効にする。
-     - 「Verify at Sign-up」を有効にする。
-     - 「Verification method」を **Verification code**（6桁コード）にする。
-   - パスワードログイン、Google/MicrosoftなどのSNSログイン、組織機能は有効にしない（既定でOFFのはずだが、ONになっていないか確認する）。
-   - **新規登録を止める設定が実際にあるか確認してほしい。** 今回のドキュメント調査では見つけられなかった（上記「引き継ぎ事項・注意点」1番を参照）。あれば有効にする。無ければ、アプリ側の `USER_DATA_ALLOWED_EMAILS` だけが防御になるので、その旨を認識しておいてほしい。
-   - マジックリンクは有効にしない（Email OTPだけを使う）。
+   - **Auth の設定は「Settings → Auth」ではなく、左メニューの Auth（認証）配下にある。** タブは **Users（ユーザー）/ Configuration（構成）/ Plugins（プラグイン、ベータ）** の3つ。設定は**ブランチ単位**（URLが `/branches/<branch>/auth?tab=configuration`）。
+   - **Email OTP 専用のトグルは存在しない。** 公式ドキュメント（`neon.com/docs/auth/guides/plugins/email-otp`、2026-09-11確認）が求めるのは次の2つだけで、いずれも Configuration タブの **Authentication（認証）** セクションにある。
 
-   ### 5.4 参加者を事前登録する（新規登録を閉じる場合）
+     | 公式ドキュメントの表記 | 画面の日本語表記 | 設定 |
+     | --- | --- | --- |
+     | Sign-up and Sign-in with Email | メールアドレスで登録する／メールアドレスでログイン | ON のまま |
+     | Verify at Sign-up | サインアップ時に確認する | **OFF が既定。ONにする** |
+     | Verification method → Verification code | 検証方法 → 検証コード | 「サインアップ時に確認する」をONにすると現れる。**既定で「検証コード」が選ばれている** |
 
-   - 「新規登録を止める設定」がある場合、その運用に従って、参加予定者のメールアドレスをConsole側で事前登録する。
-   - 事前登録の有無にかかわらず、アプリ側の許可リストとして次の環境変数にも同じメールアドレスをカンマ区切りで設定する（`USER_DATA_ALLOWED_EMAILS`）。
+   - **「既定でOFFのはず」という前回の記述は誤りだった。** 2026-09-11時点の既定値は次のとおりで、4つがONになっていた。設計5.1節が無効と定めているものは、手で切る必要がある。
 
-   ### 5.5 環境変数を設定する（Vercel、対象はPreview環境）
+     | 項目 | 場所 | 既定 | 対応 |
+     | --- | --- | --- | --- |
+     | メールアドレスで登録する（メール＋パスワード登録） | 構成 → 認証 | **ON** | **後述の理由でONのまま残した** |
+     | メールアドレスでログイン（メール＋パスワードログイン） | 構成 → 認証 | **ON** | 同上 |
+     | OAuth プロバイダー（Google が「共有キー」で登録済み） | 構成 → OAuthプロバイダー | **登録済み** | 行の「⋮」→ 削除。一覧を空にした |
+     | 組織（Organization） | プラグイン → 組織 | **ON** | OFF にした |
+     | マジックリンク | プラグイン | OFF | そのまま |
+     | 電話認証 | プラグイン | OFF | そのまま |
+     | Webhook | 構成 → ウェブフック | OFF | そのまま |
+     | Localhost を許可する | 構成 → ドメイン | ON | 検証中はそのまま。公開前に要判断 |
+
+   - **設計5.1節「パスワードログインを無効にする」は、現在のManaged Better Authでは達成できない。** Email OTP の前提条件が「メールでの登録とログイン」の有効化であり、その項目の説明文が「メールアドレスと**パスワード**を使用して」と明記しているため、OTPだけを残してパスワードを切る設定が無い。アプリは `authClient.signIn.emailOtp()` しか呼ばず、パスワード入力の画面も持たないが、**認証サーバー側にはパスワード経路が残る**。防御は `USER_DATA_ALLOWED_EMAILS` の突き合わせに依存する。
+   - **メールプロバイダー**は既定で「共有」「送信者 `auth@mail.myneon.app`」。設計5.3節の想定どおりなので変更しない。
+   - **ドメイン**欄は空のままで構わない（Email OTP はリダイレクトを使わない）。6.7でログインが通らない場合、Preview の URL をここへ登録するのを最初に試す。
+
+   ### 6.4 参加者を事前登録する
+
+   - **新規登録を止める設定は存在しない（2026-09-11確認）。** Auth 画面の上部に常設のバナーがあり、「Anyone on the web can sign up for your app. Support for signup restriction is coming soon.（ウェブ上の誰でもアプリに登録できます。登録制限機能のサポートは近日中に提供予定です。）」と明記されている。Console 側の事前登録という運用は取れない。
+   - したがって、**アプリ側の `USER_DATA_ALLOWED_EMAILS` が唯一の防御**になる。検証用ダミーのメールアドレスをカンマ区切りで環境変数に入れる。
+
+   ### 6.5 環境変数を設定する（Vercel、対象はPreview環境）
 
    ```
-   NEON_AUTH_BASE_URL=（5.2で控えたAuth base URL）
+   NEON_AUTH_BASE_URL=（6.2で控えたAuth URL。表示のまま、パス込み）
    NEON_AUTH_COOKIE_SECRET=（下記コマンドで生成）
    USER_DATA_ALLOWED_EMAILS=検証用ダミーアカウントのメールアドレス（カンマ区切り）
-   USER_DATA_DATABASE_URL=（本人記録用プロジェクトのSQL接続文字列、実行時ロール）
+   USER_DATA_DATABASE_URL=（本人記録用プロジェクトの接続文字列、実行時ロール）
    USER_DATA_KEK=（既存手順どおり。未設定ならここで生成）
    NEXT_PUBLIC_CLOUD_BACKUP_ENABLED=true　　※Preview環境の変数としてのみ設定し、Productionには設定しない
    ```
@@ -150,21 +171,62 @@ Neonへ適用する前に、`db/migrations/0002_user_data_snapshots.sql` をロ�
    node -e "console.log('v1:' + require('node:crypto').randomBytes(32).toString('base64'))"
    ```
 
-   ### 5.6 `pnpm db:user-data:setup` を実行する
+   - **Vercel の「Type（タイプ）」は必ず Secret（秘密）を選ぶこと。** Config（設定）で保存すると、保存後に編集画面を開いただけで値が平文で表示される。`USER_DATA_DATABASE_URL`・`USER_DATA_KEK`・`NEON_AUTH_COOKIE_SECRET`・`USER_DATA_ALLOWED_EMAILS` の4つが対象。`NEON_AUTH_BASE_URL` と `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` は秘密ではないので Config でよい。
+   - **`.env` 形式をまとめて貼り付けて複数行に展開する機能を使うと、Type が Secret から Config へ戻ることがある。** 貼り付けた**あと**に Type と Environments を見直してから保存する。保存後は一覧の行頭が鍵アイコン（🔒）になっていれば Secret、`<>` なら Config。
+   - **Environments（環境）も同様に、貼り付け後に Preview だけになっているか見直す。** 既定は Production で、`.env` 貼り付け後に「Production and Preview」へ戻ることがある。
 
-   - `USER_DATA_DATABASE_URL`（マイグレーション用ロールの接続文字列）をローカルまたはCIの環境変数に設定したうえで実行する。
-   - 実行後、実行時ロールに必要な `SELECT`/`INSERT`/`UPDATE`/`DELETE` だけが付与されていることを確認する（`docs/account-cloud-storage-decision.md` 6.2節）。
+   ### 6.6 `pnpm db:user-data:setup` と実行時ロールの作成
 
-   ### 5.7 Preview環境でだけ動作確認する
+   マイグレーションと実行時では**同じ `USER_DATA_DATABASE_URL` という変数名**を読むため（`scripts/setup-user-data-db.mjs` と `src/lib/server/user-data-store.ts`）、実際には「手元にはマイグレーション用ロールの接続文字列、Vercelには実行時ロールの接続文字列」を入れる形になる。**6.5より先にこの項を済ませたほうが手戻りが無い。**
 
-   - 上記5.5の環境変数をPreview環境にだけ設定し、Productionには設定しないことを再確認する（`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` を含む）。
-   - Preview環境をデプロイし直す（`NEXT_PUBLIC_` 変数はビルド時に埋め込まれるため、変数追加後の再デプロイが必須）。
+   1. マイグレーション用（既定の `neondb_owner`）の接続文字列を Console の「Connect（接続する）」から取得し、手元の環境変数に入れて `pnpm db:user-data:setup` を実行する。成功すると `本人記録用のDB構造を更新しました（21件）。` と出る。
+
+      - Windows の `cmd` で `set VAR=値` を使う場合、接続文字列に `&` が含まれるとそこで文が切れる。`set "VAR=値"` と引用符で囲むか、PowerShell で `$env:VAR = '値'`（シングルクォート）を使う。
+
+   2. **実行時ロールは Console の「Roles（役割）」画面ではなく、SQL で作る。** Neon公式（`neon.com/docs/manage/roles`、2026-09-11確認）は「Console・API・CLI で作ったロールは `neon_superuser` のメンバーになる」「`neon_superuser` は `BYPASSRLS` を持つ」「限定的な権限のロールが必要なら SQL クライアントから作る」と記載している。
+
+      ```sql
+      CREATE ROLE yorucare_app
+        LOGIN PASSWORD '生成した値'
+        NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+
+      GRANT CONNECT ON DATABASE neondb TO yorucare_app;
+      GRANT USAGE ON SCHEMA public TO yorucare_app;
+      GRANT SELECT, INSERT, UPDATE, DELETE ON user_data_snapshots TO yorucare_app;
+      GRANT SELECT, INSERT, UPDATE, DELETE ON user_data_devices  TO yorucare_app;
+      ```
+
+      Console の SQL エディタには実行履歴が残るため、ここで使ったパスワードは履歴に残る。**公開前に必ず作り直すこと。**
+
+   3. 付与結果を確認する。
+
+      ```sql
+      SELECT rolname, rolcanlogin, rolsuper, rolbypassrls
+      FROM pg_roles WHERE rolname = 'yorucare_app';
+
+      SELECT table_name, privilege_type
+      FROM information_schema.role_table_grants
+      WHERE grantee = 'yorucare_app'
+      ORDER BY table_name, privilege_type;
+      ```
+
+      `rolbypassrls` が `f`、権限が2テーブル×4種の8行だけであること。**2026-09-11の実測でこのとおりになった。**
+
+   4. Neon の SQL エディタには最初からサンプルSQL（`playing_with_neon`）が入っている。消さずに実行すると本人記録用DBに無関係なテーブルができる。**貼り付ける前に `Ctrl+A` → `Delete` でエディタを空にすること。** できてしまったら `DROP TABLE IF EXISTS playing_with_neon;` で消す。
+   5. SQL の実行は「Run（走る）」ボタンで行う。「Explain（説明する）」を押すと文の先頭に `EXPLAIN (...)` が付き、`ALTER`/`CREATE` などでは `構文エラー (SQLSTATE 42601)` になる。
+
+   ### 6.7 Preview環境でだけ動作確認する
+
+   - 6.5の環境変数をPreview環境にだけ設定し、Productionには設定しないことを再確認する（`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` を含む）。
+   - Preview環境をデプロイし直す（`NEXT_PUBLIC_` 変数はビルド時に埋め込まれるため、変数追加後の再デプロイが必須）。このブランチへ push すれば新しいPreviewが自動で作られる。
    - デプロイされたPreview URLの `/cloud-login` を開く。
      1. `USER_DATA_ALLOWED_EMAILS` に含めたダミーメールアドレスを入力し、コードを送る。
      2. 届いた6桁コードで「ログインする」を押し、「ログイン済みです」の表示になることを確認する。
      3. 許可リストに含まれていないメールアドレスでは、コード検証後もログインできない（=許可リストの突き合わせで弾かれる）ことを確認する。
      4. 「ログアウトする」でサインアウトし、再度未ログイン状態の画面に戻ることを確認する。
-   - 確認が終わったら、`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` をPreview環境からも外す（または `false` にする）ことを推奨する。検証以外の目的でONにし続けない。
+   - あわせて記録タブを開き、「クラウドに預ける」の導線が出ること、預ける前に件数が表示されることを確認する。
+   - **メールの到達性（届くか、何分かかるか、迷惑メールに入らないか）をこの場で記録する。** 共有SMTP（`auth@mail.myneon.app`）のままで公開してよいかの判断材料になる（設計5.3節・11.2節）。
+   - 確認が終わったら、`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED` をPreview環境からも外す（または `false` にする）。検証以外の目的でONにし続けない。
 
    ### 6.8 詰まりやすい点（2026-09-09 追記）
 
@@ -174,3 +236,9 @@ Neonへ適用する前に、`db/migrations/0002_user_data_snapshots.sql` をロ�
    - **`USER_DATA_DATABASE_URL` に匿名分析用のURLを使わない。** データ境界を分けるため、別プロジェクトの接続文字列にする。
    - **実行時ロールに与えるのは `SELECT`/`INSERT`/`UPDATE`/`DELETE` の4つだけ。** スーパーユーザーや `BYPASSRLS` を持つロールだとRLSが素通りし、第二の防御が無くなる。
    - `NEON_AUTH_COOKIE_SECRET` は32文字未満だと、エラーにならず「認証が未設定（＝常に未ログイン）」として静かに扱われる。生成コマンドの出力をそのまま使うこと。
+
+7. **Vercelの環境変数は「Secret（秘密）」で保存すること。** 2026-09-11の設定作業で、`.env` 形式の貼り付けを使ったところ Type が Config（設定）で保存され、編集画面を開くだけで接続文字列が平文で表示された。Config は「保存後も閲覧できる」種類で、秘密値には使わない。詳細と回避手順は6.5節に書いた。
+
+8. **`yorucare_app` のパスワードは公開前に作り直すこと。** (1) 作成時の `CREATE ROLE ... PASSWORD` がNeonのSQLエディタ履歴に残る、(2) 上記7の取り違えにより、一時的にVercel上で平文閲覧可能な状態だった、の2点による。検証はダミーデータのみ・本番の入口は閉じたままなので実害は無いが、このロールの資格情報を本番相当として扱わないこと。同じ理由で `USER_DATA_KEK` と `NEON_AUTH_COOKIE_SECRET` も作り直してある。
+
+9. **設計5.1節の「パスワードログインを無効にする」は現状のManaged Better Authでは満たせない。** Email OTP の前提条件がメール＋パスワードの有効化であるため（6.3節）。アプリ側にパスワードの入口は無いが、認証サーバー側の経路は残る。`USER_DATA_ALLOWED_EMAILS` が唯一の防御である点を、公開判断のときに改めて評価すること。
