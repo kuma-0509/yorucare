@@ -126,3 +126,19 @@ Push購読情報は、本人の記録本文、匿名利用イベント、研究�
 - [ServiceWorkerRegistration.showNotification（MDN）](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification)
 - [Periodic Background Synchronization API（MDN）](https://developer.mozilla.org/en-US/docs/Web/API/Web_Periodic_Background_Synchronization_API)
 - [Vercel Cron Jobs Usage and Pricing](https://vercel.com/docs/cron-jobs/usage-and-pricing)
+
+## 10. 記録済みの追加要望（未判断・未実装）
+
+記録日: 2026-09-11  
+状態: 管理表へ `未着手` で記録しただけ。方針改訂も実装もしていない
+
+公式LINEを開設し、アプリ入力のリマインドとしてアプリへのリンクだけを共有する要望がある。リンクを開くと本人アカウントで継続して記録できることを求める。入力そのものはLINE上ではなくアプリ側で行う。
+
+現行の結論との関係:
+
+- 8節は、連絡先や外部アカウントを新たに扱うためLINEを初期対象外としている
+- Gate 2未達のため、Web Pushの本番実装も保留のままである
+- LINE内ブラウザとホーム画面追加のWebアプリでは端末内保存が共有されないため、継続入力はクラウド保存の本人確認に依存する
+- 記録本文と健康情報はLINEへ送らない
+
+着手する場合は、本文の通知手段・データ境界・Gate 2との関係を先に改訂する。Web Pushの保留課題の実装開始とは見なさない。
