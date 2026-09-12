@@ -20,6 +20,7 @@ import { CloudRestoreDialog } from "@/components/shared/cloud-restore-dialog";
 import { LiveRegion } from "@/components/shared/live-region";
 import { isCloudBackupEnabled } from "@/lib/cloud-backup";
 import { cloudAuthClient } from "@/lib/cloud-auth-client";
+import { fetchCloudAuthOutcome } from "@/lib/cloud-auth-status";
 import {
   hasCloudBackupConsent,
   saveCloudBackupConsent,
@@ -61,6 +62,8 @@ type Phase =
   | { step: "loading" }
   /** ログインしていない。ここではまだ1件も送らない */
   | { step: "signed_out" }
+  /** Better Authのセッションはあるが、許可リスト外。使えない */
+  | { step: "not_allowed" }
   /** ログイン済みだが、まだ預けることに同意していない */
   | { step: "not_enabled" }
   /** 預けている */
@@ -97,24 +100,28 @@ export function CloudBackupPanel() {
 
     let cancelled = false;
     void (async () => {
-      let signedIn = false;
-      try {
-        const { data } = await cloudAuthClient.getSession();
-        signedIn = Boolean(data?.user);
-      } catch {
-        // 確かめられなければ、ログインしていない扱いにする
-      }
+      // サーバー側の判定（`getCloudAuthStatus`）だけを正とする。Better Auth
+      // のセッション有無を自分で見ると、許可リスト外のメールアドレスでも
+      // 「ログインできている」と扱ってしまう（記録APIは401で拒否するが、
+      // この画面の表示だけが食い違う）
+      const outcome = await fetchCloudAuthOutcome();
       if (cancelled) return;
 
       refreshSyncState();
       await refreshLocalSummary();
       if (cancelled) return;
 
-      if (!signedIn) {
-        setPhase({ step: "signed_out" });
+      if (outcome === "ok") {
+        setPhase(hasCloudBackupConsent() ? { step: "enabled" } : { step: "not_enabled" });
         return;
       }
-      setPhase(hasCloudBackupConsent() ? { step: "enabled" } : { step: "not_enabled" });
+      if (outcome === "not_allowed") {
+        setPhase({ step: "not_allowed" });
+        return;
+      }
+      // 未認証・判定不能（マウント時点では何も分かっていないため、どちらも
+      // 未ログイン扱いにしてよい）
+      setPhase({ step: "signed_out" });
     })();
 
     return () => {
@@ -206,7 +213,9 @@ export function CloudBackupPanel() {
           <CardDescription>{CLOUD.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {phase.step !== "enabled" && <CloudBackupExplainer />}
+          {phase.step !== "enabled" && phase.step !== "not_allowed" && (
+            <CloudBackupExplainer />
+          )}
 
           {phase.step === "signed_out" && (
             <div className="space-y-2">
@@ -218,6 +227,20 @@ export function CloudBackupPanel() {
               </p>
               <Button asChild variant="outline" className="w-full">
                 <a href={LOGIN_PATH}>{CLOUD.signInAction}</a>
+              </Button>
+            </div>
+          )}
+
+          {phase.step === "not_allowed" && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-foreground">
+                {CLOUD.notAllowedHeading}
+              </h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {CLOUD.notAllowedBody}
+              </p>
+              <Button asChild variant="outline" className="w-full">
+                <a href={LOGIN_PATH}>{CLOUD.notAllowedAction}</a>
               </Button>
             </div>
           )}

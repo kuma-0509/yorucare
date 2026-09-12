@@ -17,6 +17,7 @@ const sync = vi.hoisted(() => ({
   pushSnapshot: vi.fn(),
   deleteCloudData: vi.fn(),
 }));
+const fetchMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/cloud-auth-client", () => ({ cloudAuthClient: auth }));
 vi.mock("@/lib/cloud-sync", async () => {
@@ -52,12 +53,39 @@ async function clickAsync(element: HTMLElement) {
   });
 }
 
+function jsonResponse(status: number, body: unknown): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+/**
+ * `GET /api/cloud/session`（`fetchCloudAuthOutcome`が叩く先）の応答を固定する。
+ * この画面はBetter Authのセッション有無を自分で見ず、この結果だけを正とする。
+ *
+ * `auth.getSession`（Better Authクライアント）も一緒に設定しておく。こちらは
+ * 現在の実装では読まないが、「Better Authのセッションはあるのに許可リスト外」
+ * という状態（`notAllowed`）を正しく表すために必要（回帰確認で使う）。
+ */
 function signedIn() {
   auth.getSession.mockResolvedValue({ data: { user: { id: "u1" } } });
+  fetchMock.mockResolvedValue(jsonResponse(200, { ok: true }));
 }
 
 function signedOut() {
   auth.getSession.mockResolvedValue({ data: null });
+  fetchMock.mockResolvedValue(
+    jsonResponse(401, { ok: false, reason: "unauthenticated" })
+  );
+}
+
+/** Better Authのセッションはあるが、許可リスト外のアドレス */
+function notAllowed() {
+  auth.getSession.mockResolvedValue({ data: { user: { id: "u1" } } });
+  fetchMock.mockResolvedValue(
+    jsonResponse(403, { ok: false, reason: "not_allowed" })
+  );
 }
 
 describe("クラウド保存の設定", () => {
@@ -66,6 +94,7 @@ describe("クラウド保存の設定", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    vi.stubGlobal("fetch", fetchMock);
     process.env.NEXT_PUBLIC_CLOUD_BACKUP_ENABLED = "true";
     // 本物の pushSnapshot は成功時に最終預け日時を端末へ書く。表示を確かめる
     // ためにそこだけ同じ動きにしておく
@@ -88,6 +117,7 @@ describe("クラウド保存の設定", () => {
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
     if (originalFlag === undefined) {
       delete process.env.NEXT_PUBLIC_CLOUD_BACKUP_ENABLED;
     } else {
@@ -100,6 +130,7 @@ describe("クラウド保存の設定", () => {
     signedIn();
     const { container } = render(<CloudBackupPanel />);
     await waitFor(() => expect(container.innerHTML).toBe(""));
+    expect(fetchMock).not.toHaveBeenCalled();
     expect(auth.getSession).not.toHaveBeenCalled();
   });
 
@@ -127,6 +158,33 @@ describe("クラウド保存の設定", () => {
     it("ログインの導線を出す時点では1件も送らない", async () => {
       render(<CloudBackupPanel />);
       await screen.findByText(CLOUD.signInHeading);
+      expect(sync.pushSnapshot).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Better Authのセッションはあるが、許可リスト外のとき", () => {
+    beforeEach(notAllowed);
+
+    it("「ログイン済み」ではなく、使えない旨の専用案内を出す", async () => {
+      render(<CloudBackupPanel />);
+      expect(await screen.findByText(CLOUD.notAllowedHeading)).toBeTruthy();
+      expect(screen.getByText(CLOUD.notAllowedBody)).toBeTruthy();
+      // 「預ける前の説明」や件数確認など、使えるかのような表示は出さない
+      expect(screen.queryByText(CLOUD.confirmHeading)).toBeNull();
+      expect(screen.queryByText(CLOUD.enabledHeading)).toBeNull();
+    });
+
+    it("別のメールアドレスでログインし直す導線を出す", async () => {
+      render(<CloudBackupPanel />);
+      const link = await screen.findByRole("link", {
+        name: CLOUD.notAllowedAction,
+      });
+      expect(link.getAttribute("href")).toBe("/cloud-login");
+    });
+
+    it("この時点では1件も送らない", async () => {
+      render(<CloudBackupPanel />);
+      await screen.findByText(CLOUD.notAllowedHeading);
       expect(sync.pushSnapshot).not.toHaveBeenCalled();
     });
   });

@@ -20,6 +20,17 @@
 
 - 削除前の再認証チェックは、実は**2つの作業が同じ日に独立に同じ不具合を見つけて同じ対応をしていた**。設定画面の実装時（本コミット由来）と、PR #49の自動レビュー指摘（`fix: 自動レビューの指摘4件を直す`）の両方。mainへ実際に入ったのは後者で、今回の統合でその判定を`cloud-reauth.ts`へ切り出す整理だけを追加で取り込んだ。
 
+### 追記（統合直後、Preview確認の準備でローカル実機確認をしたところ発見した不具合）
+
+統合後、ユーザーがPreview環境でダミーデータの通し確認をする前に、こちらでもローカルの実際のブラウザ（Playwright）で一通り画面を確かめた。記録タブに設定画面が正しい位置に出ることは確認できたが、**設定画面（`cloud-backup-panel.tsx`）が、ログイン確認画面（`/cloud-login`）で2026-09-12に直したのと同じ不具合を独立に抱えていた**ことが分かった。
+
+- 設定画面は`cloudAuthClient.getSession()`（Better Authのセッション有無だけ）で「ログイン済み」を判定しており、`getCloudSession`が行う許可リストの突き合わせを経由していなかった。
+- 許可リスト外のアドレスでBetter Authのセッションだけがある場合、設定画面は「預ける前の説明」「この内容を預ける」の確認まで進められてしまう。実際に預けようとすると本人記録APIが401で正しく拒否するため記録が漏れることはないが、参加者からは原因の分からない「いまは預けられませんでした」に見える。
+
+ログイン確認画面の判定ロジックを`src/lib/cloud-auth-status.ts`（`fetchCloudAuthOutcome`）として切り出し、設定画面・ログイン確認画面の両方がこれを使うように直した。設定画面には「このアカウントでは使えません」という専用の案内（`CLOUD.notAllowedHeading`/`notAllowedBody`/`notAllowedAction`）を追加した。
+
+新設テスト3件を追加し、修正前のコードで実際に落ちる（許可リスト外でも「この内容を預ける」の確認画面を出してしまう）ことを確認したうえで直した。
+
 ## 変更ファイル
 
 - `src/components/shared/cloud-backup-panel.tsx` / `.test.tsx`（新規）: 設定画面。記録タブのカードとして配置（`records-tab.tsx`）。`isCloudBackupEnabled()`がfalseの間は`null`を返す
@@ -35,17 +46,22 @@
 - `src/lib/copy.ts`: `cloudBackup`の文言一式
 - `src/lib/dates.ts`: `formatDateTimeLabel`、`formatDateLabel`
 - `src/components/tabs/records-tab.tsx` / `.test.tsx`: 設定画面を配置
-- `docs/DEVELOPMENT_BOARD.md`: クラウドバックアップの行を更新（設定画面・復元画面の実装を反映）
-- `docs/account-cloud-storage-decision.md`: 4節の実装状況表、11.1節（削除前の再認証・退会時アカウント削除の未実装）、15節（意思決定記録）を更新
+- `src/lib/cloud-auth-status.ts`（新規）: `fetchCloudAuthOutcome`。`GET /api/cloud/session`の結果を4値へ正規化する共通判定。ログイン確認画面・設定画面の両方から使う
+- `src/components/shared/cloud-backup-panel.tsx` / `.test.tsx`: `not_allowed`フェーズを追加し、`fetchCloudAuthOutcome`で判定するよう変更
+- `src/app/cloud-login/page.tsx`: 独自に持っていた判定ロジックを`cloud-auth-status.ts`へ切り出し、そちらを使うよう整理（挙動は無変更）
+- `src/lib/copy.ts`: `cloudBackup.notAllowedHeading`/`notAllowedBody`/`notAllowedAction`を追加
+- `docs/DEVELOPMENT_BOARD.md`: クラウドバックアップの行を更新（設定画面・復元画面の実装、今回の不具合修正を反映）
+- `docs/account-cloud-storage-decision.md`: 4節の実装状況表、11.1節（削除前の再認証・退会時アカウント削除の未実装・今回の不具合）、15節（意思決定記録）を更新
 - `docs/handoff/latest.md`: 本ファイル
 
 ## 検証結果
 
 - `pnpm lint`: 成功（警告・エラーなし）
-- `pnpm test`: 成功（67 test files / 694 tests）
+- `pnpm test`: 成功（67 test files / 697 tests）
 - `pnpm exec tsc --noEmit`: `src/components/shared/ai-share-panel.test.tsx`で4件のエラーが出るが、**この統合と無関係の既存main上の問題**（統合前のmainでも同じエラーが出ることを確認済み）
 - `pnpm build`: 成功。`/cloud-login`・`/api/cloud/session`を含む全ルートがビルド出力に含まれることを確認した
 - `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED`は設定しておらず、`CloudBackupPanel`はフラグOFFの間`null`を返すことをコードで確認した（表示テストは前ブランチの18件がそのまま通っている）
+- ローカルで`pnpm dev`を`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED=true`・`USER_DATA_DEV_OWNER_ID`付きで起動し、Playwright（実ブラウザ）で記録タブを開き、設定画面が正しい位置に描画されることを確認した（本物のNeon/Managed Better Authには接続していないため、ログイン後の状態確認はできていない）
 
 ## 自動レビュー指摘
 
@@ -62,10 +78,12 @@
 
 ## 引き継ぎ事項・注意点
 
-1. **設定画面・復元画面はまだPreviewで実機確認していない。** 自動テストと`pnpm build`のみ。Neon Consoleの設定自体は2026-09-11に完了しているため、次はPreview環境でダミーデータを使い、`/cloud-login`でログイン→記録タブの設定画面で「クラウドに預ける」→復元画面で別端末からの復元、までを通しで確認できる状態にある。
+1. **設定画面・復元画面はまだPreview（本物のNeon/Managed Better Auth）で実機確認していない。** ローカルではPlaywrightで見た目の描画だけ確認済み。Neon Consoleの設定自体は2026-09-11に完了しているため、次はPreview環境でダミーデータを使い、`/cloud-login`でログイン→記録タブの設定画面で「クラウドに預ける」→復元画面で別端末からの復元、に加えて**許可リスト外のダミーアドレスで「このアカウントでは使えません」の表示になることも**確認できる状態にある。
 
 2. **削除前の再認証は、統合の前後でロジックが変わっていない。** mainには既にPR #49由来の実装があり、今回の統合は「判定を`cloud-reauth.ts`という独立ファイルへ切り出す」という整理だけを追加した。挙動（10分以内なら削除可、それ以外は`403 reauth_required`）は変えていない。
 
 3. **`getCloudAuthStatus`・`GET /api/cloud/session`（PR #61由来）はこの統合で変更していない。** 衝突したのは`cloud-session.ts`の`isRecentlyVerified`部分だけで、自動マージが正しく処理した。
 
 4. **`/cloud-login`・設定画面・復元画面はすべてフラグOFFなら到達不可のまま。** `CloudBackupPanel`がフラグを見て`null`を返し、`CloudRestoreDialog`はその内側からしか呼ばれないため、フラグOFFの間はJavaScriptには含まれるが画面には現れない。
+
+5. **「使えるか」の判定は、今後`src/lib/cloud-auth-status.ts`の`fetchCloudAuthOutcome`に一本化してある。** 新しい画面を作るときに`cloudAuthClient.getSession()`を直接見て「ログイン済みか」を判定すると、今回と同じ不具合（許可リスト外を弾けない）を再発する。必ずこの関数（または`GET /api/cloud/session`）を経由すること。

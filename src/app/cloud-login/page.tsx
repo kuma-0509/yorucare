@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cloudAuthClient } from "@/lib/cloud-auth-client";
+import { fetchCloudAuthOutcome } from "@/lib/cloud-auth-status";
 
 /**
  * クラウドバックアップの本人確認が動くかどうかだけを確かめる、最小限の画面。
@@ -24,39 +25,6 @@ type Phase =
   | { step: "check_failed" }
   | { step: "enter_email" }
   | { step: "enter_code" };
-
-/**
- * `/api/cloud/session` の結果を4値に正規化する。
- *
- * サーバー側の判定（`getCloudAuthStatus`）だけを正とする。Better Authの
- * セッション有無を画面が自分で判断すると、許可リストに無いメール
- * アドレスでも「ログイン済みです」と表示してしまう（記録APIは401で
- * 拒否するが、画面の表示だけが食い違う）。
- *
- * `unknown`（通信できない・想定外の応答）は「未認証」ではない。呼び出し
- * 側が状況に応じて扱いを決める。マウント時のように何も分かっていない
- * 場面では未ログインへ倒してよいが、6桁コードの検証に成功した直後に
- * `unknown` が返った場合は、Cookieはすでに有効なはずなので未ログイン
- * 表示へ倒さない（`check_failed` として区別する）。
- */
-async function fetchCloudAuthOutcome(): Promise<
-  "ok" | "not_allowed" | "unauthenticated" | "unknown"
-> {
-  try {
-    const response = await fetch("/api/cloud/session", { method: "GET" });
-    if (response.status === 200) return "ok";
-    if (response.status === 401) return "unauthenticated";
-    if (response.status === 403) {
-      const body = (await response.json().catch(() => null)) as {
-        reason?: unknown;
-      } | null;
-      if (body?.reason === "not_allowed") return "not_allowed";
-    }
-  } catch {
-    // 通信できない場合は判定不能として扱う
-  }
-  return "unknown";
-}
 
 export default function CloudLoginPage() {
   const [phase, setPhase] = useState<Phase>({ step: "checking" });
