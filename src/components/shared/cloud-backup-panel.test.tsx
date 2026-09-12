@@ -353,7 +353,7 @@ describe("クラウド保存の設定", () => {
       });
 
       it("退会ではログインからも出る", async () => {
-        auth.signOut.mockResolvedValue(undefined);
+        auth.signOut.mockResolvedValue({ data: {}, error: null });
         render(<CloudBackupPanel />);
 
         await clickAsync(
@@ -366,6 +366,48 @@ describe("クラウド保存の設定", () => {
         expect(sync.deleteCloudData).toHaveBeenCalledTimes(1);
         expect(auth.signOut).toHaveBeenCalledTimes(1);
         expect((await screen.findAllByText(CLOUD.leaveDone)).length).toBeGreaterThan(0);
+      });
+
+      it("サーバーがログアウトのエラーを返したときは、ログインから出た表示にしない", async () => {
+        auth.signOut.mockResolvedValue({
+          data: null,
+          error: { message: "Invalid origin", status: 403, code: "INVALID_ORIGIN" },
+        });
+        render(<CloudBackupPanel />);
+
+        await clickAsync(
+          await screen.findByRole("button", { name: CLOUD.leaveAction })
+        );
+        await clickAsync(
+          screen.getByRole("button", { name: CLOUD.leaveConfirmAction })
+        );
+
+        // クラウド上の控えはすでに消えている
+        expect(sync.deleteCloudData).toHaveBeenCalledTimes(1);
+        expect(
+          (await screen.findAllByText(CLOUD.leaveSignOutFailed)).length
+        ).toBeGreaterThan(0);
+        // 「ログインから出た」表示（未ログイン扱い）へは切り替えない
+        expect(screen.queryByText(CLOUD.leaveDone)).toBeNull();
+        expect(screen.queryByText(CLOUD.signInHeading)).toBeNull();
+      });
+
+      it("例外が起きたときも、ログインから出た表示にしない", async () => {
+        auth.signOut.mockRejectedValue(new TypeError("network error"));
+        render(<CloudBackupPanel />);
+
+        await clickAsync(
+          await screen.findByRole("button", { name: CLOUD.leaveAction })
+        );
+        await clickAsync(
+          screen.getByRole("button", { name: CLOUD.leaveConfirmAction })
+        );
+
+        expect(sync.deleteCloudData).toHaveBeenCalledTimes(1);
+        expect(
+          (await screen.findAllByText(CLOUD.leaveSignOutFailed)).length
+        ).toBeGreaterThan(0);
+        expect(screen.queryByText(CLOUD.signInHeading)).toBeNull();
       });
 
       it("本人確認から時間が経っていたら、消さずに再ログインを案内する", async () => {

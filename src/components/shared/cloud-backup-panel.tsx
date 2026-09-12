@@ -187,13 +187,28 @@ export function CloudBackupPanel() {
     refreshSyncState();
 
     if (kind === "leave") {
-      try {
-        await cloudAuthClient.signOut();
-      } catch {
-        // 出られなくても、クラウド上の控えはすでに消えている
-      }
       setBusy(false);
       setConfirm(null);
+
+      let signOutError: unknown = null;
+      try {
+        const result = await cloudAuthClient.signOut();
+        signOutError = result.error;
+      } catch (error) {
+        signOutError = error;
+      }
+
+      if (signOutError) {
+        // 失敗したのに「ログインから出た」表示へ切り替えない。サーバー側の
+        // セッションが生きたままなのに未ログイン表示になると、共有端末で
+        // 「ログアウトしたつもり」が成立してしまう。クラウド上の控えは
+        // すでに消えているため、状態としては「ログイン済みで預けていない」
+        // に一致する
+        setPhase({ step: "not_enabled" });
+        setMessage(CLOUD.leaveSignOutFailed);
+        return;
+      }
+
       setPhase({ step: "signed_out" });
       setMessage(CLOUD.leaveDone);
       return;

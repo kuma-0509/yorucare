@@ -31,6 +31,15 @@
 
 新設テスト3件を追加し、修正前のコードで実際に落ちる（許可リスト外でも「この内容を預ける」の確認画面を出してしまう）ことを確認したうえで直した。
 
+### 追記（ユーザーによるPreview実機確認で発見した不具合、2026-09-13）
+
+上記の修正をpushしたあと、ユーザーがPreview環境でダミーデータの通し確認を行った。
+
+- **最初、設定画面が全く表示されなかった。** 原因はVercelのPreview環境変数から`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED`が無くなっていたため（前回9/9の引き継ぎで「確認が終わったらPreviewからも外すことを推奨する」と書いた、その状態のままだった）。ユーザーがPreview環境変数に`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED=true`を追加し、再デプロイして解消。**この変数は今後、設定・復元画面の検証が続くあいだはPreviewに設定したままにしてよい**（Productionには絶対に設定しない）。
+- 設定・許可リストログイン・預ける・最終預け日時の表示・復元（両方に記録がある状態で戻す）は正常に確認できた。
+- **「退会する」を実行したあと、`/cloud-login`を開くと「ログイン済みです」のままになっていた。** 実際にはサインアウトできていないのに、設定画面は「クラウド上の控えを消して、ログインから出ました」と表示していた。原因は`handleDelete`（`kind === "leave"`）が`cloudAuthClient.signOut()`の戻り値の`error`を見ておらず、例外だけを`try/catch`で握り潰していたため（2026-09-12にログイン確認画面の`handleSignOut`で直したのと同じ種類の不具合。こちらは別実装だったため直っていなかった）。戻り値を確かめ、失敗時は「ログインから出た」表示へ切り替えず、`not_enabled`のまま「クラウド上の控えは消しましたが、ログアウトできませんでした」と表示するよう直した。新設テスト2件を追加し、修正前のコードで実際に落ちることを確認したうえで直した。
+- この不具合のため、許可リスト外のダミーアドレスでのログイン確認（3番目の確認項目）はまだできていない。退会の修正後、同じ端末でサインアウトし直してから確認する必要がある。
+
 ## 変更ファイル
 
 - `src/components/shared/cloud-backup-panel.tsx` / `.test.tsx`（新規）: 設定画面。記録タブのカードとして配置（`records-tab.tsx`）。`isCloudBackupEnabled()`がfalseの間は`null`を返す
@@ -49,19 +58,21 @@
 - `src/lib/cloud-auth-status.ts`（新規）: `fetchCloudAuthOutcome`。`GET /api/cloud/session`の結果を4値へ正規化する共通判定。ログイン確認画面・設定画面の両方から使う
 - `src/components/shared/cloud-backup-panel.tsx` / `.test.tsx`: `not_allowed`フェーズを追加し、`fetchCloudAuthOutcome`で判定するよう変更
 - `src/app/cloud-login/page.tsx`: 独自に持っていた判定ロジックを`cloud-auth-status.ts`へ切り出し、そちらを使うよう整理（挙動は無変更）
-- `src/lib/copy.ts`: `cloudBackup.notAllowedHeading`/`notAllowedBody`/`notAllowedAction`を追加
-- `docs/DEVELOPMENT_BOARD.md`: クラウドバックアップの行を更新（設定画面・復元画面の実装、今回の不具合修正を反映）
-- `docs/account-cloud-storage-decision.md`: 4節の実装状況表、11.1節（削除前の再認証・退会時アカウント削除の未実装・今回の不具合）、15節（意思決定記録）を更新
+- `src/lib/copy.ts`: `cloudBackup.notAllowedHeading`/`notAllowedBody`/`notAllowedAction`、`leaveSignOutFailed`を追加
+- `src/components/shared/cloud-backup-panel.tsx` / `.test.tsx`: `handleDelete`の`kind === "leave"`分岐で`signOut()`の戻り値の`error`を確かめるよう修正
+- `docs/DEVELOPMENT_BOARD.md`: クラウドバックアップの行を更新（設定画面・復元画面の実装、今回の2件の不具合修正を反映）
+- `docs/account-cloud-storage-decision.md`: 4節の実装状況表、11.1節（削除前の再認証・退会時アカウント削除の未実装・今回の2件の不具合）、15節（意思決定記録）を更新
 - `docs/handoff/latest.md`: 本ファイル
 
 ## 検証結果
 
 - `pnpm lint`: 成功（警告・エラーなし）
-- `pnpm test`: 成功（67 test files / 697 tests）
+- `pnpm test`: 成功（67 test files / 699 tests）
 - `pnpm exec tsc --noEmit`: `src/components/shared/ai-share-panel.test.tsx`で4件のエラーが出るが、**この統合と無関係の既存main上の問題**（統合前のmainでも同じエラーが出ることを確認済み）
 - `pnpm build`: 成功。`/cloud-login`・`/api/cloud/session`を含む全ルートがビルド出力に含まれることを確認した
 - `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED`は設定しておらず、`CloudBackupPanel`はフラグOFFの間`null`を返すことをコードで確認した（表示テストは前ブランチの18件がそのまま通っている）
 - ローカルで`pnpm dev`を`NEXT_PUBLIC_CLOUD_BACKUP_ENABLED=true`・`USER_DATA_DEV_OWNER_ID`付きで起動し、Playwright（実ブラウザ）で記録タブを開き、設定画面が正しい位置に描画されることを確認した（本物のNeon/Managed Better Authには接続していないため、ログイン後の状態確認はできていない）
+- 退会の修正は、ユーザーのPreview実機確認で見つかった不具合の再現テストを新設し、修正前のコードで実際に落ちることを確認したうえで直した（上記「追記」参照）
 
 ## 自動レビュー指摘
 
@@ -69,12 +80,13 @@
 
 ## 次にやること
 
-1. **`yorucare_app`ロールのパスワード再作成**（Neon Console側の作業。作成時のSQLがエディタ履歴に残っている）
-2. **別端末での復元確認**（未実施のまま。今回の統合で復元画面のコードは揃ったので、Console設定済みのPreview環境で実際に確認できる状態になった）
-3. **参加者が実際に使うメール事業者での到達確認**（現在Gmail1アカウントのみ）
-4. **同意文面と研究・安全管理手続きの確認**（未着手・担当と期限が未定。これが済むまで本番フラグを開けない）
-5. **退会時の認証アカウント削除は未実装**（Managed Better Authの`delete-user`をアプリ側から有効化できるか未確認のまま。11.1節参照）
-6. `cursor/cloud-login-allowlist-message`（`cd69d3c`）/ `fix/cloud-login-allowlist-message`（`bd16a9d`）: ログイン確認画面の「許可リスト外でも『時間をおいてもう一度』と出る」問題（送信コード時の案内文言、今回とは別の不具合）を修正する2つの候補PR。**同じ問題を再実装しないこと**
+1. **Preview実機確認の続き（最優先）。** 退会の修正をpushしたので、Preview環境で①ダミーアドレスでサインアウトし直す（またはブラウザのCookieを消す）②許可リスト外のダミーアドレスでログインし、「このアカウントでは使えません」が出ることを確認する。これが確認できれば、今回のブランチの主要な確認項目は揃う
+2. **`yorucare_app`ロールのパスワード再作成**（Neon Console側の作業。作成時のSQLがエディタ履歴に残っている）
+3. **別端末での復元確認**（未実施のまま。今回の統合で復元画面のコードは揃ったので、Console設定済みのPreview環境で実際に確認できる状態になった）
+4. **参加者が実際に使うメール事業者での到達確認**（現在Gmail1アカウントのみ）
+5. **同意文面と研究・安全管理手続きの確認**（未着手・担当と期限が未定。これが済むまで本番フラグを開けない）
+6. **退会時の認証アカウント削除は未実装**（Managed Better Authの`delete-user`をアプリ側から有効化できるか未確認のまま。11.1節参照）
+7. `cursor/cloud-login-allowlist-message`（`cd69d3c`）/ `fix/cloud-login-allowlist-message`（`bd16a9d`）: ログイン確認画面の「許可リスト外でも『時間をおいてもう一度』と出る」問題（送信コード時の案内文言、今回とは別の不具合）を修正する2つの候補PR。**同じ問題を再実装しないこと**
 
 ## 引き継ぎ事項・注意点
 
@@ -87,3 +99,5 @@
 4. **`/cloud-login`・設定画面・復元画面はすべてフラグOFFなら到達不可のまま。** `CloudBackupPanel`がフラグを見て`null`を返し、`CloudRestoreDialog`はその内側からしか呼ばれないため、フラグOFFの間はJavaScriptには含まれるが画面には現れない。
 
 5. **「使えるか」の判定は、今後`src/lib/cloud-auth-status.ts`の`fetchCloudAuthOutcome`に一本化してある。** 新しい画面を作るときに`cloudAuthClient.getSession()`を直接見て「ログイン済みか」を判定すると、今回と同じ不具合（許可リスト外を弾けない）を再発する。必ずこの関数（または`GET /api/cloud/session`）を経由すること。
+
+6. **`cloudAuthClient.signOut()`は例外を投げず`{data, error}`を返す。** ログイン確認画面（`handleSignOut`）と設定画面（`handleDelete`のleave分岐）で、同じ「`try/catch`だけで済ませて`error`を見ない」不具合が独立に2回見つかった。`signOut()`を新しく呼ぶ場所を作るときは、必ず戻り値の`error`を確かめ、失敗時は「ログアウトした」表示へ切り替えないこと。
