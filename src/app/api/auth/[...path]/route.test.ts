@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { EMAIL_NOT_ALLOWED_CODE } from "@/lib/cloud-login-errors";
 
 const getNeonAuth = vi.hoisted(() => vi.fn());
 
@@ -108,6 +109,11 @@ describe("/api/auth/[...path]", () => {
       );
 
       expect(response.status).toBe(403);
+      await expect(response.json()).resolves.toEqual({
+        ok: false,
+        code: EMAIL_NOT_ALLOWED_CODE,
+        message: EMAIL_NOT_ALLOWED_CODE,
+      });
       expect(handlerPost).not.toHaveBeenCalled();
     });
 
@@ -115,9 +121,29 @@ describe("/api/auth/[...path]", () => {
       delete process.env.USER_DATA_ALLOWED_EMAILS;
       const handlerPost = handlerPostMock();
 
-      expect((await POST(otpRequest(ALLOWED_EMAIL), otpContext())).status).toBe(
-        403
+      const response = await POST(otpRequest(ALLOWED_EMAIL), otpContext());
+      expect(response.status).toBe(403);
+      await expect(response.json()).resolves.toEqual({
+        ok: false,
+        code: EMAIL_NOT_ALLOWED_CODE,
+        message: EMAIL_NOT_ALLOWED_CODE,
+      });
+      expect(handlerPost).not.toHaveBeenCalled();
+    });
+
+    it("本文が大きすぎる拒否には許可リスト拒否のコードを付けない", async () => {
+      const handlerPost = handlerPostMock();
+      const response = await POST(
+        new Request(`${ORIGIN}/api/auth/email-otp/send-verification-otp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "x".repeat(9_000),
+        }),
+        otpContext()
       );
+
+      expect(response.status).toBe(403);
+      await expect(response.json()).resolves.toEqual({ ok: false });
       expect(handlerPost).not.toHaveBeenCalled();
     });
 
