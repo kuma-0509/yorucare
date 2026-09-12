@@ -20,8 +20,32 @@ import { cloudAuthClient } from "@/lib/cloud-auth-client";
 type Phase =
   | { step: "checking" }
   | { step: "signed_in" }
+  | { step: "not_allowed" }
   | { step: "enter_email" }
   | { step: "enter_code" };
+
+/**
+ * サーバー側の判定（`getCloudAuthStatus`）だけを正とする。
+ *
+ * Better Authのセッション有無を画面が自分で判断すると、許可リストに
+ * 無いメールアドレスでも「ログイン済みです」と表示してしまう
+ * （記録APIは401で拒否するが、画面の表示だけが食い違う）。
+ */
+async function fetchCloudLoginPhase(): Promise<Phase> {
+  try {
+    const response = await fetch("/api/cloud/session", { method: "GET" });
+    if (response.status === 200) return { step: "signed_in" };
+    if (response.status === 403) {
+      const body = (await response.json().catch(() => null)) as {
+        reason?: unknown;
+      } | null;
+      if (body?.reason === "not_allowed") return { step: "not_allowed" };
+    }
+  } catch {
+    // 通信できない場合は、後で本人がやり直せる「未ログイン」として扱う
+  }
+  return { step: "enter_email" };
+}
 
 export default function CloudLoginPage() {
   const [phase, setPhase] = useState<Phase>({ step: "checking" });
@@ -32,15 +56,9 @@ export default function CloudLoginPage() {
 
   useEffect(() => {
     let cancelled = false;
-    cloudAuthClient
-      .getSession()
-      .then(({ data }) => {
-        if (cancelled) return;
-        setPhase(data?.user ? { step: "signed_in" } : { step: "enter_email" });
-      })
-      .catch(() => {
-        if (!cancelled) setPhase({ step: "enter_email" });
-      });
+    fetchCloudLoginPhase().then((nextPhase) => {
+      if (!cancelled) setPhase(nextPhase);
+    });
     return () => {
       cancelled = true;
     };
@@ -82,7 +100,7 @@ export default function CloudLoginPage() {
         return;
       }
       setCode("");
-      setPhase({ step: "signed_in" });
+      setPhase(await fetchCloudLoginPhase());
     } catch {
       setError("コードが違うか、期限が切れています。もう一度お試しください。");
     } finally {
@@ -94,15 +112,27 @@ export default function CloudLoginPage() {
     setBusy(true);
     setError(null);
     try {
-      await cloudAuthClient.signOut();
+      const { error: signOutError } = await cloudAuthClient.signOut();
+      if (signOutError) {
+        // 失敗したのに「ログアウトした」表示へ切り替えない。サーバー側の
+        // セッションが生きたままなのに未ログイン表示になると、共有端末で
+        // 「ログアウトしたつもり」が成立してしまう
+        setError(
+          "ログアウトできませんでした。時間をおいてもう一度お試しください。"
+        );
+        return;
+      }
     } catch {
-      // サインアウトの失敗も、内容を出さず一般的な案内にとどめる
+      setError(
+        "ログアウトできませんでした。時間をおいてもう一度お試しください。"
+      );
+      return;
     } finally {
-      setEmail("");
-      setCode("");
       setBusy(false);
-      setPhase({ step: "enter_email" });
     }
+    setEmail("");
+    setCode("");
+    setPhase({ step: "enter_email" });
   }
 
   return (
@@ -125,6 +155,22 @@ export default function CloudLoginPage() {
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-foreground">
             ログイン済みです。
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSignOut}
+            disabled={busy}
+          >
+            ログアウトする
+          </Button>
+        </div>
+      )}
+
+      {phase.step === "not_allowed" && (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-foreground">
+            このメールアドレスはクラウド保存の利用対象に登録されていません。記録の保存や復元は行えません。
           </p>
           <Button
             type="button"
