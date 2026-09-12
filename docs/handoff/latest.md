@@ -35,8 +35,10 @@ PR #51 / #52 は同じ課題の候補だったが、2026-09-10 時点の画面�
 ## 検証結果
 
 - `pnpm lint`: 成功（警告・エラーなし）
-- `pnpm test`: 成功
+- `pnpm test`: 成功（64 files / 661 tests）
 - `pnpm build`: 成功
+
+PR: https://github.com/kuma-0509/yorucare/pull/62
 
 ## 次のタスク候補
 
