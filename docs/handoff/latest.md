@@ -1,58 +1,70 @@
 # Handoff
 
 日付: 2026-09-12
-担当チャット: クラウドバックアップの確認結果を最新mainへ反映
+担当チャット: ログイン確認画面の2つの不具合を修正
 
 ## 今回実装したタスク
 
-- 「クラウドバックアップと復元が未実装で、端末を失うと記録が戻らない」（`docs/DEVELOPMENT_BOARD.md`）
-- 2026-09-11に別ブランチ（`claude/yorucare-cloud-backup-w9p805`）でNeon Consoleの実地設定・Preview環境での通し確認を行ったが、mainへ27コミット分の後続変更（記録一覧の表形式化、CSV保存、監査経路の追加等）が入るあいだPRを作らず放置されていた。今回はそのブランチのdocsコミット3件（`c70fd38`・`0e73776`・`f5c209a`）の内容を、最新main上へ手動で書き直して反映した。**コードは含めない。** ブランチには設定画面・復元画面の実装コード（`805f063`、19ファイル・約1,850行）も含まれていたが、mainの`records-tab.tsx`等11ファイルと衝突するため、今回は反映対象から外した（下記「引き継ぎ事項」1番）。
-- 反映した内容:
-  - `docs/account-cloud-storage-decision.md` 2.1節「招待制」の記述を訂正（新規登録を止める設定はConsoleに存在しない）
-  - 6.2節にNeonのロールが既定で`BYPASSRLS`を持つ実測結果を追記
-  - 11.1節に、Console実地確認の表（a〜d）、サインアウト失敗・許可リスト画面表示の不具合の発見経緯、実行時ロールの実績値を追記
-  - 11.2節（公開条件）に3項目追加、15節（意思決定記録）に6行追加
-  - `.env.example`の`NEON_AUTH_BASE_URL`のコメント例をConsoleの実際の表示形式に合わせた
-  - `docs/DEVELOPMENT_BOARD.md`: 既存行の更新1件、新規行2件（サインアウト失敗が画面に反映されない、ログイン確認画面が許可リストの結果を見ない）を追加。**この2件は、現在mainに入っている`src/app/cloud-login/page.tsx`（PR #49）のコードを実際に読んで再確認した実在のバグ**（`handleSignOut`が`signOut()`の戻り値のエラーを見ず`finally`で常に未ログイン表示にする／`getSession()`の結果だけで「ログイン済みです」を出し許可リストの判定を経由しない）。ブランチの記述をそのまま転記していない
+- 「クラウドバックアップのログイン確認画面が、サインアウト失敗を画面に反映しない」（`docs/DEVELOPMENT_BOARD.md`）
+- 「クラウドバックアップのログイン確認画面が、許可リストの結果を見ずに『ログイン済みです』と表示する」（同上）
+- 前回のチャットで確認・記録した2件の不具合（PR #60）を、実際に修正した
+
+### 何を直したか
+
+1. **サインアウト失敗の握り潰し**: `src/app/cloud-login/page.tsx` の `handleSignOut` は `cloudAuthClient.signOut()` の戻り値を見ず、失敗しても必ず未ログイン表示に切り替えていた。戻り値の `error` を確かめ、失敗・例外時は今のフェーズ（ログイン済み／許可リスト外）を保ったまま「ログアウトできませんでした」と表示するよう直した。
+2. **許可リストを見ない表示**: 画面は `cloudAuthClient.getSession()`（Better Authのセッション有無だけ）で「ログイン済みです」を出しており、`getCloudSession` が行う許可リストの突き合わせを経由していなかった。サーバー側に新しい判定 `getCloudAuthStatus`（`ok`／`not_allowed`／`unauthenticated`の3状態）を追加し、これだけを叩く軽量API `GET /api/cloud/session` を新設した。画面はこのAPIの結果だけを正として表示を決め、許可リスト外のときは「このメールアドレスはクラウド保存の利用対象に登録されていません」という専用の案内を出す（従来の「ログイン済みです」は出ない）。既存の `getCloudSession` は、この新判定のうち`ok`だけを取り出す薄いラッパーへ整理し、既存の契約（許可リスト外はnull）は変えていない。
+
+### 回帰の確認
+
+`src/app/cloud-login/page.test.tsx` を新規作成した（9件）。修正前のコード（`getSession()`直呼び、`signOut()`のエラー未確認）に対して同じテストを走らせ、**9件中7件が実際に落ちることを確認した**うえで直した（残り2件は今回の2つの不具合と無関係な基本ケースで、修正前後どちらでも通る）。
+
+### 追記（PR #61、自動レビューの指摘を受けて）
+
+上記1〜2の修正をPR #61として出したところ、自動レビュー（chatgpt-codex-connector）から本物の指摘が1件付いた。**6桁コードの検証に成功した直後、状態確認（`/api/cloud/session`）が通信エラーや想定外の応答で失敗すると、Cookieはもう有効なのに「未ログイン」＝メール入力画面へ戻ってしまう**という回帰。自分の直前の修正で新たに入れた不具合だった。
+
+`fetchCloudAuthOutcome`を4値（`ok`／`not_allowed`／`unauthenticated`／`unknown`）に分け、`unknown`（通信できない・想定外の応答）は「未認証」と区別した。マウント時点（何も分かっていない）では`unknown`も未ログインへ倒してよいが、検証成功直後に`unknown`が返った場合は`check_failed`という専用フェーズにして、「もう一度確認する」ボタンで再確認できるようにした。確定した401（`unauthenticated`）のときだけ、検証成功直後でもメール入力へ戻す。
+
+新設テスト3件を追加し、修正前のコードで2件（`unknown`関連）が実際に落ちることを確認したうえで直した（もう1件「確定401なら戻す」は元のコードでも正しかったため、修正前後どちらでも通る）。
 
 ## 変更ファイル
 
-- `.env.example`
-- `docs/account-cloud-storage-decision.md`
-- `docs/DEVELOPMENT_BOARD.md`
-- `docs/handoff/latest.md`（本ファイル）
-
-コードの変更は無い。
+- `src/app/cloud-login/page.tsx`: `not_allowed`／`check_failed`フェーズの追加、`fetchCloudAuthOutcome`で`/api/cloud/session`を叩く、サインアウトのエラー処理
+- `src/app/cloud-login/page.test.tsx`: 新規（12件）
+- `src/app/api/cloud/session/route.ts`: 新規。DBに触れない軽量な状態確認API
+- `src/app/api/cloud/session/route.test.ts`: 新規（6件）
+- `src/lib/server/cloud-session.ts`: `getCloudAuthStatus`を追加。`getCloudSession`はこれを使う薄いラッパーへ整理（既存の外部契約は不変）
+- `src/lib/server/cloud-session.test.ts`: `getCloudAuthStatus`のテストを追加（6件）
+- `docs/DEVELOPMENT_BOARD.md`: 該当2行を`完了 2026-09-12`に更新
+- `docs/account-cloud-storage-decision.md`: 11.1節の2つの不具合記述を「修正済み」に更新、11.2節の公開条件から該当2項目を削除（満たされたため）、15節に意思決定記録2行を追加
+- `docs/handoff/latest.md`: 本ファイル
 
 ## 検証結果
 
-- コードを変更していないため `pnpm lint` / `pnpm test` / `pnpm build` は実行していない。表の列数（マークダウンの `|` の数）だけ機械確認した
-- 今回追加した2つの不具合報告は、`src/app/cloud-login/page.tsx`（mainの現物）を読んで該当行を確認したうえで記載している
+- `pnpm lint`: 成功（警告・エラーなし）
+- `pnpm test`: 成功（63 test files / 654 tests）
+- `pnpm build`: 成功。新しいルート `/api/cloud/session` がビルド出力に含まれることを確認した
+- 上記「回帰の確認」のとおり、修正前のコードで新設テストが実際に落ちることを確認済み
 
 ## 自動レビュー指摘
 
-- 該当PRなし（まだPRを作っていない。下記参照）
+- PR #61に対して chatgpt-codex-connector から1件（P2）。「6桁コード検証の直後、状態確認が通信エラーや想定外の応答で失敗すると未ログイン表示に戻ってしまう」という指摘で、実際に自分が直前の修正で入れた回帰だった。対応内容は上記「追記（PR #61、自動レビューの指摘を受けて）」のとおり。修正をコミット・プッシュ後、レビュースレッドを解決済みにする。
 
 ## 次のタスク候補
 
-- `docs/DEVELOPMENT_BOARD.md`の優先順位に基づけば、次点は次のいずれか。ユーザーに確認のうえ選ぶこと
-  1. 上記2件の不具合修正（`cloud-login`のサインアウト・許可リスト表示）
-  2. `claude/yorucare-cloud-backup-w9p805`の設定画面・復元画面コードを、最新mainへ統合する（下記「引き継ぎ事項」1番）
-  3. `yorucare_app`ロールのパスワード再作成（Neon Console側の作業）
+`docs/handoff/latest.md`の前回の引き継ぎに書いた3件のうち、今回は不具合修正2件を終えた。残りは以下（優先順位はユーザーに確認すること）。
+
+1. **`claude/yorucare-cloud-backup-w9p805`の設定画面・復元画面コードを、最新mainへ統合する。** mainの`records-tab.tsx`・`storage.ts`・`constants.ts`・`copy.ts`・`dates.ts`・`cloud-sync.ts`・`cloud-session.ts`・`src/app/api/cloud/snapshot/route.ts`と衝突する。**今回の修正で`cloud-session.ts`と`cloud-sync.ts`にも手を入れたため、衝突箇所と内容が前回の記述から変わっている可能性がある。統合時は必ず現在のmainの内容を読み直すこと。**
+2. **`yorucare_app`ロールのパスワード再作成**（Neon Console側の作業。作成時のSQLがエディタ履歴に残っている）
+3. **別端末での復元確認**（未実施のまま）
+4. **参加者が実際に使うメール事業者での到達確認**（現在Gmail1アカウントのみ）
+5. `cursor/cloud-login-allowlist-message`（`cd69d3c`）/ `fix/cloud-login-allowlist-message`（`bd16a9d`）: ログイン確認画面の「許可リスト外でも『時間をおいてもう一度』と出る」問題（送信コード時の案内文言、今回の2件とは別）を修正する2つの候補PR。**同じ問題を再実装しないこと**
 
 ## 引き継ぎ事項・注意点
 
-1. **未マージのまま残っている実装ブランチが複数ある。次のチャットは着手前にこれらの扱いをユーザーに確認すること。**
-   - `claude/yorucare-cloud-backup-w9p805`: クラウド保存の**設定画面・復元画面**の実装コード（`src/components/shared/cloud-backup-panel.tsx`・`cloud-restore-dialog.tsx`ほか）。mainの`records-tab.tsx`・`storage.ts`・`constants.ts`・`copy.ts`・`dates.ts`・`cloud-sync.ts`・`cloud-session.ts`・`src/app/api/cloud/snapshot/route.ts`と衝突する。中身を読んで手で合わせる必要があり、機械的なマージ・リベースでは済まない
-   - `cursor/cloud-login-allowlist-message`（`cd69d3c`）/ `fix/cloud-login-allowlist-message`（`bd16a9d`）: ログイン確認画面の「許可リスト外でも『時間をおいてもう一度』と出る」問題（`docs/DEVELOPMENT_BOARD.md`の別行、未着手）を修正する2つの候補PR。**同じ問題を再実装しないこと。** どちらを採るか、あるいは今回追加した2件の不具合とあわせて書き直すかをユーザーに確認する
-   - これらのブランチは、mainが27コミット先行した状態のまま放置されている。次に着手するときは、必ず最新mainを起点に内容を読み直してから進めること（そのままマージ・リベースすると衝突する）
+1. **新設した`GET /api/cloud/session`はDBに触れない。** `/api/cloud/snapshot`のGETは復元画面用でDBへのアクセスを伴うため、ログイン確認だけの用途には重すぎると判断し、専用の軽いエンドポイントを分けた。将来設定画面・復元画面を統合するときも、ログイン状態の確認にはこちらを使うこと。
 
-2. **今回のdocs反映は、ユーザーから明示的に「Aで（設定画面・復元画面のコードは含めない）」の指示を得て行った。** 経緯: 「コワークでクラウド保存できたと思う」という発言を確認したところ、実際は確認結果のコミット3件どころか設定画面・復元画面の実装コードまるごと1つが、mainから27コミット遅れたブランチに置かれたまま未マージだった。B（コードも今すぐ統合）も提示したが、11ファイルの衝突（特に`records-tab.tsx`は別機能の表形式化と競合）を理由にAを選んだ経緯を残す
+2. **`getCloudSession`の外部契約は変えていない。** 既存の呼び出し元（`/api/cloud/snapshot`、`/api/cloud/device`）は無改修で、既存テスト43件がそのまま通ることを確認済み。`getCloudAuthStatus`は内部で使う新しい詳細版で、画面側が「許可リスト外」を区別して案内するために公開した。
 
-3. **`yorucare_app`ロールのパスワードは公開前に必ず作り直すこと。** 作成時のSQL（`CREATE ROLE ... PASSWORD`）がNeon Consoleの SQL エディタ履歴に残っている。この文書更新では対応していない（Neon Console側の作業のため）
+3. **今回の2件は、記録の安全性そのものには影響していない。** 許可リスト外のアドレスでも記録APIは401で正しく拒否しており、危険だったのは画面表示の分かりにくさ（サインアウトが効いたように見える／許可リスト外でもログイン済みと出る）。データが漏れていたわけではない。
 
-4. **メールの到達性確認はGmail 1アカウント・1回のみ。** 参加者が実際に使う事業者（携帯キャリア、勤務先ドメイン等）での確認が11.2節の公開条件として残っている
-
-5. **別端末での復元確認は未実施のまま。** この機能の存在理由そのものが検証されていない
-
-6. **`/cloud-login`の2つの不具合はどちらも実際に危険なのはUXの分かりにくさであって、データの安全性ではない。** 許可リスト外のアドレスでも記録APIは401で拒否するため、記録の読み書きは守られている。サインアウト失敗も、Neon Consoleの「ドメイン」欄を登録すれば個々の発生要因は無くなるが、応答を確認しない実装自体は残る
+4. **`/cloud-login`はフラグOFFなら404のままで、本番画面から到達不可の状態は変わっていない。** 今回の変更もPreviewでのダミーデータ検証を前提としている。

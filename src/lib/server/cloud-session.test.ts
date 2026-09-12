@@ -5,7 +5,8 @@ const createNeonAuth = vi.hoisted(() => vi.fn(() => ({ getSession })));
 
 vi.mock("@neondatabase/auth/next/server", () => ({ createNeonAuth }));
 
-const { getCloudSession, isRecentlyVerified } = await import("./cloud-session");
+const { getCloudAuthStatus, getCloudSession, isRecentlyVerified } =
+  await import("./cloud-session");
 const { _resetNeonAuthCacheForTest } = await import("./neon-auth");
 
 const OWNER_ID = "user_abc123";
@@ -162,6 +163,77 @@ describe("cloud-session", () => {
       delete process.env.NEON_AUTH_BASE_URL;
       delete process.env.NEON_AUTH_COOKIE_SECRET;
 
+      const session = await getCloudSession(new Request("https://yorucare.example"));
+      expect(session).toBeNull();
+    });
+  });
+
+  describe("getCloudAuthStatus", () => {
+    it("Cookieが無い場合は unauthenticated を返す", async () => {
+      configureRealAuthEnv();
+      getSession.mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      });
+
+      const status = await getCloudAuthStatus(
+        new Request("https://yorucare.example")
+      );
+      expect(status).toEqual({ status: "unauthenticated" });
+    });
+
+    it("検証済みでも許可リストに無いメールアドレスは not_allowed を返す", async () => {
+      configureRealAuthEnv();
+      getSession.mockResolvedValue(validSession({ email: "other@example.com" }));
+
+      const status = await getCloudAuthStatus(
+        new Request("https://yorucare.example")
+      );
+      expect(status).toEqual({ status: "not_allowed" });
+    });
+
+    it("許可リストが未設定なら not_allowed を返す", async () => {
+      configureRealAuthEnv();
+      delete process.env.USER_DATA_ALLOWED_EMAILS;
+      getSession.mockResolvedValue(validSession());
+
+      const status = await getCloudAuthStatus(
+        new Request("https://yorucare.example")
+      );
+      expect(status).toEqual({ status: "not_allowed" });
+    });
+
+    it("期限切れのセッションは unauthenticated を返す（許可リストに載っていても）", async () => {
+      configureRealAuthEnv();
+      getSession.mockResolvedValue(
+        validSession({ expiresAt: new Date(Date.now() - 1_000).toISOString() })
+      );
+
+      const status = await getCloudAuthStatus(
+        new Request("https://yorucare.example")
+      );
+      expect(status).toEqual({ status: "unauthenticated" });
+    });
+
+    it("検証に成功した場合だけ ok とownerIdを返す", async () => {
+      configureRealAuthEnv();
+      const createdAt = "2026-09-08T09:00:00.000Z";
+      getSession.mockResolvedValue(validSession({ createdAt }));
+
+      const status = await getCloudAuthStatus(
+        new Request("https://yorucare.example")
+      );
+      expect(status).toEqual({
+        status: "ok",
+        session: { ownerId: OWNER_ID, verifiedAt: new Date(createdAt) },
+      });
+    });
+
+    it("getCloudSession はこの関数のokだけをownerIdへ変換する", async () => {
+      configureRealAuthEnv();
+      getSession.mockResolvedValue(validSession({ email: "other@example.com" }));
+
+      // not_allowed を getCloudSession 側から見ると null（既存の契約と同じ）
       const session = await getCloudSession(new Request("https://yorucare.example"));
       expect(session).toBeNull();
     });

@@ -78,36 +78,60 @@ type UserFields = {
   email?: string | null;
 };
 
-export async function getCloudSession(
+/**
+ * `getCloudSession` の内部でも使う、認証状態の詳細版。
+ *
+ * `getCloudSession` は「所有者として使えるか」の1点だけを返すが、
+ * ログイン確認画面は「Better Authのセッションはあるのに許可リストに
+ * 無いから使えない」ことを本人に伝える必要があるため、この区別を
+ * `unauthenticated` と `not_allowed` に分けて公開する。
+ */
+export type CloudAuthStatus =
+  | { status: "ok"; session: CloudSession }
+  | { status: "not_allowed" }
+  | { status: "unauthenticated" };
+
+export async function getCloudAuthStatus(
   _request: Request
-): Promise<CloudSession | null> {
+): Promise<CloudAuthStatus> {
   const devOwnerId = developmentOwnerId();
-  if (devOwnerId) return { ownerId: devOwnerId, verifiedAt: new Date() };
+  if (devOwnerId) {
+    return { status: "ok", session: { ownerId: devOwnerId, verifiedAt: new Date() } };
+  }
 
   const auth = getNeonAuth();
-  if (!auth) return null;
+  if (!auth) return { status: "unauthenticated" };
 
   let session: SessionFields | null | undefined;
   let user: UserFields | null | undefined;
   try {
     const result = await auth.getSession();
-    if (result.error) return null;
+    if (result.error) return { status: "unauthenticated" };
     session = result.data?.session as SessionFields | null | undefined;
     user = result.data?.user as UserFields | null | undefined;
   } catch {
     // Cookieが無い・改ざんされている・上流呼び出しが失敗した場合はすべて未認証扱い
-    return null;
+    return { status: "unauthenticated" };
   }
 
-  if (!session || !user) return null;
+  if (!session || !user) return { status: "unauthenticated" };
 
   const expiresAt = toDate(session.expiresAt);
-  if (expiresAt && expiresAt.getTime() <= Date.now()) return null;
+  if (expiresAt && expiresAt.getTime() <= Date.now()) {
+    return { status: "unauthenticated" };
+  }
 
-  if (!isEmailAllowed(user.email)) return null;
+  if (!isEmailAllowed(user.email)) return { status: "not_allowed" };
 
   const verifiedAt = toDate(session.createdAt) ?? new Date();
-  return { ownerId: user.id, verifiedAt };
+  return { status: "ok", session: { ownerId: user.id, verifiedAt } };
+}
+
+export async function getCloudSession(
+  request: Request
+): Promise<CloudSession | null> {
+  const result = await getCloudAuthStatus(request);
+  return result.status === "ok" ? result.session : null;
 }
 
 function toDate(value: unknown): Date | null {

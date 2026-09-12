@@ -20,8 +20,43 @@ import { cloudAuthClient } from "@/lib/cloud-auth-client";
 type Phase =
   | { step: "checking" }
   | { step: "signed_in" }
+  | { step: "not_allowed" }
+  | { step: "check_failed" }
   | { step: "enter_email" }
   | { step: "enter_code" };
+
+/**
+ * `/api/cloud/session` の結果を4値に正規化する。
+ *
+ * サーバー側の判定（`getCloudAuthStatus`）だけを正とする。Better Authの
+ * セッション有無を画面が自分で判断すると、許可リストに無いメール
+ * アドレスでも「ログイン済みです」と表示してしまう（記録APIは401で
+ * 拒否するが、画面の表示だけが食い違う）。
+ *
+ * `unknown`（通信できない・想定外の応答）は「未認証」ではない。呼び出し
+ * 側が状況に応じて扱いを決める。マウント時のように何も分かっていない
+ * 場面では未ログインへ倒してよいが、6桁コードの検証に成功した直後に
+ * `unknown` が返った場合は、Cookieはすでに有効なはずなので未ログイン
+ * 表示へ倒さない（`check_failed` として区別する）。
+ */
+async function fetchCloudAuthOutcome(): Promise<
+  "ok" | "not_allowed" | "unauthenticated" | "unknown"
+> {
+  try {
+    const response = await fetch("/api/cloud/session", { method: "GET" });
+    if (response.status === 200) return "ok";
+    if (response.status === 401) return "unauthenticated";
+    if (response.status === 403) {
+      const body = (await response.json().catch(() => null)) as {
+        reason?: unknown;
+      } | null;
+      if (body?.reason === "not_allowed") return "not_allowed";
+    }
+  } catch {
+    // 通信できない場合は判定不能として扱う
+  }
+  return "unknown";
+}
 
 export default function CloudLoginPage() {
   const [phase, setPhase] = useState<Phase>({ step: "checking" });
@@ -32,15 +67,14 @@ export default function CloudLoginPage() {
 
   useEffect(() => {
     let cancelled = false;
-    cloudAuthClient
-      .getSession()
-      .then(({ data }) => {
-        if (cancelled) return;
-        setPhase(data?.user ? { step: "signed_in" } : { step: "enter_email" });
-      })
-      .catch(() => {
-        if (!cancelled) setPhase({ step: "enter_email" });
-      });
+    fetchCloudAuthOutcome().then((outcome) => {
+      if (cancelled) return;
+      // マウント時点では何も分かっていないため、判定不能（unknown）も
+      // 未認証と同じくメール入力から始めさせてよい
+      if (outcome === "ok") setPhase({ step: "signed_in" });
+      else if (outcome === "not_allowed") setPhase({ step: "not_allowed" });
+      else setPhase({ step: "enter_email" });
+    });
     return () => {
       cancelled = true;
     };
@@ -82,7 +116,9 @@ export default function CloudLoginPage() {
         return;
       }
       setCode("");
-      setPhase({ step: "signed_in" });
+      // ここまで来ればCookieはすでに有効なので、次の確認が失敗しても
+      // 「未ログイン」へは倒さない（recheckAfterSignIn が判断する）
+      await recheckAfterSignIn();
     } catch {
       setError("コードが違うか、期限が切れています。もう一度お試しください。");
     } finally {
@@ -90,19 +126,46 @@ export default function CloudLoginPage() {
     }
   }
 
+  /**
+   * サインインが成立した後（またはその確認をやり直すとき）に使う。
+   *
+   * `unknown`（通信できない・想定外の応答）は「未認証」ではないため、
+   * ここでは未ログイン表示へ倒さず、もう一度確認できる `check_failed` を
+   * 出す。確定した401（`unauthenticated`）のときだけメール入力へ戻す。
+   */
+  async function recheckAfterSignIn() {
+    const outcome = await fetchCloudAuthOutcome();
+    if (outcome === "ok") setPhase({ step: "signed_in" });
+    else if (outcome === "not_allowed") setPhase({ step: "not_allowed" });
+    else if (outcome === "unauthenticated") setPhase({ step: "enter_email" });
+    else setPhase({ step: "check_failed" });
+  }
+
   async function handleSignOut() {
     setBusy(true);
     setError(null);
     try {
-      await cloudAuthClient.signOut();
+      const { error: signOutError } = await cloudAuthClient.signOut();
+      if (signOutError) {
+        // 失敗したのに「ログアウトした」表示へ切り替えない。サーバー側の
+        // セッションが生きたままなのに未ログイン表示になると、共有端末で
+        // 「ログアウトしたつもり」が成立してしまう
+        setError(
+          "ログアウトできませんでした。時間をおいてもう一度お試しください。"
+        );
+        return;
+      }
     } catch {
-      // サインアウトの失敗も、内容を出さず一般的な案内にとどめる
+      setError(
+        "ログアウトできませんでした。時間をおいてもう一度お試しください。"
+      );
+      return;
     } finally {
-      setEmail("");
-      setCode("");
       setBusy(false);
-      setPhase({ step: "enter_email" });
     }
+    setEmail("");
+    setCode("");
+    setPhase({ step: "enter_email" });
   }
 
   return (
@@ -133,6 +196,46 @@ export default function CloudLoginPage() {
             disabled={busy}
           >
             ログアウトする
+          </Button>
+        </div>
+      )}
+
+      {phase.step === "not_allowed" && (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-foreground">
+            このメールアドレスはクラウド保存の利用対象に登録されていません。記録の保存や復元は行えません。
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleSignOut}
+            disabled={busy}
+          >
+            ログアウトする
+          </Button>
+        </div>
+      )}
+
+      {phase.step === "check_failed" && (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-foreground">
+            ログインはできましたが、利用できる状態かの確認が今は行えません。時間をおいてもう一度確認してください。
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setError(null);
+              try {
+                await recheckAfterSignIn();
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            もう一度確認する
           </Button>
         </div>
       )}
