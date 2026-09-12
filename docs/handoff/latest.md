@@ -18,10 +18,18 @@
 
 `src/app/cloud-login/page.test.tsx` を新規作成した（9件）。修正前のコード（`getSession()`直呼び、`signOut()`のエラー未確認）に対して同じテストを走らせ、**9件中7件が実際に落ちることを確認した**うえで直した（残り2件は今回の2つの不具合と無関係な基本ケースで、修正前後どちらでも通る）。
 
+### 追記（PR #61、自動レビューの指摘を受けて）
+
+上記1〜2の修正をPR #61として出したところ、自動レビュー（chatgpt-codex-connector）から本物の指摘が1件付いた。**6桁コードの検証に成功した直後、状態確認（`/api/cloud/session`）が通信エラーや想定外の応答で失敗すると、Cookieはもう有効なのに「未ログイン」＝メール入力画面へ戻ってしまう**という回帰。自分の直前の修正で新たに入れた不具合だった。
+
+`fetchCloudAuthOutcome`を4値（`ok`／`not_allowed`／`unauthenticated`／`unknown`）に分け、`unknown`（通信できない・想定外の応答）は「未認証」と区別した。マウント時点（何も分かっていない）では`unknown`も未ログインへ倒してよいが、検証成功直後に`unknown`が返った場合は`check_failed`という専用フェーズにして、「もう一度確認する」ボタンで再確認できるようにした。確定した401（`unauthenticated`）のときだけ、検証成功直後でもメール入力へ戻す。
+
+新設テスト3件を追加し、修正前のコードで2件（`unknown`関連）が実際に落ちることを確認したうえで直した（もう1件「確定401なら戻す」は元のコードでも正しかったため、修正前後どちらでも通る）。
+
 ## 変更ファイル
 
-- `src/app/cloud-login/page.tsx`: `not_allowed`フェーズの追加、`fetchCloudLoginPhase`で`/api/cloud/session`を叩く、サインアウトのエラー処理
-- `src/app/cloud-login/page.test.tsx`: 新規（9件）
+- `src/app/cloud-login/page.tsx`: `not_allowed`／`check_failed`フェーズの追加、`fetchCloudAuthOutcome`で`/api/cloud/session`を叩く、サインアウトのエラー処理
+- `src/app/cloud-login/page.test.tsx`: 新規（12件）
 - `src/app/api/cloud/session/route.ts`: 新規。DBに触れない軽量な状態確認API
 - `src/app/api/cloud/session/route.test.ts`: 新規（6件）
 - `src/lib/server/cloud-session.ts`: `getCloudAuthStatus`を追加。`getCloudSession`はこれを使う薄いラッパーへ整理（既存の外部契約は不変）
@@ -33,13 +41,13 @@
 ## 検証結果
 
 - `pnpm lint`: 成功（警告・エラーなし）
-- `pnpm test`: 成功（63 test files / 651 tests）
+- `pnpm test`: 成功（63 test files / 654 tests）
 - `pnpm build`: 成功。新しいルート `/api/cloud/session` がビルド出力に含まれることを確認した
 - 上記「回帰の確認」のとおり、修正前のコードで新設テストが実際に落ちることを確認済み
 
 ## 自動レビュー指摘
 
-- まだPRを作っていないため該当なし
+- PR #61に対して chatgpt-codex-connector から1件（P2）。「6桁コード検証の直後、状態確認が通信エラーや想定外の応答で失敗すると未ログイン表示に戻ってしまう」という指摘で、実際に自分が直前の修正で入れた回帰だった。対応内容は上記「追記（PR #61、自動レビューの指摘を受けて）」のとおり。修正をコミット・プッシュ後、レビュースレッドを解決済みにする。
 
 ## 次のタスク候補
 

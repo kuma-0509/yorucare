@@ -124,6 +124,94 @@ describe("CloudLoginPage", () => {
     });
   });
 
+  it("コード検証は成功したのに状態確認が通信できないときは、未ログイン表示へ倒さない", async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(401, { ok: false, reason: "unauthenticated" }))
+      .mockRejectedValueOnce(new TypeError("network error"));
+    sendVerificationOtp.mockResolvedValue({ data: {}, error: null });
+    signInEmailOtp.mockResolvedValue({ data: {}, error: null });
+
+    render(<CloudLoginPage />);
+    await waitFor(() => screen.getByLabelText("メールアドレス"));
+
+    fireEvent.change(screen.getByLabelText("メールアドレス"), {
+      target: { value: "sanka@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "コードを送る" }));
+
+    await waitFor(() => screen.getByLabelText("6桁のコード"));
+    fireEvent.change(screen.getByLabelText("6桁のコード"), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "ログインする" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "ログインはできましたが、利用できる状態かの確認が今は行えません。時間をおいてもう一度確認してください。"
+        )
+      ).toBeTruthy();
+    });
+    // Cookieはすでに有効なのに、メール入力へ戻ってしまっていないか
+    expect(screen.queryByLabelText("メールアドレス")).toBeNull();
+  });
+
+  it("状態確認が401（未認証）を明確に返したときだけ、コード検証後もメール入力へ戻す", async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(401, { ok: false, reason: "unauthenticated" }))
+      .mockResolvedValueOnce(jsonResponse(401, { ok: false, reason: "unauthenticated" }));
+    sendVerificationOtp.mockResolvedValue({ data: {}, error: null });
+    signInEmailOtp.mockResolvedValue({ data: {}, error: null });
+
+    render(<CloudLoginPage />);
+    await waitFor(() => screen.getByLabelText("メールアドレス"));
+
+    fireEvent.change(screen.getByLabelText("メールアドレス"), {
+      target: { value: "sanka@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "コードを送る" }));
+
+    await waitFor(() => screen.getByLabelText("6桁のコード"));
+    fireEvent.change(screen.getByLabelText("6桁のコード"), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "ログインする" }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("メールアドレス")).toBeTruthy();
+    });
+  });
+
+  it("「もう一度確認する」で確認し直し、成功すればログイン済み表示になる", async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse(401, { ok: false, reason: "unauthenticated" }))
+      .mockRejectedValueOnce(new TypeError("network error"))
+      .mockResolvedValueOnce(jsonResponse(200, { ok: true }));
+    sendVerificationOtp.mockResolvedValue({ data: {}, error: null });
+    signInEmailOtp.mockResolvedValue({ data: {}, error: null });
+
+    render(<CloudLoginPage />);
+    await waitFor(() => screen.getByLabelText("メールアドレス"));
+
+    fireEvent.change(screen.getByLabelText("メールアドレス"), {
+      target: { value: "sanka@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "コードを送る" }));
+
+    await waitFor(() => screen.getByLabelText("6桁のコード"));
+    fireEvent.change(screen.getByLabelText("6桁のコード"), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "ログインする" }));
+
+    await waitFor(() => screen.getByRole("button", { name: "もう一度確認する" }));
+    fireEvent.click(screen.getByRole("button", { name: "もう一度確認する" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("ログイン済みです。")).toBeTruthy();
+    });
+  });
+
   describe("ログアウト", () => {
     it("成功したときだけ未ログイン表示へ切り替える", async () => {
       fetchMock.mockResolvedValue(jsonResponse(200, { ok: true }));
