@@ -55,7 +55,7 @@
 | 費用 | Freeプランで **60,000 MAUまで無料**。DBはFreeプランで100プロジェクト、プロジェクトあたり10ブランチ・0.5GBストレージ・100CU時間・5GB egress | 数名規模の検証では無料枠内。本人記録用に別プロジェクトを立てても追加費用は発生しない |
 | ログイン方式 | マジックリンクとEmail OTPの両方を提供。管理画面のプラグイン設定で切り替える | リンク方式は下記の理由で採らず、Email OTPを採用する |
 | メール送信 | 既定は共有SMTP（`auth@mail.myneon.app`）で開発・検証用の位置づけ。本番では自前のメール事業者を推奨し、**リンク方式を使う場合は自前事業者が必須** | ログイン方式をEmail OTPへ変更した。共有SMTPのまま検証を進め、公開前に到達性を確認する |
-| 招待制 | 新規登録の可否を設定で切り替えられる。無効にすると既存の利用者だけがログインできる | 運営者が登録した参加者だけの閉じた検証にできる |
+| 招待制 | **誤り（2026-09-11にConsoleで確認して訂正）。** 新規登録を止める設定は存在しない。Auth画面の常設バナーに "Anyone on the web can sign up for your app. Support for signup restriction is coming soon." と明記されている | Console側では閉じられない。アプリ側の `USER_DATA_ALLOWED_EMAILS` が唯一の防御になる（11.1節） |
 | リージョン | Neonは`aws-ap-southeast-1`（シンガポール）に対応。Managed Better AuthはAWSリージョンのみ対応 | 希望どおりシンガポールで構成できる |
 | Vercel | Hobbyプランは実行リージョンを1つだけ選択可。既定は`iad1` | `vercel.json`の`regions`へ`sin1`を1つだけ指定する |
 | 構成の制約 | フロントエンドとバックエンドが別デプロイの構成は未対応 | 本アプリはNext.js単体のため該当しない |
@@ -167,7 +167,7 @@ APIは次の4つに限定する。
 
 ### 6.2 DB権限
 
-- マイグレーション用DBロールと実行時DBロールを分離する。
+- マイグレーション用DBロールと実行時DBロールを分離する。**これはRLSを機能させるための必須条件である。** Neonが Console・API・CLI で作るロール（既定の `neondb_owner` を含む）は `neon_superuser` のメンバーで `BYPASSRLS` を持ち、`ENABLE`/`FORCE ROW LEVEL SECURITY` とポリシーを書いていてもRLSを素通りする（2026-09-11に `SELECT rolbypassrls FROM pg_roles` で実測）。実行時ロールは SQL クライアントから `NOBYPASSRLS` を明示して作り、`rolbypassrls` が `f` であることを実測で確かめる。
 - 実行時ロールには本人記録テーブルの必要な`SELECT`、`INSERT`、`UPDATE`、`DELETE`だけを与える。
 - 本人記録テーブルでRLSと`FORCE ROW LEVEL SECURITY`を有効にする。
 - 1リクエストのトランザクション内で、検証済みJWTクレームを設定してからSQLを実行する。
