@@ -24,14 +24,15 @@
 
 import { getNeonAuth } from "./neon-auth";
 
+// 判定そのものは `cloud-reauth.ts` にある。これまでの参照先を変えずに済むよう
+// ここからも出しておく
+export { isRecentlyVerified, RECENT_AUTH_WINDOW_MS } from "./cloud-reauth";
+
 export type CloudSession = {
   ownerId: string;
   /** 直近の認証時刻。削除や退会の前に再認証を求めるときに使う */
   verifiedAt: Date;
 };
-
-/** 再認証を求める操作で「最近の認証」とみなす長さ */
-const RECENT_AUTH_WINDOW_MS = 10 * 60 * 1000;
 
 /**
  * ダミーデータでの検証用に、Preview環境だけで所有者IDを固定する抜け道。
@@ -141,12 +142,4 @@ function toDate(value: unknown): Date | null {
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
   return null;
-}
-
-/** 削除・退会など、取り返しのつかない操作の前に確かめる */
-export function isRecentlyVerified(
-  session: CloudSession,
-  now = new Date()
-): boolean {
-  return now.getTime() - session.verifiedAt.getTime() <= RECENT_AUTH_WINDOW_MS;
 }

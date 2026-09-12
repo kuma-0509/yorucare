@@ -1,70 +1,71 @@
 # Handoff
 
 日付: 2026-09-12
-担当チャット: ログイン確認画面の2つの不具合を修正
+担当チャット: 設定画面・復元画面コードの最新mainへの統合
 
 ## 今回実装したタスク
 
-- 「クラウドバックアップのログイン確認画面が、サインアウト失敗を画面に反映しない」（`docs/DEVELOPMENT_BOARD.md`）
-- 「クラウドバックアップのログイン確認画面が、許可リストの結果を見ずに『ログイン済みです』と表示する」（同上）
-- 前回のチャットで確認・記録した2件の不具合（PR #60）を、実際に修正した
+`claude/yorucare-cloud-backup-w9p805`（コミット `805f063`）に実装済みだった、クラウド保存の**設定画面と復元画面**を、最新main（PR #60・PR #61 取り込み後）へ統合した。この統合は前回までの引き継ぎで繰り返し「残タスク」として記録していたもの。
 
-### 何を直したか
+### 何をしたか
 
-1. **サインアウト失敗の握り潰し**: `src/app/cloud-login/page.tsx` の `handleSignOut` は `cloudAuthClient.signOut()` の戻り値を見ず、失敗しても必ず未ログイン表示に切り替えていた。戻り値の `error` を確かめ、失敗・例外時は今のフェーズ（ログイン済み／許可リスト外）を保ったまま「ログアウトできませんでした」と表示するよう直した。
-2. **許可リストを見ない表示**: 画面は `cloudAuthClient.getSession()`（Better Authのセッション有無だけ）で「ログイン済みです」を出しており、`getCloudSession` が行う許可リストの突き合わせを経由していなかった。サーバー側に新しい判定 `getCloudAuthStatus`（`ok`／`not_allowed`／`unauthenticated`の3状態）を追加し、これだけを叩く軽量API `GET /api/cloud/session` を新設した。画面はこのAPIの結果だけを正として表示を決め、許可リスト外のときは「このメールアドレスはクラウド保存の利用対象に登録されていません」という専用の案内を出す（従来の「ログイン済みです」は出ない）。既存の `getCloudSession` は、この新判定のうち`ok`だけを取り出す薄いラッパーへ整理し、既存の契約（許可リスト外はnull）は変えていない。
+`git cherry-pick 805f063` を新規ブランチ（`claude/cloud-backup-screens-integration`、最新main基点）で実行し、7ファイルの衝突を解消した。
 
-### 回帰の確認
+1. **`docs/DEVELOPMENT_BOARD.md`・`docs/account-cloud-storage-decision.md`・`docs/handoff/latest.md`**: 記述の衝突。両ブランチの内容を統合し、事実関係を現在のmainに合わせて書き直した（後述）。
+2. **`src/lib/constants.ts`**: 無関係な2つの定数追加が近接していただけ。両方を残した。
+3. **`src/lib/cloud-sync.ts`**: importの並び順だけの衝突。両方のimportを残した。
+4. **`src/app/api/cloud/snapshot/route.ts`・`route.test.ts`**: 本物の重複実装。**削除前の再認証チェックが、この2つのブランチで同じ日（2026-09-09）に独立に実装されていた**（本ブランチ側は `docs`コミットの実装、main側はPR #49の自動レビュー指摘 `68cf8c8` への対応）。mainにすでに入っていた`CloudSession`ベースの実装を残しつつ、`isRecentlyVerified`の判定本体を`cloud-reauth.ts`へ切り出す整理（設定画面ブランチ側の意図）は取り込んだ。`cloud-session.ts`はこの切り出しを自動マージで正しく吸収し、`getCloudAuthStatus`（PR #61由来）も無傷で残っている。
 
-`src/app/cloud-login/page.test.tsx` を新規作成した（9件）。修正前のコード（`getSession()`直呼び、`signOut()`のエラー未確認）に対して同じテストを走らせ、**9件中7件が実際に落ちることを確認した**うえで直した（残り2件は今回の2つの不具合と無関係な基本ケースで、修正前後どちらでも通る）。
+### 統合後に発見した事実（ドキュメントへ反映）
 
-### 追記（PR #61、自動レビューの指摘を受けて）
-
-上記1〜2の修正をPR #61として出したところ、自動レビュー（chatgpt-codex-connector）から本物の指摘が1件付いた。**6桁コードの検証に成功した直後、状態確認（`/api/cloud/session`）が通信エラーや想定外の応答で失敗すると、Cookieはもう有効なのに「未ログイン」＝メール入力画面へ戻ってしまう**という回帰。自分の直前の修正で新たに入れた不具合だった。
-
-`fetchCloudAuthOutcome`を4値（`ok`／`not_allowed`／`unauthenticated`／`unknown`）に分け、`unknown`（通信できない・想定外の応答）は「未認証」と区別した。マウント時点（何も分かっていない）では`unknown`も未ログインへ倒してよいが、検証成功直後に`unknown`が返った場合は`check_failed`という専用フェーズにして、「もう一度確認する」ボタンで再確認できるようにした。確定した401（`unauthenticated`）のときだけ、検証成功直後でもメール入力へ戻す。
-
-新設テスト3件を追加し、修正前のコードで2件（`unknown`関連）が実際に落ちることを確認したうえで直した（もう1件「確定401なら戻す」は元のコードでも正しかったため、修正前後どちらでも通る）。
+- 削除前の再認証チェックは、実は**2つの作業が同じ日に独立に同じ不具合を見つけて同じ対応をしていた**。設定画面の実装時（本コミット由来）と、PR #49の自動レビュー指摘（`fix: 自動レビューの指摘4件を直す`）の両方。mainへ実際に入ったのは後者で、今回の統合でその判定を`cloud-reauth.ts`へ切り出す整理だけを追加で取り込んだ。
 
 ## 変更ファイル
 
-- `src/app/cloud-login/page.tsx`: `not_allowed`／`check_failed`フェーズの追加、`fetchCloudAuthOutcome`で`/api/cloud/session`を叩く、サインアウトのエラー処理
-- `src/app/cloud-login/page.test.tsx`: 新規（12件）
-- `src/app/api/cloud/session/route.ts`: 新規。DBに触れない軽量な状態確認API
-- `src/app/api/cloud/session/route.test.ts`: 新規（6件）
-- `src/lib/server/cloud-session.ts`: `getCloudAuthStatus`を追加。`getCloudSession`はこれを使う薄いラッパーへ整理（既存の外部契約は不変）
-- `src/lib/server/cloud-session.test.ts`: `getCloudAuthStatus`のテストを追加（6件）
-- `docs/DEVELOPMENT_BOARD.md`: 該当2行を`完了 2026-09-12`に更新
-- `docs/account-cloud-storage-decision.md`: 11.1節の2つの不具合記述を「修正済み」に更新、11.2節の公開条件から該当2項目を削除（満たされたため）、15節に意思決定記録2行を追加
+- `src/components/shared/cloud-backup-panel.tsx` / `.test.tsx`（新規）: 設定画面。記録タブのカードとして配置（`records-tab.tsx`）。`isCloudBackupEnabled()`がfalseの間は`null`を返す
+- `src/components/shared/cloud-restore-dialog.tsx` / `.test.tsx`（新規）: 復元画面。`cloud-backup-panel.tsx`からのみ呼ばれるため、フラグOFFの間は到達不可
+- `src/lib/cloud-consent.ts` / `.test.tsx`（新規）: クラウド保存の同意。匿名分析の同意とは別の鍵で持つ
+- `src/lib/server/cloud-reauth.ts`（新規）: 削除前の再認証判定（認証基盤に依存しない純粋関数）
+- `src/lib/cloud-auto-backup.test.ts`（新規）: 保存後の自動送信のテスト
+- `src/lib/cloud-sync.ts` / `.test.ts`: 送信前の同意確認、`backupAfterSave`、`deleteCloudData`の戻り値を4状態へ
+- `src/lib/server/cloud-session.ts`: `isRecentlyVerified`を`cloud-reauth.ts`から再輸出する形へ整理（`getCloudAuthStatus`は無変更）
+- `src/app/api/cloud/snapshot/route.ts` / `.test.ts`: `isRecentlyVerified`のimport元を`cloud-reauth.ts`へ変更。DELETEの再認証ロジック自体は無変更（既にmainにあったもの）
+- `src/lib/storage.ts`: `saveRecord`成功後に`backupAfterSave()`を呼ぶ
+- `src/lib/constants.ts`: `cloudBackupConsent`の鍵を追加
+- `src/lib/copy.ts`: `cloudBackup`の文言一式
+- `src/lib/dates.ts`: `formatDateTimeLabel`、`formatDateLabel`
+- `src/components/tabs/records-tab.tsx` / `.test.tsx`: 設定画面を配置
+- `docs/DEVELOPMENT_BOARD.md`: クラウドバックアップの行を更新（設定画面・復元画面の実装を反映）
+- `docs/account-cloud-storage-decision.md`: 4節の実装状況表、11.1節（削除前の再認証・退会時アカウント削除の未実装）、15節（意思決定記録）を更新
 - `docs/handoff/latest.md`: 本ファイル
 
 ## 検証結果
 
 - `pnpm lint`: 成功（警告・エラーなし）
-- `pnpm test`: 成功（63 test files / 654 tests）
-- `pnpm build`: 成功。新しいルート `/api/cloud/session` がビルド出力に含まれることを確認した
-- 上記「回帰の確認」のとおり、修正前のコードで新設テストが実際に落ちることを確認済み
+- `pnpm test`: 成功（67 test files / 694 tests）
+- `pnpm exec tsc --noEmit`: `src/components/shared/ai-share-panel.test.tsx`で4件のエラーが出るが、**この統合と無関係の既存main上の問題**（統合前のmainでも同じエラーが出ることを確認済み）
+- `pnpm build`: 成功。`/cloud-login`・`/api/cloud/session`を含む全ルートがビルド出力に含まれることを確認した
+- `NEXT_PUBLIC_CLOUD_BACKUP_ENABLED`は設定しておらず、`CloudBackupPanel`はフラグOFFの間`null`を返すことをコードで確認した（表示テストは前ブランチの18件がそのまま通っている）
 
 ## 自動レビュー指摘
 
-- PR #61に対して chatgpt-codex-connector から1件（P2）。「6桁コード検証の直後、状態確認が通信エラーや想定外の応答で失敗すると未ログイン表示に戻ってしまう」という指摘で、実際に自分が直前の修正で入れた回帰だった。対応内容は上記「追記（PR #61、自動レビューの指摘を受けて）」のとおり。修正をコミット・プッシュ後、レビュースレッドを解決済みにする。
+- まだPRを作っていないため該当なし
 
-## 次のタスク候補
+## 次にやること
 
-`docs/handoff/latest.md`の前回の引き継ぎに書いた3件のうち、今回は不具合修正2件を終えた。残りは以下（優先順位はユーザーに確認すること）。
-
-1. **`claude/yorucare-cloud-backup-w9p805`の設定画面・復元画面コードを、最新mainへ統合する。** mainの`records-tab.tsx`・`storage.ts`・`constants.ts`・`copy.ts`・`dates.ts`・`cloud-sync.ts`・`cloud-session.ts`・`src/app/api/cloud/snapshot/route.ts`と衝突する。**今回の修正で`cloud-session.ts`と`cloud-sync.ts`にも手を入れたため、衝突箇所と内容が前回の記述から変わっている可能性がある。統合時は必ず現在のmainの内容を読み直すこと。**
-2. **`yorucare_app`ロールのパスワード再作成**（Neon Console側の作業。作成時のSQLがエディタ履歴に残っている）
-3. **別端末での復元確認**（未実施のまま）
-4. **参加者が実際に使うメール事業者での到達確認**（現在Gmail1アカウントのみ）
-5. `cursor/cloud-login-allowlist-message`（`cd69d3c`）/ `fix/cloud-login-allowlist-message`（`bd16a9d`）: ログイン確認画面の「許可リスト外でも『時間をおいてもう一度』と出る」問題（送信コード時の案内文言、今回の2件とは別）を修正する2つの候補PR。**同じ問題を再実装しないこと**
+1. **`yorucare_app`ロールのパスワード再作成**（Neon Console側の作業。作成時のSQLがエディタ履歴に残っている）
+2. **別端末での復元確認**（未実施のまま。今回の統合で復元画面のコードは揃ったので、Console設定済みのPreview環境で実際に確認できる状態になった）
+3. **参加者が実際に使うメール事業者での到達確認**（現在Gmail1アカウントのみ）
+4. **同意文面と研究・安全管理手続きの確認**（未着手・担当と期限が未定。これが済むまで本番フラグを開けない）
+5. **退会時の認証アカウント削除は未実装**（Managed Better Authの`delete-user`をアプリ側から有効化できるか未確認のまま。11.1節参照）
+6. `cursor/cloud-login-allowlist-message`（`cd69d3c`）/ `fix/cloud-login-allowlist-message`（`bd16a9d`）: ログイン確認画面の「許可リスト外でも『時間をおいてもう一度』と出る」問題（送信コード時の案内文言、今回とは別の不具合）を修正する2つの候補PR。**同じ問題を再実装しないこと**
 
 ## 引き継ぎ事項・注意点
 
-1. **新設した`GET /api/cloud/session`はDBに触れない。** `/api/cloud/snapshot`のGETは復元画面用でDBへのアクセスを伴うため、ログイン確認だけの用途には重すぎると判断し、専用の軽いエンドポイントを分けた。将来設定画面・復元画面を統合するときも、ログイン状態の確認にはこちらを使うこと。
+1. **設定画面・復元画面はまだPreviewで実機確認していない。** 自動テストと`pnpm build`のみ。Neon Consoleの設定自体は2026-09-11に完了しているため、次はPreview環境でダミーデータを使い、`/cloud-login`でログイン→記録タブの設定画面で「クラウドに預ける」→復元画面で別端末からの復元、までを通しで確認できる状態にある。
 
-2. **`getCloudSession`の外部契約は変えていない。** 既存の呼び出し元（`/api/cloud/snapshot`、`/api/cloud/device`）は無改修で、既存テスト43件がそのまま通ることを確認済み。`getCloudAuthStatus`は内部で使う新しい詳細版で、画面側が「許可リスト外」を区別して案内するために公開した。
+2. **削除前の再認証は、統合の前後でロジックが変わっていない。** mainには既にPR #49由来の実装があり、今回の統合は「判定を`cloud-reauth.ts`という独立ファイルへ切り出す」という整理だけを追加した。挙動（10分以内なら削除可、それ以外は`403 reauth_required`）は変えていない。
 
-3. **今回の2件は、記録の安全性そのものには影響していない。** 許可リスト外のアドレスでも記録APIは401で正しく拒否しており、危険だったのは画面表示の分かりにくさ（サインアウトが効いたように見える／許可リスト外でもログイン済みと出る）。データが漏れていたわけではない。
+3. **`getCloudAuthStatus`・`GET /api/cloud/session`（PR #61由来）はこの統合で変更していない。** 衝突したのは`cloud-session.ts`の`isRecentlyVerified`部分だけで、自動マージが正しく処理した。
 
-4. **`/cloud-login`はフラグOFFなら404のままで、本番画面から到達不可の状態は変わっていない。** 今回の変更もPreviewでのダミーデータ検証を前提としている。
+4. **`/cloud-login`・設定画面・復元画面はすべてフラグOFFなら到達不可のまま。** `CloudBackupPanel`がフラグを見て`null`を返し、`CloudRestoreDialog`はその内側からしか呼ばれないため、フラグOFFの間はJavaScriptには含まれるが画面には現れない。

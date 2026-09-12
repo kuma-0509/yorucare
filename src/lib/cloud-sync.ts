@@ -1,10 +1,12 @@
 import { isCloudBackupEnabled, snapshotChecksum } from "./cloud-backup";
+import { hasCloudBackupConsent } from "./cloud-consent";
 import {
   readCloudSyncState,
   writeCloudSyncState,
   type CloudSyncState,
 } from "./cloud-sync-state";
 import { SAMPLE_SELF_CARE } from "./constants";
+import { repository } from "./repository";
 import { parseExportPayload, type ExportPayload } from "./schemas";
 import type { SelfCareItem } from "./types";
 
@@ -19,7 +21,7 @@ const SNAPSHOT_URL = "/api/cloud/snapshot";
 const DEVICE_URL = "/api/cloud/device";
 
 export type PushResult =
-  /** 入口が閉じている、またはログインしていない。何もしない */
+  /** 入口が閉じている、同意していない、またはログインしていない。何もしない */
   | { status: "off" }
   /** 預かってもらえた */
   | { status: "synced"; storedAt: string; generation: number }
@@ -34,6 +36,9 @@ export type PushResult =
  */
 export async function pushSnapshot(payloadText: string): Promise<PushResult> {
   if (!isCloudBackupEnabled()) return { status: "off" };
+  // 同意していないあいだは1件も送らない。ログイン（アカウント作成）だけでは
+  // アップロードを始めないため、送信の手前で必ずここを通す
+  if (!hasCloudBackupConsent()) return { status: "off" };
 
   const state = readCloudSyncState();
   if (state.handedOverAt) {
@@ -182,14 +187,32 @@ export async function claimThisDevice(): Promise<boolean> {
   return true;
 }
 
-/** クラウド上の本人データを消す。停止と退会の両方から呼ぶ */
-export async function deleteCloudData(): Promise<boolean> {
-  if (!isCloudBackupEnabled()) return false;
+export type DeleteResult =
+  /** 入口が閉じている */
+  | "off"
+  /** 消えた。何度呼んでも消えたものとして扱う */
+  | "deleted"
+  /** 本人確認から時間が経っている。もう一度ログインしてもらう */
+  | "reauth_required"
+  /** 今回は消せなかった。もう一度試せる */
+  | "failed";
+
+/**
+ * クラウド上の本人データを消す。停止と退会の両方から呼ぶ。
+ *
+ * 取り返しのつかない操作なので、APIは直近の本人確認を求める。時間が
+ * 経っていた場合は消さずに `reauth_required` を返し、画面はもう一度の
+ * ログインを案内する。
+ */
+export async function deleteCloudData(): Promise<DeleteResult> {
+  if (!isCloudBackupEnabled()) return "off";
   try {
     const response = await fetch(SNAPSHOT_URL, { method: "DELETE" });
-    return response.status === 204;
+    if (response.status === 204) return "deleted";
+    if (response.status === 403) return "reauth_required";
+    return "failed";
   } catch {
-    return false;
+    return "failed";
   }
 }
 
@@ -298,4 +321,25 @@ export function planRestore(
  */
 export function requiresLocalBackup(plan: RestorePlan): boolean {
   return plan.kind === "choice_required";
+}
+
+/**
+ * 記録を端末に保存できた直後に、まるごと1件を預け直す。
+ *
+ * 呼び出し側は結果を待たない。ここでの失敗は記録の保存の失敗ではないため、
+ * 画面にはエラーを出さず、次の保存かアプリ起動のときに送り直す。
+ */
+export function backupAfterSave(): void {
+  if (!isCloudBackupEnabled()) return;
+  if (!hasCloudBackupConsent()) return;
+
+  void (async () => {
+    try {
+      const payload = await repository.buildExportPayload();
+      if (!payload.ok) return;
+      await pushSnapshot(JSON.stringify(payload.value));
+    } catch {
+      // 送れなくても端末への保存は終わっている。静かに次の機会へ回す
+    }
+  })();
 }

@@ -5,11 +5,8 @@ import {
   snapshotChecksum,
 } from "@/lib/cloud-backup";
 import { parseExportPayload, STORAGE_SCHEMA_VERSION } from "@/lib/schemas";
-import {
-  getCloudSession,
-  isRecentlyVerified,
-  type CloudSession,
-} from "@/lib/server/cloud-session";
+import { isRecentlyVerified } from "@/lib/server/cloud-reauth";
+import { getCloudSession, type CloudSession } from "@/lib/server/cloud-session";
 import {
   deleteAllUserData,
   getActiveDevice,
