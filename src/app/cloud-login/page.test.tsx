@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { EMAIL_NOT_ALLOWED_CODE } from "@/lib/cloud-login-errors";
+import { COPY } from "@/lib/copy";
 
 const sendVerificationOtp = vi.hoisted(() => vi.fn());
 const signInEmailOtp = vi.hoisted(() => vi.fn());
@@ -209,6 +211,79 @@ describe("CloudLoginPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("ログイン済みです。")).toBeTruthy();
+    });
+  });
+
+  describe("コード送信の案内", () => {
+    const UNKNOWN_EMAIL = "shiranai@example.com";
+
+    beforeEach(() => {
+      fetchMock.mockResolvedValue(
+        jsonResponse(401, { ok: false, reason: "unauthenticated" })
+      );
+    });
+
+    it("許可リストに無いときは待ち案内ではなく、入力確認を出す", async () => {
+      sendVerificationOtp.mockResolvedValue({
+        error: {
+          status: 403,
+          code: "feature_not_supported",
+          message: EMAIL_NOT_ALLOWED_CODE,
+        },
+      });
+
+      render(<CloudLoginPage />);
+      await waitFor(() => {
+        expect(screen.getByLabelText("メールアドレス")).toBeTruthy();
+      });
+
+      fireEvent.change(screen.getByLabelText("メールアドレス"), {
+        target: { value: UNKNOWN_EMAIL },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "コードを送る" }));
+
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toBe(COPY.cloudLogin.sendNotAllowed);
+      expect(alert.textContent).not.toContain(UNKNOWN_EMAIL);
+      expect(alert.textContent).not.toBe(COPY.cloudLogin.sendFailed);
+    });
+
+    it("403だけでも許可リスト拒否のコードが無ければ待ち案内にする", async () => {
+      sendVerificationOtp.mockResolvedValue({
+        error: { status: 403, statusText: "Forbidden" },
+      });
+
+      render(<CloudLoginPage />);
+      await waitFor(() => {
+        expect(screen.getByLabelText("メールアドレス")).toBeTruthy();
+      });
+
+      fireEvent.change(screen.getByLabelText("メールアドレス"), {
+        target: { value: "sanka@example.com" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "コードを送る" }));
+
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toBe(COPY.cloudLogin.sendFailed);
+    });
+
+    it("通信や送信の失敗では、時間をおいてもう一度と案内する", async () => {
+      sendVerificationOtp.mockResolvedValue({
+        error: { status: 500, message: "upstream" },
+      });
+
+      render(<CloudLoginPage />);
+      await waitFor(() => {
+        expect(screen.getByLabelText("メールアドレス")).toBeTruthy();
+      });
+
+      fireEvent.change(screen.getByLabelText("メールアドレス"), {
+        target: { value: "sanka@example.com" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "コードを送る" }));
+
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toBe(COPY.cloudLogin.sendFailed);
     });
   });
 
