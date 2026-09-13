@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { hasCloudBackupConsent } from "@/lib/cloud-consent";
 import { COPY } from "@/lib/copy";
 import { CloudRestoreDialog } from "./cloud-restore-dialog";
 
@@ -55,6 +56,7 @@ async function clickAsync(element: HTMLElement) {
 describe("クラウドから戻す画面", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     sync.claimThisDevice.mockResolvedValue(true);
     sync.pushSnapshot.mockResolvedValue({
       status: "synced",
@@ -107,6 +109,45 @@ describe("クラウドから戻す画面", () => {
     expect(exportLib.importBackup).toHaveBeenCalledTimes(1);
     expect(sync.claimThisDevice).toHaveBeenCalledTimes(1);
     expect(screen.getByText(CLOUD.restoreDone)).toBeTruthy();
+  });
+
+  it("戻しただけでは預け直しは始まらないことを、はっきり伝える", async () => {
+    // 戻す操作は「預けることへの同意」ではない。同意が無いあいだ、この端末の
+    // 変更はクラウドへ送られないため、「預ける端末にしました」だけで終えると
+    // 守られているつもりのまま使い続けてしまう
+    repo.buildExportPayload.mockResolvedValue({ ok: true, value: payload([]) });
+    sync.fetchCloudSnapshot.mockResolvedValue({
+      status: "found",
+      payload: payload(["2026-09-01"]),
+      storedAt: "2026-09-08T22:14:00.000Z",
+    });
+
+    await open();
+    await clickAsync(
+      screen.getByRole("button", { name: CLOUD.restoreCloudAction })
+    );
+
+    expect(hasCloudBackupConsent()).toBe(false);
+    expect(CLOUD.restoreDone).toContain("この内容を預ける");
+  });
+
+  it("端末の登録に失敗したときは、成功として終わらせない", async () => {
+    // 登録できていないと、以前の端末が預ける端末のままになる
+    repo.buildExportPayload.mockResolvedValue({ ok: true, value: payload([]) });
+    sync.fetchCloudSnapshot.mockResolvedValue({
+      status: "found",
+      payload: payload(["2026-09-01"]),
+      storedAt: "2026-09-08T22:14:00.000Z",
+    });
+    sync.claimThisDevice.mockResolvedValue(false);
+
+    await open();
+    await clickAsync(
+      screen.getByRole("button", { name: CLOUD.restoreCloudAction })
+    );
+
+    expect(screen.getByText(CLOUD.restoreDoneClaimFailed)).toBeTruthy();
+    expect(screen.queryByText(CLOUD.restoreDone)).toBeNull();
   });
 
   it("クラウドが空なら、この端末の内容を預ける", async () => {

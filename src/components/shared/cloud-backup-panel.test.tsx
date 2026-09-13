@@ -216,11 +216,44 @@ describe("クラウド保存の設定", () => {
       expect(
         await screen.findByRole("button", { name: CLOUD.restoreAction })
       ).toBeTruthy();
-      // 預けるものが無いので、預ける方は押せないままにする
-      const upload = screen.getByRole("button", {
+    });
+
+    it("日々の記録が0件でも、直した「できること」等があれば預けられる", async () => {
+      // 記録の件数だけで決めると、「できること」・「やらないこと」・復職日
+      // しか無い人が、関係の無い記録を1件作るまで預けられなくなる
+      repo.buildExportPayload.mockResolvedValue({
+        ok: true,
+        value: { ...payload, records: [] },
+      });
+      render(<CloudBackupPanel />);
+
+      const upload = (await screen.findByRole("button", {
         name: CLOUD.confirmAction,
-      }) as HTMLButtonElement;
+      })) as HTMLButtonElement;
+      expect(upload.disabled).toBe(false);
+      // 件数も出す（0件の記録と、預ける「できること」等の数）
+      expect(screen.getByText(CLOUD.confirmCounts(0, 3, 1))).toBeTruthy();
+    });
+
+    it("預けるものが何も無いときは、預ける方を押せないままにする", async () => {
+      // 見本のままの「できること」しか無い端末。`isEmptyPayload` と同じ基準
+      repo.buildExportPayload.mockResolvedValue({
+        ok: true,
+        value: {
+          ...payload,
+          records: [],
+          selfCareItems: [],
+          notToDoItems: [],
+          returnDate: null,
+        },
+      });
+      render(<CloudBackupPanel />);
+
+      const upload = (await screen.findByRole("button", {
+        name: CLOUD.confirmAction,
+      })) as HTMLButtonElement;
       expect(upload.disabled).toBe(true);
+      expect(screen.getByText(CLOUD.confirmNoRecords)).toBeTruthy();
     });
 
     it("記録の中身は画面に出さない", async () => {

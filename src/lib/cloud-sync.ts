@@ -324,22 +324,56 @@ export function requiresLocalBackup(plan: RestorePlan): boolean {
 }
 
 /**
+ * 送信中の1件。送信は必ず1件ずつにする（後述） */
+let backupInFlight: Promise<void> | null = null;
+/** 送信中に次の依頼が来たか。何度来ても、最後に1回だけ送り直せばよい */
+let backupQueued = false;
+
+/**
  * 記録を端末に保存できた直後に、まるごと1件を預け直す。
  *
  * 呼び出し側は結果を待たない。ここでの失敗は記録の保存の失敗ではないため、
  * 画面にはエラーを出さず、次の保存かアプリ起動のときに送り直す。
+ *
+ * **必ず1件ずつ送る。** 預けるのは記録全体のまるごと1件なので、続けて保存した
+ * ときに2つの送信が重なると、先に作った古い内容があとから届き、そちらが新しい
+ * 世代として残ってしまう（復元すると、保存したはずの変更が消える）。送信中に
+ * 来た依頼は「あとでもう1回」とだけ覚えておき、送信が終わってから、そのときの
+ * 最新の内容を作り直して送る。何件たまっても送り直すのは1回でよい。
  */
 export function backupAfterSave(): void {
   if (!isCloudBackupEnabled()) return;
   if (!hasCloudBackupConsent()) return;
 
-  void (async () => {
-    try {
-      const payload = await repository.buildExportPayload();
-      if (!payload.ok) return;
-      await pushSnapshot(JSON.stringify(payload.value));
-    } catch {
-      // 送れなくても端末への保存は終わっている。静かに次の機会へ回す
-    }
-  })();
+  if (backupInFlight) {
+    backupQueued = true;
+    return;
+  }
+  backupInFlight = runBackupUntilSettled();
+}
+
+async function runBackupUntilSettled(): Promise<void> {
+  try {
+    do {
+      backupQueued = false;
+      try {
+        // 送る直前に作り直す。待っているあいだの変更も、この1回に含める
+        const payload = await repository.buildExportPayload();
+        if (!payload.ok) return;
+        await pushSnapshot(JSON.stringify(payload.value));
+      } catch {
+        // 送れなくても端末への保存は終わっている。静かに次の機会へ回す
+        return;
+      }
+    } while (backupQueued);
+  } finally {
+    backupInFlight = null;
+    backupQueued = false;
+  }
+}
+
+/** テスト用に、送信中の状態を消す */
+export function _resetBackupQueueForTest(): void {
+  backupInFlight = null;
+  backupQueued = false;
 }

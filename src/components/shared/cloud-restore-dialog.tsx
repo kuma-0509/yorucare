@@ -119,9 +119,16 @@ export function CloudRestoreDialog({
       setMessage(COPY_CLOUD.restoreFailed);
       return;
     }
-    await claimThisDevice();
+    // 登録に失敗したまま「この端末を預ける端末にしました」と伝えると、
+    // 以前の端末が預ける端末のままなのに、守られているつもりになってしまう
+    const claimed = await claimThisDevice();
     setBusy(false);
-    setStage({ step: "done", message: COPY_CLOUD.restoreDone });
+    setStage({
+      step: "done",
+      message: claimed
+        ? COPY_CLOUD.restoreDone
+        : COPY_CLOUD.restoreDoneClaimFailed,
+    });
     onRestored?.();
   }
 

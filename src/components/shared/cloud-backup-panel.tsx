@@ -36,6 +36,7 @@ import {
 } from "@/lib/cloud-sync-state";
 import {
   deleteCloudData,
+  isEmptyPayload,
   pushSnapshot,
   summarizePayload,
   type SnapshotSummary,
@@ -77,6 +78,12 @@ type ConfirmKind = "stop" | "leave";
 export function CloudBackupPanel() {
   const [phase, setPhase] = useState<Phase>({ step: "loading" });
   const [localSummary, setLocalSummary] = useState<SnapshotSummary | null>(null);
+  /**
+   * 預けるものが何も無いか。記録の件数だけで判断しない。日々の記録が0件でも、
+   * 本人が直した「できること」・「やらないこと」・復職日は預ける値打ちがある
+   * （`isEmptyPayload` と同じ基準にそろえる）
+   */
+  const [localEmpty, setLocalEmpty] = useState(true);
   const [notice, setNotice] = useState<SyncNotice>({ kind: "none" });
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [restoreOpen, setRestoreOpen] = useState(false);
@@ -96,6 +103,7 @@ export function CloudBackupPanel() {
   const refreshLocalSummary = useCallback(async () => {
     const payload = await repository.buildExportPayload();
     setLocalSummary(payload.ok ? summarizePayload(payload.value) : null);
+    setLocalEmpty(payload.ok ? isEmptyPayload(payload.value) : true);
   }, []);
 
   useEffect(() => {
@@ -272,7 +280,7 @@ export function CloudBackupPanel() {
               <h3 className="text-sm font-medium text-foreground">
                 {CLOUD.confirmHeading}
               </h3>
-              {localSummary && localSummary.recordCount > 0 ? (
+              {localSummary && !localEmpty ? (
                 <div className="rounded-xl bg-muted px-3 py-2">
                   <p className="text-sm text-foreground">
                     {CLOUD.confirmCounts(
@@ -298,7 +306,7 @@ export function CloudBackupPanel() {
               <Button
                 type="button"
                 className="w-full"
-                disabled={busy || !localSummary || localSummary.recordCount === 0}
+                disabled={busy || !localSummary || localEmpty}
                 onClick={() => void handleEnable()}
               >
                 {busy ? CLOUD.confirmBusy : CLOUD.confirmAction}
