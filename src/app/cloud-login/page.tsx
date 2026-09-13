@@ -43,7 +43,9 @@ export default function CloudLoginPage() {
   const [devOwner, setDevOwner] = useState(false);
   const [diagnostics, setDiagnostics] = useState<CloudDiagnostics | null>(null);
 
-  // 検証用の状態確認。本番では経路が404になるため、何も出ない
+  // 検証用の状態確認。本番では経路が404になるため、何も出ない。
+  // 表示が変わるたびに取り直す。ログイン・ログアウトの後も古い判定を出し
+  // 続けると、原因の切り分けに使うための欄が逆に人を迷わせてしまう
   useEffect(() => {
     let cancelled = false;
     fetchCloudDiagnostics().then((result) => {
@@ -52,7 +54,7 @@ export default function CloudLoginPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [phase.step]);
 
   useEffect(() => {
     let cancelled = false;

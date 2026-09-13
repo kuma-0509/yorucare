@@ -137,6 +137,70 @@ describe("CloudLoginPage", () => {
     expect(screen.getByText("0件")).toBeTruthy();
   });
 
+  it("ログインの状態が変わったら、検証用の情報も取り直す", async () => {
+    // 取り直さないと、ログイン後も「unauthenticated」を出し続けてしまい、
+    // 原因の切り分けに使うための欄が逆に人を迷わせる
+    const diagnostics = (session: string) => ({
+      vercelEnv: "preview",
+      commit: "abcdef1",
+      branch: "claude/example",
+      cloudBackupEnabled: true,
+      allowedEmailCount: 1,
+      devOwnerConfigured: false,
+      authBaseUrlConfigured: true,
+      authBaseUrlValid: true,
+      authBaseHost: "auth.example.neon.tech",
+      cookieSecretConfigured: true,
+      session,
+      devOwnerInUse: false,
+      upstream: { reachable: true, status: 200 },
+    });
+
+    let loggedIn = false;
+    sessionFetch.mockImplementation(() =>
+      Promise.resolve(
+        loggedIn
+          ? jsonResponse(200, { ok: true })
+          : jsonResponse(401, { ok: false, reason: "unauthenticated" })
+      )
+    );
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/cloud/diagnostics")) {
+        return Promise.resolve(
+          jsonResponse(200, diagnostics(loggedIn ? "ok" : "unauthenticated"))
+        );
+      }
+      return sessionFetch(url);
+    });
+    sendVerificationOtp.mockResolvedValue({ data: {}, error: null });
+    signInEmailOtp.mockImplementation(() => {
+      loggedIn = true;
+      return Promise.resolve({ data: {}, error: null });
+    });
+
+    render(<CloudLoginPage />);
+    await waitFor(() => screen.getByLabelText("メールアドレス"));
+    expect(screen.getByText("unauthenticated")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("メールアドレス"), {
+      target: { value: "sanka@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "コードを送る" }));
+
+    await waitFor(() => screen.getByLabelText("6桁のコード"));
+    fireEvent.change(screen.getByLabelText("6桁のコード"), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "ログインする" }));
+
+    await waitFor(() => screen.getByText("ログイン済みです。"));
+    await waitFor(() => {
+      expect(screen.getByText("ok")).toBeTruthy();
+    });
+    expect(screen.queryByText("unauthenticated")).toBeNull();
+  });
+
   it("検証用の情報が読めないとき（本番）は、その欄を出さない", async () => {
     sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
 
