@@ -87,9 +87,35 @@
 | Code scanningの解析結果を定期監査で確認できない | 2026-09-10日次監査、YC-MON-CODE-SCAN、重大度：未評価（結果未確認）。[Code scanning](https://github.com/kuma-0509/yorucare/security/code-scanning)の解析メタデータ取得は404・no analysis found。対象SHA・実行結果・日時と解析の有無を非機密の証跡として `pnpm security:code-scan` で残す。解析なしと取得不能を問題0件と区別し、警告本文は破棄することをテストで固定する。機能設定の最終確認は担当者が行う。手順は `docs/security-monitoring.md` | 完了 | 2026-09-11 |
 | 公開候補の最新変更に対する必須CI合格を強制する設定を確認・整備する必要がある | 2026-09-10日次監査、YC-MON-REQUIRED-CHECKS、重大度：Medium（運用制御の不足）。GitHub取得結果ではbranchProtectionRulesと[rulesets](https://github.com/kuma-0509/yorucare/settings/rules)が空。[PR #50](https://github.com/kuma-0509/yorucare/pull/50)の先頭e91d64aにはbuild-and-test結果がなく、古いSHAの成功では代用できない。最新変更に対応するCI証跡と起動条件を確認し、必須チェック・承認・公開条件を担当者が整備して未実行・失敗時のブロックを検証する。[PR #34](https://github.com/kuma-0509/yorucare/pull/34)の開発手順統一と関連付け、実設定の証跡を残す | 未着手 | — |
 | 通常利用へ移る際の入口がレビュー協力を前提とした案内のままになっている | 2026-09-13、YC-UX-NORMAL-ENTRY、UX優先度：中、セキュリティ重大度：対象外。記録開始までの負担を減らすため、運営者が検証期間の終了と通常利用への移行条件を確認したうえで、レビュー専用の同意・協力募集を通常利用の入口から分離する。匿名利用の協力を終了する場合は新規送信を止め、既存の送信停止・送信済みデータ削除の導線と必要なデータ取扱い説明を残す。受入条件：通常利用の初回・再訪でレビューへの同意を必須にせず記録へ進め、無断の送信開始や既存の削除手段の消失がないことをダミーデータで確認する | 未着手 | — |
-| 保存に関する案内の量と再表示条件を、継続利用の負担に合わせて整理する必要がある | 2026-09-13、YC-UX-STORAGE-NOTICES、UX優先度：中、セキュリティ重大度：対象外。入力への集中を妨げないよう、保存方式の初回説明とバックアップを促す表示を区別し、確認済み案内の再表示条件・あとで閉じた場合の再通知間隔を整理する。現在の端末内保存に必要なデータ消失の説明、手動バックアップ・復元・削除の入口は残す。受入条件：確認済みの説明が通常の再訪で不要に割り込まず、バックアップ未実施・実施済み・延期後で意図した表示となり、保存失敗を成功に見せないことをダミーデータで確認する | 未着手 | — |
+| 保存に関する案内の量と再表示条件を、継続利用の負担に合わせて整理する必要がある | 2026-09-13、YC-UX-STORAGE-NOTICES、UX優先度：中、セキュリティ重大度：対象外。入力への集中を妨げないよう、保存方式の初回説明とバックアップを促す表示を区別し、確認済み案内の再表示条件・あとで閉じた場合の再通知間隔を整理する。現在の端末内保存に必要なデータ消失の説明、手動バックアップ・復元・削除の入口は残す。受入条件：確認済みの説明が通常の再訪で不要に割り込まず、バックアップ未実施・実施済み・延期後で意図した表示となり、保存失敗を成功に見せないことをダミーデータで確認する | 完了 | 2026-09-13 |
 
 ## 実行履歴
+
+### 2026-09-13
+
+実施タスク: 保存に関する案内の量と再表示条件を、継続利用の負担に合わせて整理する必要がある
+
+選択理由: 当日追加の UX 課題のうち、運営者判断を待たずに実装できるもの。初回説明とバックアップ促進が同時に出うることと、「あとで」がセッション限りであることが受入条件と食い違っていた。YC-UX-NORMAL-ENTRY は検証期間終了の確認が必要なため選ばない。YC-MON-REQUIRED-CHECKS は担当者の GitHub 設定が必要なため選ばない。
+
+実装内容: 初回説明とバックアップ促進を同時に出さない。確認済みの初回説明は通常の再訪で出さない。「あとで」は端末内に1日の再表示期限を残す。書き出し失敗ではバックアップ済みにしない。手動バックアップ・復元・削除の入口は残す。
+
+変更ファイル: `src/lib/storage-notices.ts` / `src/lib/storage-notices.test.ts` / `src/lib/backup-reminder.ts` / `src/lib/backup-reminder.test.ts` / `src/lib/export.test.ts` / `src/lib/constants.ts` / `src/components/shared/storage-notice-banner.tsx` / `src/components/shared/backup-reminder-banner.tsx` / `src/components/shared/storage-notices.test.tsx` / `src/components/shared/data-backup-panel.tsx` / `src/components/app-shell.tsx` / `src/components/tabs/records-tab.tsx` / `docs/DEVELOPMENT_BOARD.md` / `docs/handoff/latest.md`
+
+検証結果:
+
+- lint: 成功（警告・エラーなし）
+- test: 成功（67 files / 678 tests）
+- build: 成功
+
+セキュリティレビュー: 問題なし
+
+詳細: 秘密情報の追加なし。新しい依存関係なし。追加した端末内キーは再表示期限だけで、記録本文は入れない。外部送信は増やしていない。書き出し失敗ではバックアップ済み時刻を残さない。入口フラグは変更していない。
+
+残課題: レビュー協力を前提とした入口（YC-UX-NORMAL-ENTRY）は運営者の移行判断待ち。必須CI（YC-MON-REQUIRED-CHECKS）は担当者の GitHub 設定が必要。クラウド保存の設定・復元画面はフラグOFFのまま未着手。
+
+次回候補: YC-UX-NORMAL-ENTRY（運営者が検証期間の終了を確認してから）またはクラウド保存の設定・復元画面（フラグOFFのまま）
+
+PR: （作成後に記載）
 
 ### 2026-09-12
 

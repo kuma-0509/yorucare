@@ -93,12 +93,18 @@ export function AppShell() {
       >
         <AppHeader compact={todaySavedView} />
         <StorageHealthBanner />
-        <StorageNoticeBanner onNavigateTab={handleNavigateTab} />
         {!todaySavedView && (
-          <BackupReminderBanner
-            onNavigateTab={handleNavigateTab}
-            refreshKey={refreshKey}
-          />
+          <>
+            <StorageNoticeBanner
+              onNavigateTab={handleNavigateTab}
+              refreshKey={refreshKey}
+              onDismissed={bumpRefresh}
+            />
+            <BackupReminderBanner
+              onNavigateTab={handleNavigateTab}
+              refreshKey={refreshKey}
+            />
+          </>
         )}
         {activeTab === "today" && (
           <TodayRecordTab

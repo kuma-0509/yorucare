@@ -202,6 +202,9 @@ export function RecordsTab({
           void reload();
           onDataImported?.();
         }}
+        onExported={() => {
+          onDataImported?.();
+        }}
       />
 
       <AnonymousAnalyticsPanel />

@@ -144,6 +144,11 @@ export const STORAGE_KEYS = {
   analytics: "yorucare_analytics",
   analyticsConsent: "yorucare_analytics_consent",
   lastBackupAt: "yorucare_last_backup_at",
+  /**
+   * バックアップ促進を「あとで」にした期限。この時刻までは再表示しない。
+   * 記録本文は入れない
+   */
+  backupReminderSnoozedUntil: "yorucare_backup_reminder_snoozed_until",
   installId: "yorucare_install_id",
   /**
    * 削除済みの締めくくり演出が残した選択の記録。書き込む経路はもう無いが、

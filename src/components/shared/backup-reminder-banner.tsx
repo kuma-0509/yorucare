@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { COPY } from "@/lib/copy";
-import { getBackupReminder } from "@/lib/backup-reminder";
+import { snoozeBackupReminder } from "@/lib/backup-reminder";
+import { getVisibleStorageNotice } from "@/lib/storage-notices";
 import type { AppTab } from "@/lib/types";
 
 interface BackupReminderBannerProps {
@@ -12,12 +13,10 @@ interface BackupReminderBannerProps {
   refreshKey?: number;
 }
 
-const SNOOZE_KEY = "yorucare_backup_reminder_snoozed";
-
 /**
  * 最終バックアップからの経過を検知して、能動的にファイル保存を促すバナー。
- * 受動的な案内（StorageNoticeBanner）と違い、保存が必要なときだけ出る。
- * セッション中は「あとで」で一時的に閉じられる。
+ * 初回の保存説明（StorageNoticeBanner）とは出さない。保存が必要なときだけ出る。
+ * 「あとで」は端末内に期限を残し、期限までは再表示しない。
  */
 export function BackupReminderBanner({
   onNavigateTab,
@@ -27,21 +26,9 @@ export function BackupReminderBanner({
 
   useEffect(() => {
     let active = true;
-    let snoozed = false;
-    try {
-      snoozed = sessionStorage.getItem(SNOOZE_KEY) === "1";
-    } catch {
-      snoozed = false;
-    }
-    if (snoozed) {
-      setVisible(false);
-      return () => {
-        active = false;
-      };
-    }
-    void getBackupReminder().then((result) => {
+    void getVisibleStorageNotice().then((result) => {
       if (active) {
-        setVisible(result.ok && result.value.shouldRemind);
+        setVisible(result.ok && result.value === "backup_reminder");
       }
     });
     return () => {
@@ -50,11 +37,7 @@ export function BackupReminderBanner({
   }, [refreshKey]);
 
   const snooze = () => {
-    try {
-      sessionStorage.setItem(SNOOZE_KEY, "1");
-    } catch {
-      /* ignore */
-    }
+    snoozeBackupReminder();
     setVisible(false);
   };
 
@@ -64,6 +47,7 @@ export function BackupReminderBanner({
     <div
       className="mb-4 rounded-2xl border-2 border-caution-border/60 bg-caution px-4 py-3"
       role="status"
+      data-testid="backup-reminder-banner"
     >
       <div className="flex items-start gap-2">
         <Download

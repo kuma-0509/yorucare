@@ -23,11 +23,15 @@ import { storageErrorMessage } from "@/lib/result";
 
 interface DataBackupPanelProps {
   onImported?: () => void;
+  onExported?: () => void;
 }
 
 const MAX_BACKUP_FILE_BYTES = 2 * 1024 * 1024;
 
-export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
+export function DataBackupPanel({
+  onImported,
+  onExported,
+}: DataBackupPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pendingImport, setPendingImport] = useState<string | null>(null);
@@ -44,6 +48,7 @@ export function DataBackupPanel({ onImported }: DataBackupPanelProps) {
       return;
     }
     setMessage("記録をファイルで保存しました。");
+    onExported?.();
   };
 
   const handleImport = (file: File) => {
