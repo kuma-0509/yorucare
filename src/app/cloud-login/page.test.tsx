@@ -29,10 +29,22 @@ function jsonResponse(status: number, body: unknown): Response {
 
 describe("CloudLoginPage", () => {
   const fetchMock = vi.fn();
+  /** `/api/cloud/session` への呼び出しだけを受け持つ差し替え */
+  const sessionFetch = vi.fn();
 
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
     fetchMock.mockReset();
+    sessionFetch.mockReset();
+    // 検証用の状態確認（`/api/cloud/diagnostics`）は、本番と同じく404にしておく。
+    // 画面はこの経路が404なら何も出さない
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/cloud/diagnostics")) {
+        return Promise.resolve(new Response(null, { status: 404 }));
+      }
+      return sessionFetch(url);
+    });
     sendVerificationOtp.mockReset();
     signInEmailOtp.mockReset();
     signOut.mockReset();
@@ -46,7 +58,7 @@ describe("CloudLoginPage", () => {
   });
 
   it("確認中は「確認しています…」を出し、未ログインならメール入力へ進む", async () => {
-    fetchMock.mockResolvedValue(jsonResponse(401, { ok: false, reason: "unauthenticated" }));
+    sessionFetch.mockResolvedValue(jsonResponse(401, { ok: false, reason: "unauthenticated" }));
 
     render(<CloudLoginPage />);
     expect(screen.getByText("確認しています…")).toBeTruthy();
@@ -57,7 +69,7 @@ describe("CloudLoginPage", () => {
   });
 
   it("サーバーが許可済みと答えたときだけ「ログイン済みです」を出す", async () => {
-    fetchMock.mockResolvedValue(jsonResponse(200, { ok: true }));
+    sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
 
     render(<CloudLoginPage />);
 
@@ -69,7 +81,7 @@ describe("CloudLoginPage", () => {
   it("Preview用の固定IDで通っているときは、その旨をはっきり出す", async () => {
     // これが出ていないと、固定IDで通っただけの画面を「本物のログインが
     // できている」「許可リストが効いている」と読み違えてしまう
-    fetchMock.mockResolvedValue(jsonResponse(200, { ok: true, devOwner: true }));
+    sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true, devOwner: true }));
 
     render(<CloudLoginPage />);
 
@@ -81,7 +93,7 @@ describe("CloudLoginPage", () => {
   });
 
   it("本物のログインで通っているときは、固定IDの断りを出さない", async () => {
-    fetchMock.mockResolvedValue(jsonResponse(200, { ok: true }));
+    sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
 
     render(<CloudLoginPage />);
 
@@ -89,8 +101,53 @@ describe("CloudLoginPage", () => {
     expect(screen.queryByText(/検証用の固定IDで表示しています/)).toBeNull();
   });
 
+  it("検証用の情報が読めるときは、どのコミットで動いているかを画面に出す", async () => {
+    // 環境変数を直したのに画面が変わらないとき、古いデプロイのURLを開いた
+    // ままなのかどうかを、開発者ツールなしで見分けられるようにする
+    sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/cloud/diagnostics")) {
+        return Promise.resolve(
+          jsonResponse(200, {
+            vercelEnv: "preview",
+            commit: "abcdef1",
+            branch: "claude/example",
+            cloudBackupEnabled: true,
+            allowedEmailCount: 0,
+            devOwnerConfigured: false,
+            authBaseUrlConfigured: true,
+            authBaseUrlValid: true,
+            authBaseHost: "auth.example.neon.tech",
+            cookieSecretConfigured: true,
+            session: "ok",
+            devOwnerInUse: false,
+            upstream: { reachable: true, status: 200 },
+          })
+        );
+      }
+      return sessionFetch(url);
+    });
+
+    render(<CloudLoginPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("abcdef1（claude/example）")).toBeTruthy();
+    });
+    expect(screen.getByText("0件")).toBeTruthy();
+  });
+
+  it("検証用の情報が読めないとき（本番）は、その欄を出さない", async () => {
+    sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
+
+    render(<CloudLoginPage />);
+
+    await waitFor(() => screen.getByText("ログイン済みです。"));
+    expect(screen.queryByText(/検証用の情報/)).toBeNull();
+  });
+
   it("Better Authのセッションはあるが許可リスト外のときは、専用の案内を出す", async () => {
-    fetchMock.mockResolvedValue(
+    sessionFetch.mockResolvedValue(
       jsonResponse(403, { ok: false, reason: "not_allowed" })
     );
 
@@ -108,7 +165,7 @@ describe("CloudLoginPage", () => {
   });
 
   it("通信できないときは、待たされたままにせず未ログイン扱いで進める", async () => {
-    fetchMock.mockRejectedValue(new TypeError("network error"));
+    sessionFetch.mockRejectedValue(new TypeError("network error"));
 
     render(<CloudLoginPage />);
 
@@ -118,7 +175,7 @@ describe("CloudLoginPage", () => {
   });
 
   it("コード検証後は、サーバーの判定を取り直してから表示を決める", async () => {
-    fetchMock
+    sessionFetch
       .mockResolvedValueOnce(jsonResponse(401, { ok: false, reason: "unauthenticated" }))
       .mockResolvedValueOnce(jsonResponse(403, { ok: false, reason: "not_allowed" }));
     sendVerificationOtp.mockResolvedValue({ data: {}, error: null });
@@ -148,7 +205,7 @@ describe("CloudLoginPage", () => {
   });
 
   it("コード検証は成功したのに状態確認が通信できないときは、未ログイン表示へ倒さない", async () => {
-    fetchMock
+    sessionFetch
       .mockResolvedValueOnce(jsonResponse(401, { ok: false, reason: "unauthenticated" }))
       .mockRejectedValueOnce(new TypeError("network error"));
     sendVerificationOtp.mockResolvedValue({ data: {}, error: null });
@@ -180,7 +237,7 @@ describe("CloudLoginPage", () => {
   });
 
   it("状態確認が401（未認証）を明確に返したときだけ、コード検証後もメール入力へ戻す", async () => {
-    fetchMock
+    sessionFetch
       .mockResolvedValueOnce(jsonResponse(401, { ok: false, reason: "unauthenticated" }))
       .mockResolvedValueOnce(jsonResponse(401, { ok: false, reason: "unauthenticated" }));
     sendVerificationOtp.mockResolvedValue({ data: {}, error: null });
@@ -206,7 +263,7 @@ describe("CloudLoginPage", () => {
   });
 
   it("「もう一度確認する」で確認し直し、成功すればログイン済み表示になる", async () => {
-    fetchMock
+    sessionFetch
       .mockResolvedValueOnce(jsonResponse(401, { ok: false, reason: "unauthenticated" }))
       .mockRejectedValueOnce(new TypeError("network error"))
       .mockResolvedValueOnce(jsonResponse(200, { ok: true }));
@@ -237,7 +294,7 @@ describe("CloudLoginPage", () => {
 
   describe("ログアウト", () => {
     it("成功したときだけ未ログイン表示へ切り替える", async () => {
-      fetchMock.mockResolvedValue(jsonResponse(200, { ok: true }));
+      sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
       signOut.mockResolvedValue({ data: {}, error: null });
 
       render(<CloudLoginPage />);
@@ -251,7 +308,7 @@ describe("CloudLoginPage", () => {
     });
 
     it("サーバーがエラーを返したときは、未ログイン表示へ切り替えない", async () => {
-      fetchMock.mockResolvedValue(jsonResponse(200, { ok: true }));
+      sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
       signOut.mockResolvedValue({
         data: null,
         error: { message: "Invalid origin", status: 403, code: "INVALID_ORIGIN" },
@@ -275,7 +332,7 @@ describe("CloudLoginPage", () => {
     });
 
     it("例外が起きたときも、未ログイン表示へ切り替えない", async () => {
-      fetchMock.mockResolvedValue(jsonResponse(200, { ok: true }));
+      sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
       signOut.mockRejectedValue(new TypeError("network error"));
 
       render(<CloudLoginPage />);
@@ -294,7 +351,7 @@ describe("CloudLoginPage", () => {
     });
 
     it("許可リスト外の案内画面からも、失敗時は表示を保つ", async () => {
-      fetchMock.mockResolvedValue(
+      sessionFetch.mockResolvedValue(
         jsonResponse(403, { ok: false, reason: "not_allowed" })
       );
       signOut.mockResolvedValue({

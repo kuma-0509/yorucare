@@ -9,6 +9,11 @@ import {
   describeAuthError,
   fetchCloudAuthState,
 } from "@/lib/cloud-auth-status";
+import {
+  describeDiagnostics,
+  fetchCloudDiagnostics,
+  type CloudDiagnostics,
+} from "@/lib/cloud-diagnostics";
 
 /**
  * クラウドバックアップの本人確認が動くかどうかだけを確かめる、最小限の画面。
@@ -36,6 +41,18 @@ export default function CloudLoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [devOwner, setDevOwner] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<CloudDiagnostics | null>(null);
+
+  // 検証用の状態確認。本番では経路が404になるため、何も出ない
+  useEffect(() => {
+    let cancelled = false;
+    fetchCloudDiagnostics().then((result) => {
+      if (!cancelled) setDiagnostics(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -287,6 +304,27 @@ export default function CloudLoginPage() {
         <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
+      )}
+
+      {diagnostics && (
+        <details className="rounded-xl border border-border px-3 py-2">
+          <summary className="cursor-pointer text-sm text-muted-foreground">
+            検証用の情報（この画面がどの設定で動いているか）
+          </summary>
+          <dl className="mt-2 space-y-1">
+            {describeDiagnostics(diagnostics).map((row) => (
+              <div key={row.label} className="flex gap-2 text-xs">
+                <dt className="shrink-0 text-muted-foreground">{row.label}</dt>
+                <dd className="break-all text-foreground">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            環境変数を直したのに変わらないときは、「いま動いているコミット」を
+            確かめてください。Vercelはデプロイのたびに新しいURLを作り、環境変数は
+            デプロイごとに焼き付くため、古いURLを開いたままだと何も変わりません。
+          </p>
+        </details>
       )}
     </main>
   );
