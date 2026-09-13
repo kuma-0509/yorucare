@@ -9,7 +9,10 @@
  * 5. 実行ログに出るフォームの編集URLを開く
  *
  * 期待する列（1行目がヘッダー）
- * form / section / qid / required / question / type / options / rows / note
+ * form / section / qid / required / question / type / options / rows / help / note
+ *
+ * help … 回答者に見せる補足。フォームの説明文として表示する
+ * note … 運営向けのメモ。フォームには出さない（参加者に見せてはいけない）
  *
  * type の値
  * 説明 / 記述 / 段落 / ラジオ / チェックボックス / グリッド / 目盛
@@ -63,7 +66,8 @@ function buildFormFromActiveSheet() {
     var type = String(row[col.type]).trim();
     var options = splitList(row[col.options]);
     var gridRows = splitList(row[col.rows]);
-    var note = col.note !== undefined ? String(row[col.note]).trim() : '';
+    // help だけを回答者に見せる。note は運営メモなのでフォームに出さない
+    var help = col.help !== undefined ? String(row[col.help]).trim() : '';
 
     if (type === '説明') {
       return; // 冒頭の説明文はフォームの説明に入れてあるので項目にしない
@@ -78,25 +82,25 @@ function buildFormFromActiveSheet() {
 
     switch (type) {
       case '記述':
-        form.addTextItem().setTitle(label).setHelpText(note).setRequired(required);
+        form.addTextItem().setTitle(label).setHelpText(help).setRequired(required);
         break;
       case '段落':
-        form.addParagraphTextItem().setTitle(label).setHelpText(note).setRequired(required);
+        form.addParagraphTextItem().setTitle(label).setHelpText(help).setRequired(required);
         break;
       case 'ラジオ':
-        form.addMultipleChoiceItem().setTitle(label).setHelpText(note)
+        form.addMultipleChoiceItem().setTitle(label).setHelpText(help)
           .setChoiceValues(options).setRequired(required);
         break;
       case 'チェックボックス':
-        form.addCheckboxItem().setTitle(label).setHelpText(note)
+        form.addCheckboxItem().setTitle(label).setHelpText(help)
           .setChoiceValues(options).setRequired(required);
         break;
       case 'グリッド':
-        form.addGridItem().setTitle(label).setHelpText(note)
+        form.addGridItem().setTitle(label).setHelpText(help)
           .setRows(gridRows).setColumns(options).setRequired(required);
         break;
       case '目盛':
-        form.addScaleItem().setTitle(label).setHelpText(note)
+        form.addScaleItem().setTitle(label).setHelpText(help)
           .setBounds(Number(options[0]), Number(options[1]))
           .setLabels(options[2] || '', options[3] || '')
           .setRequired(required);

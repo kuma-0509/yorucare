@@ -7,6 +7,136 @@ Googleフォームを作らせるための指示文です。
 
 ---
 
+## プロンプト0：作成済みフォームから運営メモを消す（作成済みなら最優先）
+
+最初の生成スクリプトが、CSVの `note` 列（運営向けメモ）を回答者向けの説明として
+表示していました。「効果を過大に見せないため必須にする」「正確な日数は運営記録から取る」
+などが参加者に見えてしまうため、**参加者へ配る前に必ず実行してください。**
+
+> **添付するファイル**：最新の `01_pre.csv` / `02_weekly.csv` / `03_post.csv` / `04_withdrawal.csv`（`help` 列が増えた10列版）
+
+```text
+作成済みのGoogleフォーム4つについて、設問の説明文（ヘルプテキスト）だけを直してください。
+設問文・選択肢・必須設定・順番は絶対に触らないでください。
+
+# 何が起きているか
+フォームを作ったときのスクリプトが、CSVの note 列（運営向けの内部メモ）を
+回答者向けの説明として表示してしまっています。
+例:「効果を過大に見せないため必須にする」「正確な日数は運営記録から取る」
+これらは参加者に見せてはいけない文です。
+
+# 直したあとの正しい状態
+- CSVの help 列に文が入っている設問 … その文だけを説明として表示する
+- help 列が空の設問 … 説明を何も表示しない（空にする）
+- note 列 … どの設問にも表示しない
+
+# 手順
+1. 設問定義スプレッドシート【URL】を開く。
+2. 4つのシートを、添付した最新CSV（help列がある10列版）で取り込み直す。
+   シート名は pre / weekly / post / withdrawal のままにする。
+3. 拡張機能 > Apps Script を開き、新しいファイルを追加して、
+   この指示の末尾にある【スクリプト】をそのまま貼り付けて保存する。
+4. 関数 fixAllForms を実行する。
+5. 実行ログに出る「消した件数／書き換えた件数」を報告する。
+6. 事後フォームを実際に開いて、次の3つの設問に運営メモが残っていないことを目視で確認する。
+   - Q8（プログラム以外で影響したこと）
+   - A1（どのくらいの頻度で記録できましたか）
+   - SL11（睡眠について、一番変わったのはどれですか）
+
+# 絶対に守ること
+1. 設問文を変えない。選択肢を変えない。必須設定を変えない。順番を変えない。
+2. スクリプトを書き直さない。そのまま貼って実行する。
+3. FORM_IDS の値は既に入っている。合っているか確認だけして、勝手に別のIDへ変えない。
+4. 「定義に無いqid」がログに出たら、勝手に直さず私に報告する。
+
+# 報告してほしいこと
+| フォーム | 説明を消した件数 | 書き換えた件数 | 定義に無いqid |
+|---|---|---|---|
+| pre | | | |
+| weekly | | | |
+| post | | | |
+| withdrawal | | | |
+
+あわせて、手順6の目視確認の結果も書いてください。
+
+────────────────────────────────
+■ 【スクリプト】ここから下をそのまま Apps Script に貼る
+────────────────────────────────
+var FORM_IDS = {
+  pre:        '1dDo-qXIQM7ZPCheqzezCLlPyoaGmM17hSvrWpxuEUZE',
+  weekly:     '15_ktnv03k4_9KnMMLHe3Q4uY8Qa2yyqq1zvTWeSsjNQ',
+  post:       '1MQzKwDia7GffdUjcUALe0UujMfiVF6oq_e1xYYZVi5I',
+  withdrawal: '1Ik8hD-fvsoimrI23y-Wcxh8_95X9omAAQe57qI7bJ6k'
+};
+
+function fixAllForms() {
+  Object.keys(FORM_IDS).forEach(function (sheetName) {
+    fixOneForm(sheetName, FORM_IDS[sheetName]);
+  });
+}
+
+function fixOneForm(sheetName, formId) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet) throw new Error('シートが見つかりません: ' + sheetName);
+
+  var values = sheet.getDataRange().getValues();
+  var header = values[0].map(function (v) { return String(v).trim(); });
+  var col = {};
+  header.forEach(function (name, i) { col[name] = i; });
+  if (col.help === undefined) {
+    throw new Error('help列がありません。最新のCSVを取り込み直してください: ' + sheetName);
+  }
+
+  // qid -> help の対応表を作る
+  var helpByQid = {};
+  values.slice(1).forEach(function (row) {
+    var qid = String(row[col.qid]).trim();
+    if (qid && qid !== '-') helpByQid[qid] = String(row[col.help]).trim();
+  });
+
+  var form = FormApp.openById(formId);
+  var updated = 0, cleared = 0, unmatched = [];
+
+  form.getItems().forEach(function (item) {
+    var title = item.getTitle();
+    var m = title.match(/^([A-Za-z0-9\-]+)\.\s/); // 「A1. 」「S1-S7. 」などの接頭辞
+    if (!m) return;
+
+    var qid = m[1];
+    if (!(qid in helpByQid)) { unmatched.push(qid); return; }
+
+    var desired = helpByQid[qid];
+    var typed = asTypedItem(item);
+    if (!typed) return;
+
+    var current = typed.getHelpText();
+    if (current === desired) return;
+
+    typed.setHelpText(desired);
+    if (desired === '') cleared++; else updated++;
+  });
+
+  Logger.log(
+    sheetName + ': 説明を消した ' + cleared + '件 / 書き換えた ' + updated + '件' +
+    (unmatched.length ? ' / 定義に無いqid: ' + unmatched.join(',') : '')
+  );
+}
+
+function asTypedItem(item) {
+  switch (item.getType()) {
+    case FormApp.ItemType.TEXT:           return item.asTextItem();
+    case FormApp.ItemType.PARAGRAPH_TEXT: return item.asParagraphTextItem();
+    case FormApp.ItemType.MULTIPLE_CHOICE:return item.asMultipleChoiceItem();
+    case FormApp.ItemType.CHECKBOX:       return item.asCheckboxItem();
+    case FormApp.ItemType.GRID:           return item.asGridItem();
+    case FormApp.ItemType.SCALE:          return item.asScaleItem();
+    default:                              return null;
+  }
+}
+```
+
+---
+
 ## プロンプト1：Googleフォームを4つ作らせる（メイン・これ1本で完結）
 
 > **添付するファイル**：`01_pre.csv` / `02_weekly.csv` / `03_post.csv` / `04_withdrawal.csv`
