@@ -111,6 +111,7 @@ describe("CloudLoginPage", () => {
         return Promise.resolve(
           jsonResponse(200, {
             vercelEnv: "preview",
+            origin: "https://yorucare.example",
             commit: "abcdef1",
             branch: "claude/example",
             cloudBackupEnabled: true,
@@ -142,6 +143,7 @@ describe("CloudLoginPage", () => {
     // 原因の切り分けに使うための欄が逆に人を迷わせる
     const diagnostics = (session: string) => ({
       vercelEnv: "preview",
+      origin: "https://yorucare.example",
       commit: "abcdef1",
       branch: "claude/example",
       cloudBackupEnabled: true,
@@ -386,7 +388,7 @@ describe("CloudLoginPage", () => {
       await waitFor(() => {
         expect(
           screen.getByText(
-            "ログアウトできませんでした。時間をおいてもう一度お試しください。（詳細: 403 INVALID_ORIGIN）"
+            /ログアウトできませんでした。.*（詳細: 403 INVALID_ORIGIN）.*Domains/
           )
         ).toBeTruthy();
       });
@@ -435,7 +437,7 @@ describe("CloudLoginPage", () => {
       await waitFor(() => {
         expect(
           screen.getByText(
-            "ログアウトできませんでした。時間をおいてもう一度お試しください。（詳細: 403 INVALID_ORIGIN）"
+            /ログアウトできませんでした。.*（詳細: 403 INVALID_ORIGIN）.*Domains/
           )
         ).toBeTruthy();
       });

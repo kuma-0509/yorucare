@@ -7,6 +7,7 @@ import {
 
 const BASE: CloudDiagnostics = {
   vercelEnv: "preview",
+  origin: "https://yorucare.example",
   commit: "abcdef1",
   branch: "claude/example",
   cloudBackupEnabled: true,
@@ -59,6 +60,10 @@ describe("describeDiagnostics", () => {
     const row = describeDiagnostics(diagnostics).find((r) => r.label === label);
     return row?.value ?? "";
   }
+
+  it("Domainsへ登録すべきURLを、そのままの形で出す", () => {
+    expect(valueOf(BASE, "この画面のURL")).toBe("https://yorucare.example");
+  });
 
   it("いま動いているコミットとブランチを並べる", () => {
     expect(valueOf(BASE, "いま動いているコミット")).toBe(

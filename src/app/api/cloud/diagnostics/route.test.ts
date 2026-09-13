@@ -93,6 +93,7 @@ describe("/api/cloud/diagnostics", () => {
     const body = await response.json();
     expect(body).toMatchObject({
       vercelEnv: "preview",
+      origin: ORIGIN,
       commit: "abcdef1",
       branch: "claude/example",
       allowedEmailCount: 2,

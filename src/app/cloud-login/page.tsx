@@ -8,6 +8,7 @@ import { cloudAuthClient } from "@/lib/cloud-auth-client";
 import {
   describeAuthError,
   fetchCloudAuthState,
+  hintForSignOutError,
 } from "@/lib/cloud-auth-status";
 import {
   describeDiagnostics,
@@ -145,7 +146,7 @@ export default function CloudLoginPage() {
         // 「ログアウトしたつもり」が成立してしまう。
         // 併せて、原因の切り分けに要る最低限（状態番号）を画面に出す
         setError(
-          `ログアウトできませんでした。時間をおいてもう一度お試しください。${describeAuthError(signOutError)}`
+          `ログアウトできませんでした。時間をおいてもう一度お試しください。${describeAuthError(signOutError)}${hintForSignOutError(signOutError)}`
         );
         return;
       }

@@ -80,3 +80,17 @@ export function describeAuthError(error: unknown): string {
 
   return parts.length > 0 ? `（詳細: ${parts.join(" ")}）` : "";
 }
+
+/**
+ * ログアウトが403で断られたときだけ出す手がかり。
+ *
+ * SDKは403をすべて `feature_not_supported` という名前に置き換えてしまうため、
+ * 符号からは原因が分からない。この案件で実際に起きた403は、Managed Better Auth
+ * の「Domains」に画面のURLが登録されていない場合だった（2026-09-11に実測。
+ * ログインは通るのにサインアウトだけが失敗する）。検証用の画面でだけ出す。
+ */
+export function hintForSignOutError(error: unknown): string {
+  if (typeof error !== "object" || error === null) return "";
+  if ((error as { status?: unknown }).status !== 403) return "";
+  return "この画面のURLが、Managed Better Authの「Domains」に登録されていない可能性があります（下の「検証用の情報」の『この画面のURL』を、そのまま登録してください）。";
+}

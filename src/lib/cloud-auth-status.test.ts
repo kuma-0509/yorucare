@@ -3,6 +3,7 @@ import {
   describeAuthError,
   fetchCloudAuthOutcome,
   fetchCloudAuthState,
+  hintForSignOutError,
 } from "./cloud-auth-status";
 
 function jsonResponse(status: number, body: unknown): Response {
@@ -117,5 +118,22 @@ describe("describeAuthError", () => {
     const long = "E".repeat(80);
     const described = describeAuthError({ status: 500, code: long });
     expect(described).toBe(`（詳細: 500 ${"E".repeat(40)}）`);
+  });
+});
+
+describe("hintForSignOutError", () => {
+  it("403のときだけ、Domains未登録の可能性を案内する", () => {
+    // SDKは403をすべて feature_not_supported に置き換えるため、符号からは
+    // 原因が分からない。この案件で実際に起きた403はDomains未登録だった
+    expect(
+      hintForSignOutError({ status: 403, code: "feature_not_supported" })
+    ).toContain("Domains");
+  });
+
+  it("403以外には何も足さない", () => {
+    expect(hintForSignOutError({ status: 401 })).toBe("");
+    expect(hintForSignOutError({ status: 500 })).toBe("");
+    expect(hintForSignOutError(new TypeError("network error"))).toBe("");
+    expect(hintForSignOutError(null)).toBe("");
   });
 });

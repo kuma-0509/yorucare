@@ -6,6 +6,7 @@
  */
 export type CloudDiagnostics = {
   vercelEnv: string | null;
+  origin: string;
   commit: string | null;
   branch: string | null;
   cloudBackupEnabled: boolean;
@@ -40,6 +41,7 @@ export function describeDiagnostics(
 
   return [
     { label: "環境", value: diagnostics.vercelEnv ?? "（ローカル）" },
+    { label: "この画面のURL", value: diagnostics.origin },
     {
       label: "いま動いているコミット",
       value: diagnostics.commit

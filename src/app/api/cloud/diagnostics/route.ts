@@ -24,6 +24,13 @@ const UPSTREAM_PROBE_TIMEOUT_MS = 3_000;
 type Diagnostics = {
   /** どのデプロイを見ているか */
   vercelEnv: string | null;
+  /**
+   * この画面のURL（オリジン）。Managed Better Auth の「Domains」へ登録するのは
+   * この値そのもの。登録が無いと、ログインは通るのにサインアウトだけが403で
+   * 失敗する（2026-09-11に実測）。デプロイのたびにURLが変わるため、
+   * 「いま見ている画面のURL」を画面に出して取り違えを防ぐ
+   */
+  origin: string;
   commit: string | null;
   branch: string | null;
   /** 設定が入っているか（中身は返さない） */
@@ -110,6 +117,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const diagnostics: Diagnostics = {
     vercelEnv: process.env.VERCEL_ENV ?? null,
+    origin: new URL(request.url).origin,
     commit: (process.env.VERCEL_GIT_COMMIT_SHA ?? "").slice(0, 7) || null,
     branch: process.env.VERCEL_GIT_COMMIT_REF ?? null,
     cloudBackupEnabled: true,
