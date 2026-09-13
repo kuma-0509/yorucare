@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cloudAuthClient } from "@/lib/cloud-auth-client";
-import { fetchCloudAuthOutcome } from "@/lib/cloud-auth-status";
+import {
+  describeAuthError,
+  fetchCloudAuthState,
+} from "@/lib/cloud-auth-status";
 
 /**
  * クラウドバックアップの本人確認が動くかどうかだけを確かめる、最小限の画面。
@@ -32,11 +35,13 @@ export default function CloudLoginPage() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [devOwner, setDevOwner] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetchCloudAuthOutcome().then((outcome) => {
+    fetchCloudAuthState().then(({ outcome, devOwner: isDevOwner }) => {
       if (cancelled) return;
+      setDevOwner(isDevOwner);
       // マウント時点では何も分かっていないため、判定不能（unknown）も
       // 未認証と同じくメール入力から始めさせてよい
       if (outcome === "ok") setPhase({ step: "signed_in" });
@@ -102,7 +107,8 @@ export default function CloudLoginPage() {
    * 出す。確定した401（`unauthenticated`）のときだけメール入力へ戻す。
    */
   async function recheckAfterSignIn() {
-    const outcome = await fetchCloudAuthOutcome();
+    const { outcome, devOwner: isDevOwner } = await fetchCloudAuthState();
+    setDevOwner(isDevOwner);
     if (outcome === "ok") setPhase({ step: "signed_in" });
     else if (outcome === "not_allowed") setPhase({ step: "not_allowed" });
     else if (outcome === "unauthenticated") setPhase({ step: "enter_email" });
@@ -117,15 +123,16 @@ export default function CloudLoginPage() {
       if (signOutError) {
         // 失敗したのに「ログアウトした」表示へ切り替えない。サーバー側の
         // セッションが生きたままなのに未ログイン表示になると、共有端末で
-        // 「ログアウトしたつもり」が成立してしまう
+        // 「ログアウトしたつもり」が成立してしまう。
+        // 併せて、原因の切り分けに要る最低限（状態番号）を画面に出す
         setError(
-          "ログアウトできませんでした。時間をおいてもう一度お試しください。"
+          `ログアウトできませんでした。時間をおいてもう一度お試しください。${describeAuthError(signOutError)}`
         );
         return;
       }
-    } catch {
+    } catch (caught) {
       setError(
-        "ログアウトできませんでした。時間をおいてもう一度お試しください。"
+        `ログアウトできませんでした。時間をおいてもう一度お試しください。${describeAuthError(caught)}`
       );
       return;
     } finally {
@@ -147,6 +154,18 @@ export default function CloudLoginPage() {
           行いません。
         </p>
       </div>
+
+      {devOwner && (
+        <p
+          role="status"
+          className="rounded-xl bg-muted px-3 py-2 text-sm leading-relaxed text-foreground"
+        >
+          検証用の固定IDで表示しています（USER_DATA_DEV_OWNER_ID
+          が設定されています）。この状態では、実際のログイン結果や許可リストの
+          判定を確かめられません。確かめたいときは、この環境変数を外してから
+          もう一度お試しください。
+        </p>
+      )}
 
       {phase.step === "checking" && (
         <p className="text-sm text-muted-foreground">確認しています…</p>

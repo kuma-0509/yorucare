@@ -39,6 +39,11 @@ export type CloudSession = {
  *
  * 本番では、環境変数が設定されていても使わない。実データを預ける経路を
  * 認証なしで開けないようにするため、ここは二重に塞いでおく。
+ *
+ * この抜け道は「ログインしていないとき」の代わりにしか使わない
+ * （`getCloudAuthStatus` を参照）。先に使ってしまうと、本物のログイン状態や
+ * 許可リストの結果を覆い隠し、Preview環境での実機確認が何も確かめられない
+ * ものになる。
  */
 function developmentOwnerId(): string | null {
   if (process.env.VERCEL_ENV === "production") return null;
@@ -88,18 +93,38 @@ type UserFields = {
  * `unauthenticated` と `not_allowed` に分けて公開する。
  */
 export type CloudAuthStatus =
-  | { status: "ok"; session: CloudSession }
+  | {
+      status: "ok";
+      session: CloudSession;
+      /** 本物のログインではなく、Preview専用の固定IDで通したか */
+      devOwner?: true;
+    }
   | { status: "not_allowed" }
   | { status: "unauthenticated" };
 
 export async function getCloudAuthStatus(
   _request: Request
 ): Promise<CloudAuthStatus> {
+  const real = await getRealAuthStatus();
+  if (real.status !== "unauthenticated") return real;
+
+  // 本物のログインが無いときだけ、Preview専用の固定IDへ落とす。順序が逆だと
+  // 「ログインできていない」「許可リストから外れている」という本当の状態を
+  // 固定IDが覆い隠してしまう
   const devOwnerId = developmentOwnerId();
   if (devOwnerId) {
-    return { status: "ok", session: { ownerId: devOwnerId, verifiedAt: new Date() } };
+    return {
+      status: "ok",
+      session: { ownerId: devOwnerId, verifiedAt: new Date() },
+      devOwner: true,
+    };
   }
 
+  return real;
+}
+
+/** 固定IDの抜け道を使わない、本物のログイン状態だけの判定 */
+async function getRealAuthStatus(): Promise<CloudAuthStatus> {
   const auth = getNeonAuth();
   if (!auth) return { status: "unauthenticated" };
 

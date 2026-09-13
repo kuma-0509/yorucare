@@ -147,6 +147,22 @@ describe("/api/auth/[...path]", () => {
       });
     });
 
+    it("本文の無い要求（ブラウザのサインアウト）は、本文を足さずに転送する", async () => {
+      // 空文字を本文として付けると「本文なし」が「長さ0の本文あり」に変わり、
+      // 転送先での本文の解釈が変わることがある
+      const handlerPost = handlerPostMock();
+
+      const response = await POST(
+        new Request(`${ORIGIN}/api/auth/sign-out`, { method: "POST" }),
+        { params: Promise.resolve({ path: ["sign-out"] }) }
+      );
+
+      expect(response.status).toBe(200);
+      expect(handlerPost).toHaveBeenCalledTimes(1);
+      const forwarded = handlerPost.mock.calls[0][0] as Request;
+      expect(forwarded.body).toBeNull();
+    });
+
     it("メールアドレスを含まない要求（サインアウト等）はそのまま通す", async () => {
       const handlerPost = handlerPostMock();
 

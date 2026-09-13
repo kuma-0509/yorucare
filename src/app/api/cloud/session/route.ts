@@ -29,7 +29,14 @@ export async function GET(request: Request): Promise<NextResponse> {
   const status = await getCloudAuthStatus(request);
 
   if (status.status === "ok") {
-    return NextResponse.json({ ok: true }, { headers: NO_STORE_HEADERS });
+    // `devOwner` は Preview専用の固定ID（USER_DATA_DEV_OWNER_ID）で通したとき
+    // だけ真になる。本番では `getCloudAuthStatus` がこの抜け道を使わないため、
+    // 常に出ない。画面がこの印を出すことで、「本物のログイン結果を見ている
+    // つもりが、実は固定IDで通っていた」という取り違えを防ぐ
+    return NextResponse.json(
+      status.devOwner ? { ok: true, devOwner: true } : { ok: true },
+      { headers: NO_STORE_HEADERS }
+    );
   }
 
   if (status.status === "not_allowed") {

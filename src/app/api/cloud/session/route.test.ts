@@ -64,6 +64,18 @@ describe("/api/cloud/session", () => {
     await expect(response.json()).resolves.toEqual({ ok: true });
   });
 
+  it("Preview用の固定IDで通ったときは devOwner の印を添える", async () => {
+    // 画面が「本物のログイン結果を見ているつもり」で取り違えないようにする
+    getCloudAuthStatus.mockResolvedValue({
+      status: "ok",
+      session: { ownerId: "preview-owner-1", verifiedAt: new Date() },
+      devOwner: true,
+    });
+    const response = await GET(request());
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true, devOwner: true });
+  });
+
   it("Better Authのセッションはあるが許可リスト外なら403 not_allowedを返す", async () => {
     getCloudAuthStatus.mockResolvedValue({ status: "not_allowed" });
     const response = await GET(request());

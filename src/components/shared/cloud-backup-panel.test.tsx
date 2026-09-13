@@ -384,8 +384,13 @@ describe("クラウド保存の設定", () => {
 
         // クラウド上の控えはすでに消えている
         expect(sync.deleteCloudData).toHaveBeenCalledTimes(1);
+        // 原因の切り分けに要る最低限（状態番号）を添えて出す
         expect(
-          (await screen.findAllByText(CLOUD.leaveSignOutFailed)).length
+          (
+            await screen.findAllByText(
+              `${CLOUD.leaveSignOutFailed}（詳細: 403 INVALID_ORIGIN）`
+            )
+          ).length
         ).toBeGreaterThan(0);
         // 「ログインから出た」表示（未ログイン扱い）へは切り替えない
         expect(screen.queryByText(CLOUD.leaveDone)).toBeNull();

@@ -66,6 +66,29 @@ describe("CloudLoginPage", () => {
     });
   });
 
+  it("Preview用の固定IDで通っているときは、その旨をはっきり出す", async () => {
+    // これが出ていないと、固定IDで通っただけの画面を「本物のログインが
+    // できている」「許可リストが効いている」と読み違えてしまう
+    fetchMock.mockResolvedValue(jsonResponse(200, { ok: true, devOwner: true }));
+
+    render(<CloudLoginPage />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/検証用の固定IDで表示しています/)
+      ).toBeTruthy();
+    });
+  });
+
+  it("本物のログインで通っているときは、固定IDの断りを出さない", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { ok: true }));
+
+    render(<CloudLoginPage />);
+
+    await waitFor(() => screen.getByText("ログイン済みです。"));
+    expect(screen.queryByText(/検証用の固定IDで表示しています/)).toBeNull();
+  });
+
   it("Better Authのセッションはあるが許可リスト外のときは、専用の案内を出す", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse(403, { ok: false, reason: "not_allowed" })
@@ -242,7 +265,7 @@ describe("CloudLoginPage", () => {
       await waitFor(() => {
         expect(
           screen.getByText(
-            "ログアウトできませんでした。時間をおいてもう一度お試しください。"
+            "ログアウトできませんでした。時間をおいてもう一度お試しください。（詳細: 403 INVALID_ORIGIN）"
           )
         ).toBeTruthy();
       });
@@ -291,7 +314,7 @@ describe("CloudLoginPage", () => {
       await waitFor(() => {
         expect(
           screen.getByText(
-            "ログアウトできませんでした。時間をおいてもう一度お試しください。"
+            "ログアウトできませんでした。時間をおいてもう一度お試しください。（詳細: 403 INVALID_ORIGIN）"
           )
         ).toBeTruthy();
       });

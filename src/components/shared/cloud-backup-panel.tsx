@@ -20,7 +20,10 @@ import { CloudRestoreDialog } from "@/components/shared/cloud-restore-dialog";
 import { LiveRegion } from "@/components/shared/live-region";
 import { isCloudBackupEnabled } from "@/lib/cloud-backup";
 import { cloudAuthClient } from "@/lib/cloud-auth-client";
-import { fetchCloudAuthOutcome } from "@/lib/cloud-auth-status";
+import {
+  describeAuthError,
+  fetchCloudAuthOutcome,
+} from "@/lib/cloud-auth-status";
 import {
   hasCloudBackupConsent,
   saveCloudBackupConsent,
@@ -205,7 +208,11 @@ export function CloudBackupPanel() {
         // すでに消えているため、状態としては「ログイン済みで預けていない」
         // に一致する
         setPhase({ step: "not_enabled" });
-        setMessage(CLOUD.leaveSignOutFailed);
+        // 原因の切り分けに要る最低限（状態番号）を添える。実機確認では
+        // 開発者ツールを開かないと応答が見えないため、画面に出しておく
+        setMessage(
+          `${CLOUD.leaveSignOutFailed}${describeAuthError(signOutError)}`
+        );
         return;
       }
 

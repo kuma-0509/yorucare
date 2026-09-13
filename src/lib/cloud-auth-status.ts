@@ -12,19 +12,71 @@
  */
 export type CloudAuthOutcome = "ok" | "not_allowed" | "unauthenticated" | "unknown";
 
-export async function fetchCloudAuthOutcome(): Promise<CloudAuthOutcome> {
+export type CloudAuthState = {
+  outcome: CloudAuthOutcome;
+  /**
+   * Preview専用の固定ID（`USER_DATA_DEV_OWNER_ID`）で通っているか。
+   *
+   * 真のときは、画面の「使える」表示が本物のログイン結果ではない。実機確認で
+   * 「ログインできたつもり」「許可リストが効いているつもり」の取り違えが
+   * 起きるため、画面はこの印を必ず本人に見せる。本番では常に偽。
+   */
+  devOwner: boolean;
+};
+
+/** 状態と、Preview専用の固定IDで通ったかどうかを合わせて取り出す */
+export async function fetchCloudAuthState(): Promise<CloudAuthState> {
   try {
     const response = await fetch("/api/cloud/session", { method: "GET" });
-    if (response.status === 200) return "ok";
-    if (response.status === 401) return "unauthenticated";
+    if (response.status === 200) {
+      const body = (await response.json().catch(() => null)) as {
+        devOwner?: unknown;
+      } | null;
+      return { outcome: "ok", devOwner: body?.devOwner === true };
+    }
+    if (response.status === 401) {
+      return { outcome: "unauthenticated", devOwner: false };
+    }
     if (response.status === 403) {
       const body = (await response.json().catch(() => null)) as {
         reason?: unknown;
       } | null;
-      if (body?.reason === "not_allowed") return "not_allowed";
+      if (body?.reason === "not_allowed") {
+        return { outcome: "not_allowed", devOwner: false };
+      }
     }
   } catch {
     // 通信できない場合は判定不能として扱う
   }
-  return "unknown";
+  return { outcome: "unknown", devOwner: false };
+}
+
+export async function fetchCloudAuthOutcome(): Promise<CloudAuthOutcome> {
+  return (await fetchCloudAuthState()).outcome;
+}
+
+/**
+ * ログアウトなど、認証SDKの失敗を画面に出すときの補足。
+ *
+ * 「できませんでした」だけでは、実機確認でしか出ない失敗の原因を切り分け
+ * られない（Preview環境は開発者ツールを開かないと応答が見えない）。そこで
+ * HTTPの状態番号と、あれば短い符号だけを添える。メールアドレスや6桁コード
+ * のような本人の情報は、SDKのエラーにも含まれないものだけを選んで出す。
+ */
+export function describeAuthError(error: unknown): string {
+  if (typeof error !== "object" || error === null) return "";
+
+  const record = error as { status?: unknown; statusText?: unknown; code?: unknown };
+  const parts: string[] = [];
+  if (typeof record.status === "number") parts.push(String(record.status));
+
+  const code =
+    typeof record.code === "string"
+      ? record.code
+      : typeof record.statusText === "string"
+        ? record.statusText
+        : "";
+  if (code) parts.push(code.slice(0, 40));
+
+  return parts.length > 0 ? `（詳細: ${parts.join(" ")}）` : "";
 }
