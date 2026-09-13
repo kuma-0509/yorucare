@@ -3,32 +3,41 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { COPY } from "@/lib/copy";
-import { STORAGE_KEYS } from "@/lib/constants";
+import {
+  dismissStorageNotice,
+  getVisibleStorageNotice,
+} from "@/lib/storage-notices";
 import type { AppTab } from "@/lib/types";
 
 interface StorageNoticeBannerProps {
   onNavigateTab?: (tab: AppTab) => void;
+  refreshKey?: number;
+  onDismissed?: () => void;
 }
 
-export function StorageNoticeBanner({ onNavigateTab }: StorageNoticeBannerProps) {
+export function StorageNoticeBanner({
+  onNavigateTab,
+  refreshKey = 0,
+  onDismissed,
+}: StorageNoticeBannerProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    try {
-      const dismissed = localStorage.getItem(STORAGE_KEYS.storageNoticeDismissed);
-      setVisible(dismissed !== "1");
-    } catch {
-      setVisible(false);
-    }
-  }, []);
+    let active = true;
+    void getVisibleStorageNotice().then((result) => {
+      if (active) {
+        setVisible(result.ok && result.value === "storage_notice");
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [refreshKey]);
 
   const dismiss = () => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.storageNoticeDismissed, "1");
-    } catch {
-      /* ignore */
-    }
+    dismissStorageNotice();
     setVisible(false);
+    onDismissed?.();
   };
 
   if (!visible) return null;
@@ -37,6 +46,7 @@ export function StorageNoticeBanner({ onNavigateTab }: StorageNoticeBannerProps)
     <div
       className="mb-4 rounded-2xl border-2 border-border bg-muted/60 px-4 py-3"
       role="status"
+      data-testid="storage-notice-banner"
     >
       <p className="text-sm leading-relaxed text-foreground">
         {COPY.storageDeviceOnly}

@@ -6,6 +6,8 @@ import { ok, type Result } from "./result";
 export const FIRST_BACKUP_GRACE_DAYS = 3;
 /** 前回バックアップからの再通知しきい値（日数） */
 export const BACKUP_REMINDER_INTERVAL_DAYS = 7;
+/** 「あとで」を選んだあとに再表示するまでの間隔（日数） */
+export const BACKUP_SNOOZE_DAYS = 1;
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -72,11 +74,56 @@ export function getLastBackupAt(): string | null {
   }
 }
 
-/** ファイル保存が成功したときに記録する */
+export function getBackupSnoozedUntil(): string | null {
+  if (!isBrowser()) return null;
+  try {
+    return localStorage.getItem(STORAGE_KEYS.backupReminderSnoozedUntil);
+  } catch {
+    return null;
+  }
+}
+
+export function isBackupReminderSnoozed(
+  snoozedUntil: string | null,
+  now: Date
+): boolean {
+  if (!snoozedUntil) return false;
+  const until = new Date(snoozedUntil);
+  if (Number.isNaN(until.getTime())) return false;
+  return now.getTime() < until.getTime();
+}
+
+/** 「あとで」を選んだときに、次の再表示期限を残す */
+export function snoozeBackupReminder(now: Date = new Date()): void {
+  if (!isBrowser()) return;
+  try {
+    const until = new Date(
+      now.getTime() + BACKUP_SNOOZE_DAYS * MS_PER_DAY
+    );
+    localStorage.setItem(
+      STORAGE_KEYS.backupReminderSnoozedUntil,
+      until.toISOString()
+    );
+  } catch {
+    /* 期限の保存に失敗しても本処理は継続する */
+  }
+}
+
+export function clearBackupReminderSnooze(): void {
+  if (!isBrowser()) return;
+  try {
+    localStorage.removeItem(STORAGE_KEYS.backupReminderSnoozedUntil);
+  } catch {
+    /* 期限の削除に失敗しても本処理は継続する */
+  }
+}
+
+/** ファイル保存が成功したときに記録する。失敗した経路からは呼ばない */
 export function recordBackupDone(now: Date = new Date()): void {
   if (!isBrowser()) return;
   try {
     localStorage.setItem(STORAGE_KEYS.lastBackupAt, now.toISOString());
+    clearBackupReminderSnooze();
   } catch {
     /* バックアップ時刻の保存に失敗しても本処理は継続する */
   }
