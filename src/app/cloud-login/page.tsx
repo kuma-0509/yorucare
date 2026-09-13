@@ -15,6 +15,8 @@ import {
   fetchCloudDiagnostics,
   type CloudDiagnostics,
 } from "@/lib/cloud-diagnostics";
+import { cloudLoginSendFailureReason } from "@/lib/cloud-login-errors";
+import { COPY } from "@/lib/copy";
 
 /**
  * クラウドバックアップの本人確認が動くかどうかだけを確かめる、最小限の画面。
@@ -35,6 +37,11 @@ type Phase =
   | { step: "enter_email" }
   | { step: "enter_code" };
 
+function sendCodeErrorMessage(error: unknown): string {
+  return cloudLoginSendFailureReason(error) === "not_allowed"
+    ? COPY.cloudLogin.sendNotAllowed
+    : COPY.cloudLogin.sendFailed;
+}
 export default function CloudLoginPage() {
   const [phase, setPhase] = useState<Phase>({ step: "checking" });
   const [email, setEmail] = useState("");
@@ -83,13 +90,13 @@ export default function CloudLoginPage() {
         type: "sign-in",
       });
       if (sendError) {
-        setError("コードを送れませんでした。時間をおいてもう一度お試しください。");
+        setError(sendCodeErrorMessage(sendError));
         return;
       }
       setCode("");
       setPhase({ step: "enter_code" });
-    } catch {
-      setError("コードを送れませんでした。時間をおいてもう一度お試しください。");
+    } catch (sendException) {
+      setError(sendCodeErrorMessage(sendException));
     } finally {
       setBusy(false);
     }
