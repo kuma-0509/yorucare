@@ -115,7 +115,7 @@
 
 次回候補: YC-UX-NORMAL-ENTRY（運営者が検証期間の終了を確認してから）またはクラウド保存の設定・復元画面（フラグOFFのまま）
 
-PR: （作成後に記載）
+PR: https://github.com/kuma-0509/yorucare/pull/64
 
 ### 2026-09-12
 
