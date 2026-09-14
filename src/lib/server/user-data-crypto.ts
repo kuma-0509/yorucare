@@ -116,6 +116,11 @@ export function isUserDataKeyConfigured(): boolean {
   }
 }
 
+/** いま包み直しに使う親鍵の版。鍵そのものは返さない */
+export function currentUserDataKeyVersion(): string {
+  return loadKeyRing().current.version;
+}
+
 /**
  * 暗号文に結び付ける付加データ。所有者・スキーマ版・世代を含めることで、
  * 別の利用者や別の世代の暗号文を持ち込んでも復号できないようにする。
