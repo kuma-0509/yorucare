@@ -14,6 +14,8 @@
 3. `pnpm user-data:rewrap-keys` を追加した。既定は確認だけ。`--apply` で `key_version` と `wrapped_dek` だけ更新する。記録本文は復号しない。
 4. アプリ用ロール（RLSあり）では全件が見えないため、`USER_DATA_KEY_ROTATION_DATABASE_URL`（ownerロール、Vercelに置かない）を必須にし、`rolbypassrls` が偽なら止める。
 
+PR: https://github.com/kuma-0509/yorucare/pull/67
+
 ### 検証結果
 
 - `pnpm lint`: 成功（警告・エラーなし）
