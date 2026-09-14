@@ -1,0 +1,10 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0,   "y": 0, "w": 816, "h": 1145, "title": "表面（募集）", "print": "fixed" },
+    { "file": "Back.dc.html", "x": 936, "y": 0, "w": 816, "h": 1145, "title": "裏面（申し込む前に）", "print": "fixed" }
+  ],
+  "annotations": [
+    { "id": "spec", "x": 0, "y": -150, "w": 900, "text": "A4両面・塗り足し3mm込み 816×1145px（96dpi）\n文字は 11 / 14 / 18 / 22 / 28 / 35 の6段階のみ。余白は8pxベース。\n情報を足すときは余白を削らず、各面の「予備の余白」（表47px・裏27px）を使ってください。" }
+  ],
+  "launch": { "view": "canvas" }
+}

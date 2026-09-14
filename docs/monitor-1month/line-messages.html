@@ -1,0 +1,395 @@
+<title>ヨルケア公式LINE 返信文面集</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --ground:#eef1f5;
+    --paper:#ffffff;
+    --bubble:#ffffff;
+    --bubble-line:#dde3ea;
+    --ink:#1f2b3d;
+    --ink-soft:#5a6a7e;
+    --ink-faint:#8a95a5;
+    --navy:#1f3a5f;
+    --blue:#356a9f;
+    --blue-pale:#e8eff7;
+    --rule:#dde3ea;
+    --caution-bg:#fdf3e7;
+    --caution-ink:#8a5320;
+    --caution-line:#d98b4f;
+    --ok:#2d6a4a;
+    --ok-bg:#e6f2ea;
+    --chan:#06c755;
+    --shadow:0 1px 2px rgba(31,43,61,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#141920;
+      --paper:#1b212a;
+      --bubble:#242c37;
+      --bubble-line:#333d4a;
+      --ink:#e7ecf3;
+      --ink-soft:#a9b5c4;
+      --ink-faint:#7d8896;
+      --navy:#9dc0e0;
+      --blue:#8fb6dd;
+      --blue-pale:#23303f;
+      --rule:#2c3541;
+      --caution-bg:#2e2418;
+      --caution-ink:#e8b483;
+      --caution-line:#b3762f;
+      --ok:#8fd0ab;
+      --ok-bg:#1d2b23;
+      --shadow:0 1px 2px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#141920;
+    --paper:#1b212a;
+    --bubble:#242c37;
+    --bubble-line:#333d4a;
+    --ink:#e7ecf3;
+    --ink-soft:#a9b5c4;
+    --ink-faint:#7d8896;
+    --navy:#9dc0e0;
+    --blue:#8fb6dd;
+    --blue-pale:#23303f;
+    --rule:#2c3541;
+    --caution-bg:#2e2418;
+    --caution-ink:#e8b483;
+    --caution-line:#b3762f;
+    --ok:#8fd0ab;
+    --ok-bg:#1d2b23;
+    --shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',Meiryo,sans-serif;
+    line-height:1.75;
+    font-size:15px;
+  }
+  .wrap{ max-width:760px; margin:0 auto; padding-block:40px 72px; padding-left:20px; padding-right:20px; }
+
+  h1,h2,h3{ font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif; text-wrap:balance; margin:0; }
+  h1{ font-size:30px; font-weight:900; line-height:1.35; letter-spacing:.01em; }
+  h2{ font-size:20px; font-weight:700; color:var(--navy); }
+  h3{ font-size:16px; font-weight:700; }
+
+  .lede{ color:var(--ink-soft); margin:12px 0 0; max-width:62ch; }
+  .eyebrow{ font-size:12px; font-weight:700; letter-spacing:.14em; color:var(--blue); display:flex; align-items:center; gap:8px; }
+  .eyebrow::before{ content:""; width:10px; height:10px; border-radius:3px; background:var(--chan); flex:none; }
+
+  header{ border-bottom:1px solid var(--rule); padding-bottom:28px; margin-bottom:8px; }
+
+  section{ margin-top:48px; }
+  .sec-head{ display:flex; flex-direction:column; gap:6px; margin-bottom:20px; }
+  .sec-note{ color:var(--ink-soft); font-size:14px; max-width:62ch; }
+
+  /* トーク画面を模した並び */
+  .thread{ display:flex; flex-direction:column; gap:20px; }
+  .msg{ display:flex; flex-direction:column; gap:6px; }
+  .msg-meta{
+    display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+    font-size:12px; color:var(--ink-faint);
+  }
+  .msg-no{
+    font-weight:700; color:var(--paper); background:var(--navy);
+    border-radius:999px; padding:1px 9px; font-size:11px; letter-spacing:.04em;
+  }
+  .msg-name{ font-weight:700; color:var(--ink-soft); font-size:13px; }
+  .count{ margin-left:auto; font-variant-numeric:tabular-nums; }
+  .count b{ color:var(--ok); font-weight:700; }
+  .bubble{
+    background:var(--bubble); border:1px solid var(--bubble-line);
+    border-radius:4px 16px 16px 16px; padding:16px 18px;
+    white-space:pre-wrap; box-shadow:var(--shadow);
+    font-size:14.5px; line-height:1.85;
+  }
+  .bubble .ph{ color:var(--blue); font-weight:700; background:var(--blue-pale); padding:0 4px; border-radius:3px; }
+
+  .steps{ display:flex; flex-direction:column; gap:10px; margin:0; padding:0; list-style:none; counter-reset:s; }
+  .steps li{ display:flex; gap:12px; align-items:flex-start; }
+  .steps li::before{
+    counter-increment:s; content:counter(s);
+    flex:none; width:22px; height:22px; border-radius:50%;
+    background:var(--blue-pale); color:var(--blue);
+    font-size:12px; font-weight:700; display:grid; place-items:center; margin-top:3px;
+  }
+
+  .callout{
+    background:var(--caution-bg); border-left:4px solid var(--caution-line);
+    border-radius:0 12px 12px 0; padding:16px 20px; color:var(--caution-ink);
+  }
+  .callout h3{ color:var(--caution-ink); margin-bottom:6px; }
+  .callout p{ margin:0; font-size:14px; }
+  .callout p + p{ margin-top:10px; }
+
+  .swap{ background:var(--paper); border:1px solid var(--rule); border-radius:12px; padding:16px 18px; margin-top:14px; }
+  .swap .lbl{ font-size:12px; font-weight:700; color:var(--ink-faint); letter-spacing:.08em; display:block; margin-bottom:8px; }
+  .swap pre{ margin:0; white-space:pre-wrap; font-family:inherit; font-size:14px; line-height:1.85; }
+
+  .placeholders{ display:grid; gap:10px; }
+  .ph-row{
+    display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.4fr); gap:4px 20px;
+    background:var(--paper); border:1px solid var(--rule); border-radius:12px; padding:12px 16px;
+  }
+  .ph-row dt{ font-weight:700; color:var(--blue); font-size:14px; }
+  .ph-row dd{ margin:0; color:var(--ink-soft); font-size:14px; }
+
+  .tablewrap{ overflow-x:auto; }
+  table{ border-collapse:collapse; width:100%; font-size:14px; background:var(--paper); border-radius:12px; overflow:hidden; }
+  caption{ text-align:left; color:var(--ink-soft); font-size:13px; padding-bottom:10px; }
+  th,td{ text-align:left; padding:9px 14px; border-bottom:1px solid var(--rule); vertical-align:top; }
+  thead th{ background:var(--blue-pale); color:var(--navy); font-weight:700; font-size:13px; white-space:nowrap; }
+  tbody tr:last-child th, tbody tr:last-child td{ border-bottom:0; }
+  td.where{ white-space:nowrap; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .chip{ display:inline-block; background:var(--ok-bg); color:var(--ok); font-size:12px; font-weight:700; padding:1px 8px; border-radius:999px; }
+
+  footer{ margin-top:56px; padding-top:20px; border-top:1px solid var(--rule); color:var(--ink-faint); font-size:13px; }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ヨルケア公式アカウント @615ixfwt</div>
+    <h1 style="margin-top:10px;">公式LINE 返信文面集</h1>
+    <p class="lede">友だち追加した人に自動で届く5通と、そのあと運営から送るメッセージの文面です。そのままコピーして、LINE公式アカウントの管理画面に貼り付けてください。5か月仕様が定める「申込前に必ず説明する12項目」は、すべてこの5通に含めています。</p>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <h2>どこに貼り付けるか</h2>
+      <p class="sec-note">LINE公式アカウントの管理画面（LINE Official Account Manager）で、2か所を設定します。</p>
+    </div>
+    <ol class="steps">
+      <li><b>あいさつメッセージ</b>　友だち追加した瞬間に自動で届きます。ここに下の5通を、上から順に入れます。1つの吹き出しにつき500文字まで、最大5通までです。</li>
+      <li><b>応答メッセージ（キーワード応答）</b>　特定の言葉が送られてきたときに自動で返します。「やめたい」「休みます」の2つを設定します。</li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>あいさつメッセージ（自動・5通）</h2>
+      <p class="sec-note">上から順に1通ずつ入れてください。文字数は500字の上限に対する実測値です。</p>
+    </div>
+
+    <div class="thread">
+
+      <div class="msg">
+        <div class="msg-meta"><span class="msg-no">1</span><span class="msg-name">あいさつ</span><span class="count"><b>189</b> / 500文字</span></div>
+        <div class="bubble">ヨルケア公式LINEへのご登録、ありがとうございます。
+
+「夜の20分から始める、セルフケア習慣。」
+4週間の無料モニター（10/20〜11/15・6名限定）のご案内です。
+
+このあと4通、申し込む前に知っておいていただきたいことをお送りします。最後に、お申し込みのご案内があります。
+
+わからないことは、このトークにそのまま送ってください。伊藤・熊谷のどちらかがお返事します。</div>
+      </div>
+
+      <div class="msg">
+        <div class="msg-meta"><span class="msg-no">2</span><span class="msg-name">いつ・どのくらい</span><span class="count"><b>267</b> / 500文字</span></div>
+        <div class="bubble">【いつ・どのくらい】
+
+期間｜2026年10月20日（火）〜11月15日（日）の4週間
+
+・火／木 21:00〜21:20　夜のストレッチ
+　※どちらか片方だけの参加でもかまいません
+・日 21:00〜21:20　疲労回復ストレッチ
+・日 21:25〜21:45　振り返りの会
+・毎日1〜2分　ヨルケアアプリに記録
+
+1週間の合計は、およそ60〜80分です。
+Zoomを使います。カメラOFF・座ったままで参加できます。
+
+振り返りの会は3名ずつ・2グループに分かれます。当日の出席状況によって、人数やグループが変わることがあります。</div>
+      </div>
+
+      <div class="msg">
+        <div class="msg-meta"><span class="msg-no">3</span><span class="msg-name">必ずお読みください（1/2）</span><span class="count"><b>302</b> / 500文字</span></div>
+        <div class="bubble">【申し込む前に、必ずお読みください（1/2）】
+
+■ 定員は6名です
+6名になり次第、締め切ります。申込締切は10月13日（火）です。
+
+■ 研究とプログラム改善のためのモニター募集です
+参加費は無料です。あわせて、アンケート2回（参加前・参加後／各15分程度）とアプリでの記録にご協力をお願いしています。ご協力は任意で、いつでも取りやめられます。
+
+■ 記録は、あなたの端末の中に残ります
+アプリに書いた内容はご自身の端末に保存され、運営者も原則として見ることはできません。勤務先や支援機関へ共有されることもありません。アプリの記録を生成AIで整理する機能もありますが、使うかどうかはご本人の任意です。</div>
+      </div>
+
+      <div class="msg">
+        <div class="msg-meta"><span class="msg-no">4</span><span class="msg-name">必ずお読みください（2/2）</span><span class="count"><b>336</b> / 500文字</span></div>
+        <div class="bubble">【申し込む前に、必ずお読みください（2/2）】
+
+■ 途中でやめられます
+休んだ日や、記録が書けなかった日があっても、それだけを理由に参加を終わりにすることはありません。やめたいときは、このトークに一言お送りください。
+
+■ 医療ではありません
+ヨルケアは医療行為ではなく、診断・治療の代わりになるものではありません。効果や症状の改善を保証するものではありません。主治医から運動を制限されている方は、参加をお控えください。
+
+■ 急ぎのときは、こちらではなく医療機関へ
+アプリやアンケートの内容は、リアルタイムには確認していません。夜間・休日の見守りは行っていません。体調が急に悪くなったときは、かかりつけの医療機関や、お住まいの地域の相談窓口・119番へご連絡ください。</div>
+      </div>
+
+      <div class="msg">
+        <div class="msg-meta"><span class="msg-no">5</span><span class="msg-name">お申し込み</span><span class="count"><b>196</b> / 500文字</span></div>
+        <div class="bubble">【お申し込みは、この3つです】
+
+① 申込フォームに回答（5分ほど）
+▶ <span class="ph">（Googleフォームのリンク）</span>
+
+② ヨルケアアプリを開く
+▶ <span class="ph">（アプリのリンク）</span>
+
+③ 当日、Zoomに入る
+▶ <span class="ph">（ZoomのURL）</span>
+
+申込締切：10月13日（火）／定員6名
+主催：株式会社mimococo ／ 担当者レンタル
+お問い合わせ：yorucare.yuki.kumagai@gmail.com</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>差し替えが必要な3か所</h2>
+      <p class="sec-note">5通目の色がついた部分を、実際のURLに置き換えてください。</p>
+    </div>
+    <div class="placeholders">
+      <dl class="ph-row"><dt>（Googleフォームのリンク）</dt><dd>同意と申し込みを兼ねたフォームのURL</dd></dl>
+      <dl class="ph-row"><dt>（アプリのリンク）</dt><dd>https://yorucare.vercel.app</dd></dl>
+      <dl class="ph-row"><dt>（ZoomのURL）</dt><dd>4週間ずっと同じ部屋を使うなら定期ミーティングのURL</dd></dl>
+    </div>
+
+    <div class="callout" style="margin-top:24px;">
+      <h3>ZoomのURLだけは、渡す相手を絞ることをおすすめします</h3>
+      <p>5通目は「登録時に3つとも送る」という当初の設計どおりに書いています。ただしこの形だと、<b>友だち追加した人は誰でもZoomの部屋に入れる状態</b>になります。申し込んでいない人が夜のセッションに入ってくると、参加者の安心が崩れます。</p>
+      <p>気になる場合は、5通目を下の文面に差し替えて、ZoomのURLはフォーム回答後に個別に送ってください。文字数は178文字です。</p>
+      <div class="swap">
+        <span class="lbl">差し替え版・5通目</span>
+        <pre>【お申し込みは、この3ステップです】
+
+① 下の申込フォームに回答（5分ほど）
+▶ （Googleフォームのリンク）
+
+② 折り返し、参加前アンケート（15分程度）をお送りします
+
+③ 開始までに、ヨルケアアプリとZoomのURLをお送りします
+
+申込締切：10月13日（火）／定員6名
+主催：株式会社mimococo ／ 担当者レンタル
+お問い合わせ：yorucare.yuki.kumagai@gmail.com</pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>申し込みのあとに送るメッセージ</h2>
+      <p class="sec-note">こちらは自動ではなく、運営から手で送ります。</p>
+    </div>
+    <div class="thread">
+
+      <div class="msg">
+        <div class="msg-meta"><span class="msg-name">フォーム回答を受け取ったとき</span></div>
+        <div class="bubble">お申し込みありがとうございます。参加が確定しました。
+
+開始までに、次の2つをお送りします。
+・参加前アンケート（15分程度）
+・ヨルケアアプリとZoomのURL
+
+10月17日（金）ごろに、接続の確認とオリエンテーションの時間を設けます。日時が決まりましたら、あらためてご連絡します。
+
+何か気になることがあれば、いつでもこのトークにお送りください。</div>
+      </div>
+
+      <div class="msg">
+        <div class="msg-meta"><span class="msg-name">開始前日（10月19日）</span></div>
+        <div class="bubble">明日10月20日（火）21:00から、ヨルケアの4週間がはじまります。
+
+ZoomのURLはこちらです。
+▶ <span class="ph">（ZoomのURL）</span>
+
+カメラはOFFのままで大丈夫です。座ったままでも、横になったままでも参加できます。途中で抜けても構いません。
+
+体調がすぐれない日は、無理せずお休みください。お待ちしています。</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>キーワード応答（自動）</h2>
+      <p class="sec-note">送られてきた言葉に反応して自動で返します。どちらも、そのあと運営が必ず個別に返信してください。</p>
+    </div>
+    <div class="thread">
+
+      <div class="msg">
+        <div class="msg-meta"><span class="msg-name">キーワード：やめたい／退会／中止</span></div>
+        <div class="bubble">ご連絡ありがとうございます。承りました。
+
+理由をお聞かせいただく必要はありません。手続きはこちらで進めますので、これ以上の操作は不要です。
+
+もしよろしければ、差し支えのない範囲で「どんなところが続けにくかったか」を教えていただけると、今後の改善に役立ちます。答えなくても、まったく問題ありません。
+
+ここまでご参加いただき、ありがとうございました。</div>
+      </div>
+
+      <div class="msg">
+        <div class="msg-meta"><span class="msg-name">キーワード：休みます／欠席／今日は</span></div>
+        <div class="bubble">ご連絡ありがとうございます。承りました。ゆっくりお休みください。
+
+お休みが続いても、参加が終わりになることはありません。次に出られそうなときに、また入っていただければ大丈夫です。</div>
+      </div>
+
+    </div>
+
+    <div class="callout" style="margin-top:24px;">
+      <h3>体調やつらさに触れる言葉には、自動応答を設定しないでください</h3>
+      <p>「しんどい」「消えたい」のような言葉に自動返信を設定すると、機械が返した文面が本人に届くことになります。5か月仕様の安全対応は、人が判断して動くことを前提にしています。</p>
+      <p>これらの言葉は<b>通知だけを受け取って、人が読んでから返す</b>運用にしてください。あわせて、判断のフローチャートと発言例（仕様書8章が作成を求めているもの）を、開始前に用意しておく必要があります。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>「申込前に説明する12項目」の充足チェック</h2>
+      <p class="sec-note">5か月仕様の10章が定める項目です。今回は1か月版なので、期間・人数・アンケート回数は実際の値に置き換えています。</p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <caption>出典：docs/evidence/yorucare-5month-program-spec.md 10章</caption>
+        <thead>
+          <tr><th>#</th><th>説明すべきこと</th><th>どこで</th><th>状態</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>プログラムの期間</td><td class="where">2通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>2</td><td>1回あたりの所要時間</td><td class="where">2通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>3</td><td>振り返りは原則3名で行うこと</td><td class="where">2通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>4</td><td>募集定員</td><td class="where">3通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>5</td><td>欠席時にグループが変わる場合があること</td><td class="where">2通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>6</td><td>アンケートの回数と負担</td><td class="where">3通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>7</td><td>医療や緊急支援ではないこと</td><td class="where">4通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>8</td><td>効果や症状改善を保証しないこと</td><td class="where">4通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>9</td><td>途中でやめられること</td><td class="where">4通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>10</td><td>アプリ記録と研究データの保存・閲覧方法</td><td class="where">3通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>11</td><td>勤務先や支援機関へ自動共有されないこと</td><td class="where">3通目</td><td><span class="chip">済</span></td></tr>
+          <tr><td>12</td><td>緊急時に運営者が行えること・行えないこと</td><td class="where">4通目</td><td><span class="chip">済</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="sec-note" style="margin-top:14px;">10番の「研究データの保存期間と閲覧範囲」は、LINEでは概要だけに留めています。詳細は同意説明書に書く前提です。<b>同意説明書はまだ作成されていません。</b>申込フォームから読める状態にしてから、募集を始めてください。</p>
+  </section>
+
+  <footer>
+    ヨルケア 1か月モニター（2026年10月20日〜11月15日）／主催：株式会社mimococo ・ 担当者レンタル<br>
+    お問い合わせ：yorucare.yuki.kumagai@gmail.com
+  </footer>
+
+</div>

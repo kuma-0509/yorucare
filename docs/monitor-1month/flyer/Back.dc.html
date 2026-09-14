@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
+  <style>
+    /* 表面（Main.dc.html）と同じ設計トークンを使う */
+    :root{
+      --bleed:11px; --pad-x:51px;
+      --navy:#16304f; --navy-band:#1f3a5f; --navy-sub:#2c4f7c;
+      --blue:#356a9f; --blue-pale:#eef4fa;
+      --caution:#fef3e8; --caution-ink:#7c4a2a; --caution-line:#d98b4f;
+      --ink:#2d3748; --ink-soft:#5a6a7e; --line:#e2e8f0; --paper:#ffffff; --paper-alt:#f8f9fb;
+      --r:16px;
+    }
+    body{ margin:0; }
+    a{ color:var(--blue); } a:hover{ color:var(--navy); }
+
+    .sheet{
+      width:816px; height:1145px; box-sizing:border-box;
+      background:var(--paper); color:var(--ink); line-height:1.5;
+      font-family:'Noto Sans JP','Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic',Meiryo,sans-serif;
+      display:flex; flex-direction:column; overflow:hidden;
+    }
+    .main{ flex:1; display:flex; flex-direction:column; gap:16px; padding:20px var(--pad-x) 0; }
+    .grow{ flex:1; min-height:24px; }
+
+    .fine{ font-size:11px; line-height:16px; }
+    .base{ font-size:14px; line-height:24px; }
+    .md  { font-size:18px; line-height:24px; font-weight:700; }
+    .lg  { font-size:22px; line-height:32px; font-weight:700; }
+    .sec-h{ font-size:18px; line-height:24px; font-weight:700; color:var(--navy); margin-bottom:12px; }
+    .cell{ background:#fff; padding:9px 12px; font-size:14px; line-height:20px; text-align:center; }
+    .cell-h{ background:var(--paper-alt); padding:9px 12px; font-size:14px; line-height:20px; font-weight:700; color:var(--navy); text-align:center; }
+    .qa-q{ font-size:14px; line-height:24px; font-weight:700; color:var(--navy); }
+    .qa-a{ font-size:14px; line-height:24px; color:var(--ink-soft); }
+  </style>
+</helmet>
+
+<div class="sheet">
+
+  <!-- 見出し帯 -->
+  <div style="background:var(--navy-band); color:#fff; padding:calc(var(--bleed) + 12px) var(--pad-x) 10px; display:flex; align-items:baseline; justify-content:space-between; gap:24px;">
+    <div class="lg">申し込む前に、知っておいてほしいこと</div>
+    <div class="fine" style="color:#b9cbe0; letter-spacing:0.08em;">ヨルケア 1か月モニター</div>
+  </div>
+
+  <div class="main">
+
+    <!-- 1週間の流れ -->
+    <div>
+      <div class="sec-h">1週間の流れ</div>
+      <div style="display:grid; grid-template-columns:max-content repeat(3, minmax(0,1fr)); gap:1.5px; background:var(--line); border:1.5px solid var(--line); border-radius:12px; overflow:hidden;">
+        <div class="cell-h" style="color:var(--ink-soft); font-size:12px;">時間</div>
+        <div class="cell-h">火</div>
+        <div class="cell-h">木</div>
+        <div class="cell-h">日</div>
+        <div class="cell" style="white-space:nowrap; font-weight:700; color:var(--ink-soft); text-align:left;">21:00〜21:20</div>
+        <div class="cell">夜のストレッチ</div>
+        <div class="cell">夜のストレッチ</div>
+        <div class="cell">疲労回復ストレッチ</div>
+        <div class="cell" style="white-space:nowrap; font-weight:700; color:var(--ink-soft); text-align:left;">21:25〜21:45</div>
+        <div class="cell" style="background:var(--paper-alt);"></div>
+        <div class="cell" style="background:var(--paper-alt);"></div>
+        <div class="cell">振り返りの会</div>
+      </div>
+      <div class="fine" style="color:var(--ink-soft); margin-top:8px;">眠る前の時間に合わせて21時開始。1週間の合計はおよそ60〜80分です。</div>
+    </div>
+
+    <!-- 参加のかたち -->
+    <div>
+      <div class="sec-h">参加のかたち</div>
+      <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px 24px;">
+        <div class="base" style="display:flex; gap:8px;"><span style="color:var(--blue); font-weight:900;">✓</span><span><b>Zoom</b>のURLをタップするだけ</span></div>
+        <div class="base" style="display:flex; gap:8px;"><span style="color:var(--blue); font-weight:900;">✓</span><span><b>カメラOFF・座ったまま</b>で参加できます</span></div>
+        <div class="base" style="display:flex; gap:8px;"><span style="color:var(--blue); font-weight:900;">✓</span><span>火・木は<b>どちらか片方だけ</b>でもかまいません</span></div>
+        <div class="base" style="display:flex; gap:8px;"><span style="color:var(--blue); font-weight:900;">✓</span><span>休んだ日があっても大丈夫です</span></div>
+        <div class="base" style="display:flex; gap:8px;"><span style="color:var(--blue); font-weight:900;">✓</span><span>やめたいときはLINEで一言でOK</span></div>
+      </div>
+      <div class="fine" style="color:var(--ink-soft); margin-top:8px;">振り返りの会は3名ずつ・2グループに分かれます。当日の出席状況により人数やグループが変わることがあります。主治医から運動を制限されている方は、参加をお控えください。</div>
+    </div>
+
+    <!-- 記録の扱い -->
+    <div style="background:var(--caution); border-left:6px solid var(--caution-line); border-radius:var(--r); padding:16px 20px; display:flex; flex-direction:column; gap:4px;">
+      <div class="md" style="color:var(--caution-ink);">あなたの記録は、あなたのものです</div>
+      <div class="base" style="color:var(--caution-ink);">アプリに書いた内容は<b>ご自身の端末の中に保存され</b>、運営者も原則として見ることはできません。勤務先や支援機関へ共有されることもありません。<b>内容はリアルタイムには確認していません。</b>急ぎのときは医療機関や緊急の窓口へご連絡ください。</div>
+    </div>
+
+    <!-- 実施者 -->
+    <div>
+      <div class="sec-h">実施するのは、この2人です</div>
+      <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:24px;">
+        <div style="display:flex; gap:16px; align-items:flex-start;">
+          <div style="width:92px; height:92px; border-radius:50%; overflow:hidden; background:var(--paper-alt); border:1px solid var(--line); flex-shrink:0;">
+            <img src="ito.jpg" alt="伊藤 美幸" style="width:100%; height:100%; object-fit:cover; display:block;">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
+            <div class="md" style="color:var(--navy);">伊藤 美幸</div>
+            <div class="fine" style="color:var(--blue); font-weight:700;">ストレッチセッション担当<br>株式会社mimococo 代表取締役</div>
+            <div class="fine" style="color:var(--ink-soft);">トレーナーとして15年活動。自身のうつ病の経験から、就労移行支援事業所 約150事業所へ復職に向けた運動プログラムを提供。</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:16px; align-items:flex-start;">
+          <div style="width:92px; height:92px; border-radius:50%; overflow:hidden; background:var(--paper-alt); border:1px solid var(--line); flex-shrink:0;">
+            <img src="kumagai.jpg" alt="熊谷 祐希" style="width:100%; height:100%; object-fit:cover; display:block;">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
+            <div class="md" style="color:var(--navy);">熊谷 祐希</div>
+            <div class="fine" style="color:var(--blue); font-weight:700;">振り返りの会 担当<br>社会福祉士・企業在籍型ジョブコーチ</div>
+            <div class="fine" style="color:var(--ink-soft);">就労移行支援・特例子会社・企業人事など約12年、障がい者就労と雇用の両側に携わる。のべ3,000名以上に研修を実施。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- よくある質問 -->
+    <div>
+      <div class="sec-h">よくある質問</div>
+      <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px 24px;">
+        <div>
+          <div class="qa-q">Q. うまく話せる自信がありません。</div>
+          <div class="qa-a">A. 深い悩みを話す場ではありません。今週の振り返りと、来週のセルフケアの予定を報告する会です。アプリの記録を生成AIに入れて整理することもできます。</div>
+        </div>
+        <div>
+          <div class="qa-q">Q. 途中で参加できない日が出そうです。</div>
+          <div class="qa-a">A. 全日程すべてに参加する必要はありません。参加しやすい方法を、一緒に模索していきたいと考えています。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grow"></div>
+  </div>
+
+  <!-- 申込・主催 -->
+  <div style="background:var(--navy-band); color:#fff; padding:12px var(--pad-x); display:flex; align-items:center; gap:20px;">
+    <div style="width:96px; height:96px; background:#fff; border-radius:4px; padding:9px; box-sizing:border-box; flex-shrink:0;">
+      <img src="line-qr.png" alt="ヨルケア公式LINEの友だち追加QRコード（LINE ID: @615ixfwt）" style="width:100%; height:100%; display:block;">
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:8px; min-width:0;">
+      <div class="md">申込・お問い合わせ</div>
+      <div class="base" style="color:#dce7f2;">公式LINE（ID：@615ixfwt）を友だち追加してください。<b>申込締切 10月13日（火）</b></div>
+      <div class="fine" style="color:#b9cbe0;">主催：株式会社mimococo ／ 担当者レンタル　お問い合わせ：yorucare.yuki.kumagai@gmail.com</div>
+    </div>
+  </div>
+
+  <!-- 注記 -->
+  <div style="background:var(--paper-alt); border-top:1px solid var(--line); padding:10px var(--pad-x) calc(var(--bleed) + 10px);">
+    <div class="fine" style="color:var(--ink-soft);">
+      ヨルケアは医療行為ではなく、診断・治療の代わりになるものではありません。効果や症状の改善を保証するものではありません。緊急時の対応窓口ではありませんので、体調が急に悪くなった場合は、かかりつけの医療機関にご相談ください。
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
