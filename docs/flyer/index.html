@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>ヨルケア 1か月モニター募集チラシ（A4両面）</title>
+<style>
+/* ==========================================================================
+   ヨルケア 1か月モニター募集チラシ / A4両面
+   印刷: Chrome で開き「印刷 → 用紙A4・余白なし・背景グラフィックON」
+   配色は 濃紺 / 白 / グレー の3色のみ。アクセント色は使わない。
+   ========================================================================== */
+
+@font-face{font-family:"YC Sans";src:url(fonts/sans-400.woff2) format("woff2");font-weight:400;font-display:block}
+@font-face{font-family:"YC Sans";src:url(fonts/sans-500.woff2) format("woff2");font-weight:500;font-display:block}
+@font-face{font-family:"YC Sans";src:url(fonts/sans-700.woff2) format("woff2");font-weight:700;font-display:block}
+@font-face{font-family:"YC Sans";src:url(fonts/sans-900.woff2) format("woff2");font-weight:900;font-display:block}
+@font-face{font-family:"YC Serif";src:url(fonts/serif-400.woff2) format("woff2");font-weight:400;font-display:block}
+@font-face{font-family:"YC Serif";src:url(fonts/serif-600.woff2) format("woff2");font-weight:600;font-display:block}
+
+:root{
+  --navy:#1B2A41;          /* 濃紺 */
+  --navy-deep:#16223A;     /* 濃紺（帯・沈める用） */
+  --ink:#2E3540;           /* 本文 */
+  --gray:#6E737B;          /* 補助テキスト */
+  --gray-soft:#9AA0A7;     /* ラベル・注記 */
+  --rule:#D7D6D1;          /* 罫 */
+  --tint:#EDECE8;          /* 薄いグレー面 */
+  --paper:#DEDCD6;         /* 用紙外周（コンクリート調のベース） */
+  --white:#fff;
+}
+
+@page{ size:A4; margin:0; }
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ background:#8b8b8b; }
+body{
+  font-family:"YC Sans",sans-serif;
+  color:var(--ink);
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:geometricPrecision;
+}
+
+/* ---------- 用紙 ---------- */
+.page{
+  position:relative;
+  width:210mm; height:297mm;
+  margin:0 auto;
+  background:var(--paper);
+  overflow:hidden;
+  break-after:page;
+}
+.page:last-child{ break-after:auto; }
+/* 外周に細い余白ラインを残し、中身を一回り小さい白い面に置く */
+.panel{
+  position:absolute; inset:5mm;
+  background:var(--white);
+  overflow:hidden;
+}
+
+/* ---------- 共通パーツ ---------- */
+.label{                      /* 濃色の小さな四角いラベル（白抜き） */
+  display:flex; align-items:center; justify-content:center;
+  background:var(--navy); color:var(--white);
+  font-size:10pt; font-weight:700; letter-spacing:.06em;
+  height:5.8mm; border-radius:.7mm; white-space:nowrap;
+}
+.pill{                       /* 角丸の濃紺タグ（ピル型） */
+  display:inline-flex; align-items:center;
+  height:8.4mm; padding:0 6.5mm;
+  background:var(--navy); color:var(--white);
+  font-size:11pt; font-weight:700; letter-spacing:.04em;
+  border-radius:99mm; white-space:nowrap;
+}
+.sechead{                    /* セクション見出し：見出し＋細い横罫 */
+  display:flex; align-items:center; gap:2.5mm;
+  font-size:12pt; font-weight:900; color:var(--navy); letter-spacing:.02em;
+  white-space:nowrap;
+}
+.sechead::after{ content:""; flex:1; height:.3mm; background:var(--rule); }
+.note{ font-size:10.5pt; line-height:1.45; color:var(--gray); }
+.tcy{ text-combine-upright:all; }   /* 縦書き中の数字（縦中横） */
+
+/* ==========================================================================
+   表面
+   ========================================================================== */
+
+/* ① ロゴ（左上のみ。右側は完全に空ける） */
+.mast{ position:absolute; left:12mm; top:8.5mm; }
+.mast__en{
+  font-family:"YC Serif",serif; font-weight:400; line-height:1.2;
+  font-size:7.5pt; letter-spacing:.34em; color:var(--gray-soft);
+}
+.mast__logo{
+  font-family:"YC Serif",serif; font-weight:600;
+  font-size:19pt; letter-spacing:.18em; color:var(--navy);
+  line-height:1.06; margin-top:1.2mm;
+}
+.mast__ja{ font-size:10.5pt; line-height:1.3; color:var(--gray); margin-top:1.6mm; letter-spacing:.02em; }
+
+/* ② 写真（左）＋ 濃紺ブロック・大見出し（右） */
+.hero{
+  position:absolute; left:0; top:28mm;
+  width:84mm; height:95mm;
+  clip-path:url(#heroCurve);
+  background:var(--tint);
+}
+.hero img{ width:100%; height:100%; object-fit:cover; object-position:50% 8%; display:block; }
+.hero__scrim{                 /* 縦書きコピーの可読性を担保する薄い暗部 */
+  position:absolute; inset:0;
+  background:linear-gradient(to right, rgba(22,34,58,.62) 0%, rgba(22,34,58,.40) 16%, rgba(22,34,58,.12) 34%, rgba(22,34,58,0) 52%);
+}
+.hero__copy{
+  position:absolute; left:6.5mm; top:30mm; height:58mm;
+  writing-mode:vertical-rl; text-orientation:mixed;
+  font-size:11pt; font-weight:500; color:var(--white);
+  letter-spacing:.14em; line-height:2.1;
+}
+
+.target{
+  position:absolute; left:90mm; right:0; top:28mm; height:26mm;
+  background:var(--navy); color:var(--white);
+  padding:6.4mm 8mm 0 6mm;
+  font-size:10.5pt; font-weight:500; line-height:1.62; letter-spacing:.01em;
+}
+.hr-lead{ position:absolute; left:96mm; right:12mm; top:57.5mm; height:.4mm; background:var(--navy); }
+.kicker{
+  position:absolute; left:96mm; top:59.5mm;
+  font-size:20pt; font-weight:900; color:var(--navy); letter-spacing:.03em;
+}
+.big{
+  position:absolute; left:95mm; top:67mm;
+  font-size:26mm; font-weight:900; color:var(--navy);
+  line-height:.98; letter-spacing:0;
+}
+.big span{ display:block; }
+.big i{ display:inline-block; width:1em; text-align:center; font-style:normal; }
+
+/* ③ タグ（角丸の濃紺タグを右端揃えで並べる） */
+.fbody{
+  position:absolute; left:12mm; right:12mm; top:127mm; bottom:63mm;
+  display:flex; flex-direction:column; justify-content:space-between;
+}
+.tags{ display:flex; justify-content:flex-end; gap:3mm; }
+
+/* ④ 条件・内容（罫線は引かず、位置揃えだけで表をつくる） */
+.facts{}
+.facts__row{
+  display:grid; grid-template-columns:32mm 42mm 1fr;
+  align-items:center; column-gap:4mm; height:6.5mm;
+}
+.facts__row--wide{ grid-template-columns:32mm 1fr; }
+.facts__val{ font-size:10.5pt; font-weight:700; color:var(--navy); letter-spacing:.01em; }
+.facts__desc{ font-size:10.5pt; font-weight:400; color:var(--gray); }
+.facts__split{
+  display:flex; align-items:center; gap:3mm;
+  margin:3.4mm 0 1.6mm; font-size:10.5pt; font-weight:900; color:var(--navy);
+}
+.facts__split::after{ content:""; flex:1; height:.3mm; background:var(--rule); }
+
+/* ⑤ 協力のお願い（色は使わず、面と罫で沈める） */
+.ask{
+  background:var(--tint); border-left:1.2mm solid var(--navy);
+  padding:4mm 5mm 4.2mm;
+}
+.ask__h{ font-size:11.5pt; font-weight:900; color:var(--navy); margin-bottom:1.6mm; }
+.ask__b{ font-size:10.5pt; line-height:1.6; color:var(--ink); }
+.ask__b b{ font-weight:700; color:var(--navy); }
+
+/* ⑥ 濃色の連絡先帯 */
+.foot{
+  position:absolute; left:0; right:0; bottom:0; height:63mm;
+  background:var(--navy); color:var(--white);
+  padding:5mm 12mm 4mm;
+}
+.foot__grid{ display:grid; grid-template-columns:1fr 22mm; column-gap:6mm; }
+.foot__grid>.foot__qr{ order:2; }
+.foot__qr{ width:22mm; }
+.foot__qr img{ width:22mm; height:22mm; display:block; background:#fff; padding:1mm; border-radius:1mm; }
+.foot__id{ font-size:10.5pt; font-weight:700; letter-spacing:.04em; text-align:center; margin-top:1.4mm; }
+.foot__h{ font-size:13pt; font-weight:900; letter-spacing:.01em; }
+.steps{ display:grid; grid-template-columns:repeat(3,1fr); gap:2.4mm; margin-top:2.6mm; }
+.steps li{ list-style:none; display:grid; grid-template-columns:4.4mm 1fr; gap:1.8mm; align-items:start;
+  background:rgba(255,255,255,.12); border-radius:1mm; padding:1.6mm 2.2mm; }
+.steps b{ display:flex; align-items:center; justify-content:center;
+  width:4.4mm; height:4.4mm; border-radius:50%; background:var(--white); color:var(--navy);
+  font-size:8.5pt; font-weight:900; }
+.steps span{ font-size:10.5pt; font-weight:500; line-height:1.35; }
+.deadline{ display:flex; align-items:baseline; gap:4mm; margin-top:3mm; }
+.deadline b{ font-size:13.5pt; font-weight:900; letter-spacing:.01em; }
+.deadline span{ font-size:10.5pt; font-weight:500; opacity:.88; }
+.foot__fine{
+  position:absolute; left:12mm; right:12mm; bottom:4mm;
+  border-top:.25mm solid rgba(255,255,255,.28); padding-top:2.2mm;
+  font-size:9pt; line-height:1.5; color:rgba(255,255,255,.92);
+}
+.foot__fine .org{ font-weight:700; }
+.foot__fine .dis{ display:block; margin-top:.8mm; color:rgba(255,255,255,.78); }
+
+/* ==========================================================================
+   裏面
+   ========================================================================== */
+.bmast{ position:absolute; left:12mm; right:12mm; top:10mm;
+  display:flex; align-items:baseline; justify-content:space-between; }
+.bmast h1{ font-size:19pt; font-weight:900; color:var(--navy); letter-spacing:.01em; }
+.bmast span{ font-family:"YC Serif",serif; font-size:10.5pt; color:var(--gray-soft); letter-spacing:.12em; }
+.bmast__rule{ position:absolute; left:12mm; right:12mm; top:21.5mm; height:.4mm; background:var(--navy); }
+
+.bbody{
+  position:absolute; left:12mm; right:12mm; top:25mm; bottom:44mm;
+  display:flex; flex-direction:column; justify-content:space-between;
+}
+.brow{ display:grid; grid-template-columns:1fr 1fr; column-gap:8mm; align-items:start; }
+.sec{ min-width:0; }
+.checks{ display:grid; grid-template-columns:1fr; row-gap:1.5mm; margin-top:2.6mm; }
+.checks li{ list-style:none; display:grid; grid-template-columns:4.6mm 1fr;
+  font-size:10.5pt; line-height:1.42; color:var(--ink); }
+.checks li::before{ content:"✓"; color:var(--navy); font-weight:900; }
+.checks b{ font-weight:700; color:var(--navy); }
+
+.week{ width:100%; border-collapse:collapse; margin-top:2.8mm; }
+.week th,.week td{ text-align:left; padding:1.4mm 2.4mm; white-space:nowrap; font-size:10.5pt; border-bottom:.25mm solid var(--rule); }
+.week thead th{ font-weight:700; color:var(--navy); background:var(--tint); border-bottom:.4mm solid var(--navy); }
+.week tbody th{ font-weight:700; color:var(--navy); white-space:nowrap; width:11mm; }
+.week td{ color:var(--ink); }
+.week td:empty::after{ content:"—"; color:var(--gray-soft); }
+
+.card{ background:var(--tint); border-left:1.2mm solid var(--navy); padding:3.8mm 5mm 4mm; }
+.card h3{ font-size:12pt; font-weight:900; color:var(--navy); margin-bottom:1.6mm; }
+.card p{ font-size:10.5pt; line-height:1.5; color:var(--ink); }
+.card b{ font-weight:700; color:var(--navy); }
+
+.people{ display:grid; grid-template-columns:1fr 1fr; column-gap:8mm; margin-top:2.8mm; }
+.person{ display:grid; grid-template-columns:16mm 1fr; column-gap:3mm; align-items:center; }
+.person img{ width:16mm; height:16mm; border-radius:50%; object-fit:cover; display:block; }
+.person h4{ font-size:12pt; font-weight:900; color:var(--navy); letter-spacing:.02em; }
+.person .role{ font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.45; margin-top:.6mm; }
+.person .bio{ font-size:10.5pt; line-height:1.45; color:var(--gray); margin-top:1.8mm; grid-column:1/-1; }
+
+.faq{ display:grid; grid-template-columns:repeat(3,1fr); column-gap:6mm; row-gap:2.6mm; margin-top:2.8mm; }
+.faq dt{ font-size:10.5pt; font-weight:700; color:var(--navy); line-height:1.45; }
+.faq dd{ font-size:10.5pt; line-height:1.45; color:var(--ink); margin-top:.6mm; }
+
+.bfoot{ position:absolute; left:0; right:0; bottom:0; height:44mm;
+  background:var(--navy); color:var(--white); padding:4.4mm 12mm 3.6mm; }
+.bfoot__grid{ display:grid; grid-template-columns:1fr 20mm; column-gap:5mm; }
+.bfoot__grid>.foot__qr{ order:2; }
+.bfoot h3{ font-size:12.5pt; font-weight:900; }
+.bfoot p{ font-size:10.5pt; line-height:1.5; margin-top:1.5mm; }
+.bfoot .fine{ font-size:9pt; line-height:1.45; opacity:.8; margin-top:1.8mm;
+  border-top:.25mm solid rgba(255,255,255,.28); padding-top:1.8mm; }
+.bfoot b{ font-weight:900; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- 写真の右端をゆるやかな弧で切り抜く -->
+    <clipPath id="heroCurve" clipPathUnits="objectBoundingBox">
+      <path d="M0,0 L0.80,0 C0.985,0.26 0.985,0.74 0.80,1 L0,1 Z"/>
+    </clipPath>
+  </defs>
+</svg>
+
+<!-- ======================= 表面 ======================= -->
+<section class="page">
+  <div class="panel">
+
+    <header class="mast">
+      <div class="mast__en">NIGHT SELF-CARE PROGRAM</div>
+      <div class="mast__logo">YORUCARE</div>
+      <div class="mast__ja">ヨルケア｜働きながら、夜を整えるプログラム</div>
+    </header>
+
+    <figure class="hero">
+      <img src="assets/hero-kumagai.jpg" alt="">
+      <div class="hero__scrim"></div>
+    </figure>
+    <figcaption class="hero__copy">夜の<span class="tcy">20</span>分から始める、<br>セルフケア習慣の<span class="tcy">4</span>週間。</figcaption>
+
+    <div class="target">復職後、または障がい者雇用枠で<br>働いている方へ</div>
+    <div class="hr-lead"></div>
+    <div class="kicker">無料モニター</div>
+    <div class="big"><span><i>6</i><i>名</i></span><span><i>限</i><i>定</i></span></div>
+
+    <div class="fbody">
+    <div class="tags">
+      <span class="pill">参加費 無料</span>
+      <span class="pill">オンライン開催</span>
+      <span class="pill">カメラOFFでOK</span>
+      <span class="pill">録画・録音なし</span>
+    </div>
+
+    <div class="facts">
+      <div class="facts__row facts__row--wide"><span class="label">参加費</span><span class="facts__val">無料</span></div>
+      <div class="facts__row facts__row--wide"><span class="label">日程</span><span class="facts__val">2026年10月20日（火）〜 11月15日（日）／全4週間</span></div>
+      <div class="facts__row facts__row--wide"><span class="label">形式</span><span class="facts__val">オンライン（Zoom）</span></div>
+      <div class="facts__row facts__row--wide"><span class="label">申込締切</span><span class="facts__val">10月13日（火）</span></div>
+
+      <div class="facts__split">4週間で、この3つをします</div>
+
+      <div class="facts__row"><span class="label">夜のストレッチ</span><span class="facts__val">火・木 21:00〜21:20</span><span class="facts__desc">体をゆるめて、眠りに向かう準備をします。</span></div>
+      <div class="facts__row"><span class="label">アプリで記録</span><span class="facts__val">毎日1〜2分</span><span class="facts__desc">気分・睡眠・お薬を、スマホに記録します。</span></div>
+      <div class="facts__row"><span class="label">振り返りの会</span><span class="facts__val">日 21:25〜21:45</span><span class="facts__desc">3名ずつのグループで、ひとり5分ずつ話します。</span></div>
+    </div>
+
+    <div class="ask">
+      <div class="ask__h">参加費は無料です。あわせて、ご協力をお願いしています</div>
+      <p class="ask__b"><b>プログラムの改善と研究のためのモニター募集</b>です。アンケート2回（各15分程度）とアプリでの記録にご協力ください。ご協力は任意で、いつでもやめられます。→ 詳しくは裏面へ</p>
+    </div>
+    </div>
+
+    <footer class="foot">
+      <div class="foot__grid">
+        <div class="foot__qr">
+          <img src="assets/qr-line.png" alt="公式LINE QRコード">
+          <div class="foot__id">@615ixfwt</div>
+        </div>
+        <div>
+          <div class="foot__h">申込は、公式LINEから。3ステップで終わります。</div>
+          <ul class="steps">
+            <li><b>1</b><span>QRコードから友だち追加</span></li>
+            <li><b>2</b><span>届いた申込フォームに回答</span></li>
+            <li><b>3</b><span>アプリとZoomのURLが届く</span></li>
+          </ul>
+          <div class="deadline"><b>申込締切 10月13日（火）</b><span>6名になり次第、締め切ります。</span></div>
+        </div>
+      </div>
+      <div class="foot__fine">
+        <span class="org">主催：株式会社mimococo ／ 担当者レンタル</span>　お問い合わせ：yorucare.yuki.kumagai@gmail.com（公式LINEからもお受けします）
+        <!-- ▼ 免責文：原稿のまま。末尾が原稿の時点で途切れているため〔　〕で明示。正しい全文が分かり次第、〔〕ごと差し替えてください。 -->
+        <span class="dis">ヨルケアは医療行為ではなく、診断・治療の代わりになるものではありません。効果や症状の改善を保証するものではありません。緊急時の対〔以下、原稿が途切れています。全文をご確認ください〕</span>
+      </div>
+    </footer>
+
+  </div>
+</section>
+
+<!-- ======================= 裏面 ======================= -->
+<section class="page">
+  <div class="panel">
+
+    <div class="bmast">
+      <h1>申し込む前に、知っておいてほしいこと</h1>
+      <span>YORUCARE 1か月モニター</span>
+    </div>
+    <div class="bmast__rule"></div>
+
+    <div class="bbody">
+    <div class="brow">
+      <div class="sec"><div class="sechead">こんな方に向いています</div>
+        <ul class="checks">
+          <li><span>寝る直前まで、スマホを見てしまう</span></li>
+          <li><span>朝、前の日の疲れが残っている</span></li>
+          <li><span>仕事を始めてから、疲れてセルフケアの習慣がうまく作れていない</span></li>
+          <li><span>同じ立場の人と会話しながら、振り返り・体調管理をしたい</span></li>
+          <li><span>復職後、体調のペースがまだつかめない</span></li>
+        </ul>
+      </div>
+      <div class="sec"><div class="card">
+          <h3>あなたの記録は、あなたのものです</h3>
+          <p>アプリに書いた内容は<b>ご自身の端末の中に保存され</b>、運営者も原則として見ることはできません。勤務先や支援機関へ共有されることもありません。<b>内容はリアルタイムには確認していません。</b>急ぎのときは医療機関や緊急の窓口へご連絡ください。</p>
+        </div>
+      </div>
+    </div>
+    <div class="brow">
+      <div class="sec"><div class="sechead">1週間の流れ</div>
+        <table class="week">
+          <thead><tr><th>曜日</th><th>21:00〜21:20</th><th>21:25〜21:45</th></tr></thead>
+          <tbody>
+            <tr><th>火</th><td>夜のストレッチ</td><td></td></tr>
+            <tr><th>木</th><td>夜のストレッチ</td><td></td></tr>
+            <tr><th>日</th><td>疲労回復ストレッチ</td><td>振り返りの会</td></tr>
+          </tbody>
+        </table>
+        <p class="note" style="margin-top:2.2mm">眠る前の時間に合わせて21時開始。1週間の合計はおよそ60〜80分です。</p>
+      </div>
+      <div class="sec"><div class="sechead">参加のかたち</div>
+        <ul class="checks">
+          <li><span><b>Zoom</b>のURLをタップするだけ</span></li>
+          <li><span><b>カメラOFF・座ったまま</b>で参加できます</span></li>
+          <li><span><b>録画・録音はしません</b></span></li>
+          <li><span>火・木は<b>どちらか片方だけ</b>でもかまいません</span></li>
+          <li><span>休んだ日があっても大丈夫です</span></li>
+          <li><span>やめたいときはLINEで一言でOK</span></li>
+        </ul>
+        <p class="note" style="margin-top:2.2mm">振り返りの会は3名ずつ・2グループに分かれます。当日の出席状況により人数やグループが変わることがあります。主治医から運動を制限されている方は、参加をお控えください。</p>
+      </div>
+    </div>
+    <div class="sec"><div class="sechead">実施するのは、この2人です</div>
+      <div class="people">
+        <div class="person">
+          <img src="assets/portrait-ito.jpg" alt="">
+          <div>
+            <h4>伊藤 美幸</h4>
+            <div class="role">ストレッチセッション担当<br>株式会社mimococo 代表取締役</div>
+          </div>
+          <p class="bio">トレーナーとして15年活動。自身のうつ病の経験から、就労移行支援事業所 約150事業所へ復職に向けた運動プログラムを提供。</p>
+        </div>
+        <div class="person">
+          <img src="assets/portrait-kumagai.jpg" alt="">
+          <div>
+            <h4>熊谷 祐希</h4>
+            <div class="role">振り返りの会 担当<br>社会福祉士・企業在籍型ジョブコーチ</div>
+          </div>
+          <p class="bio">就労移行支援・特例子会社・企業人事など約12年、障がい者就労と雇用の両側に携わる。のべ3,000名以上に研修を実施。</p>
+        </div>
+      </div>
+    </div>
+    <div class="sec"><div class="sechead">よくある質問</div>
+      <dl class="faq">
+        <div>
+          <dt>Q. うまく話せる自信がありません。</dt>
+          <dd>A. 深い悩みを話す場ではありません。今週と来週のことを話すだけです。</dd>
+        </div>
+        <div>
+          <dt>Q. 途中で参加できない日が出そうです。</dt>
+          <dd>A. 休んだ日や書けなかった日があっても、参加は終わりません。</dd>
+        </div>
+        <div>
+          <dt>Q. 1か月のあと、5か月版に参加しないといけませんか。</dt>
+          <dd>A. 必要ありません。4週間だけで終わってかまいません。</dd>
+        </div>
+      </dl>
+    </div>
+    </div>
+
+    <footer class="bfoot">
+      <div class="bfoot__grid">
+        <div class="foot__qr">
+          <img src="assets/qr-line.png" alt="公式LINE QRコード">
+          <div class="foot__id">@615ixfwt</div>
+        </div>
+        <div>
+          <h3>申込・お問い合わせ</h3>
+          <p>公式LINE（ID：@615ixfwt）を友だち追加してください。<b>申込締切 10月13日（火）</b></p>
+          <p>主催：株式会社mimococo ／ 担当者レンタル<br>お問い合わせ：yorucare.yuki.kumagai@gmail.com</p>
+          <!-- ▼ 免責文：原稿のまま。末尾が原稿の時点で途切れているため〔　〕で明示。 -->
+          <p class="fine">ヨルケアは医療行為ではなく、診断・治療の代わりになるものではありません。効果や症状の改善を保証するものではありません。緊急時の対〔以下、原稿が途切れています。全文をご確認ください〕</p>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+</section>
+
+</body>
+</html>

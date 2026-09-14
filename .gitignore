@@ -52,3 +52,6 @@ yorucare-testdata*.json
 
 # 別リポジトリとして管理している静的サイト
 /sites/
+
+# 入稿用チラシPDFは成果物としてバージョン管理する
+!docs/flyer/*.pdf
