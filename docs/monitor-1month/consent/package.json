@@ -1,0 +1,6 @@
+{
+  "name": "yorucare-consent-build",
+  "private": true,
+  "type": "module",
+  "dependencies": { "pdfjs-dist": "^4.10.38" }
+}

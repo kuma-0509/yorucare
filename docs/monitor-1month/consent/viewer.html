@@ -1,0 +1,6 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#8a8a8a"><div id="o"></div>
+<script type="module">
+import * as L from './node_modules/pdfjs-dist/build/pdf.mjs';
+L.GlobalWorkerOptions.workerSrc = './node_modules/pdfjs-dist/build/pdf.worker.mjs';
+window.pdfjsLib = L; window.pdfReady = true;
+</script>

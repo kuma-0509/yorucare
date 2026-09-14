@@ -52,3 +52,13 @@ yorucare-testdata*.json
 
 # 別リポジトリとして管理している静的サイト
 /sites/
+# 1か月モニターの配布物（*.pdf の除外から戻す）
+!docs/monitor-1month/*.pdf
+
+# 同意説明書PDFの作業ファイル（フォントとnode_modulesは各自で取得する）
+docs/monitor-1month/consent/fonts/
+docs/monitor-1month/consent/node_modules/
+docs/monitor-1month/consent/*.css
+docs/monitor-1month/consent/print.html
+docs/monitor-1month/consent/pg*.png
+docs/monitor-1month/consent/package-lock.json

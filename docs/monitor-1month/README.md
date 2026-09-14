@@ -13,8 +13,9 @@
 | `ヨルケア募集チラシ_両面_A4.pdf` | 手元のプリンタ／メール添付／LINE転送用（210×297mm） |
 | `ヨルケア募集チラシ_両面_入稿用（塗り足し3mm付き）.pdf` | 印刷所入稿用（216×303mm・塗り足し3mm） |
 | `flyer/` | チラシのソースと再生成スクリプト |
+| `ヨルケア参加同意説明書_A4.pdf` | 参加同意説明書（A4・7ページ） |
 | `line-messages.html` | 公式LINE（@615ixfwt）の自動返信文面集 |
-| `consent.html` | 参加同意説明書 |
+| `consent/` | 同意説明書のソースと再生成スクリプト |
 
 ## チラシの設計ルール
 
@@ -48,6 +49,30 @@ node build-pdf.mjs                 # PDF 2種類を出力
 node verify-qr.mjs                 # チラシ上のQRが読めるか確認
 ```
 
+## 同意説明書PDFの作り方
+
+`consent/consent.html` が正本です。画面用の指定（幅760px・15px）のままでは紙に合わないので、
+`build-pdf.mjs` が印刷用CSSを後から重ねて上書きします。**本文を直すときは `consent.html` だけを直してください。**
+
+```bash
+cd docs/monitor-1month/consent
+npm install                        # pdfjs-dist（出力したPDFを画像にして確認する用）
+
+# 実フォントを取得（fonts/ はリポジトリに含めていません）
+mkdir -p fonts && cp ../flyer/fonts/*.ttf fonts/     # 本文用 Noto Sans JP（n1〜n4）
+curl -sS -A "Mozilla/5.0" \
+  "https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@600;700&display=swap" -o zom.css
+i=0; for u in $(grep -o 'https://fonts.gstatic.com[^)]*' zom.css | sort -u); do
+  i=$((i+1)); curl -sS -A "Mozilla/5.0" "$u" -o "fonts/m$i.ttf"
+done
+
+node build-pdf.mjs                 # PDFを出力（フォント未読込・CSS差し込み失敗なら exit 1）
+node shot-pdf.mjs                  # 出力したPDFを pg1..pgN.png に描画して目視確認
+```
+
+`shot-pdf.mjs` は `viewer.html` を **http で**開く必要があります（file:// ではモジュール読み込みがブロックされます）。
+同じフォルダで `python3 -m http.server 8731` を動かしてから実行してください。
+
 補助スクリプト：
 
 - `crop.mjs` — 元写真を顔中心の正方形に切り出して縮小する（ImageMagick なしで動くよう Chromium を使用）
@@ -56,7 +81,8 @@ node verify-qr.mjs                 # チラシ上のQRが読めるか確認
 
 ## 未確定・未着手
 
-- **同意説明書の黄色い箇所**（研究責任者名／精神科医・安全責任者名／緊急連絡先の要否／倫理審査の扱い／作成日・版）
+- **同意説明書7章B表に残っている矛盾** — 「精神科医の閲覧」と「保存期間…倫理審査に従います」の2行。
+  今回の1か月は精神科医を置かず、倫理審査も行わない方針にしたため、この2行は現状と合っていません
 - **判断フローチャートと発言例**（確定仕様8章が作成を求めているもの）— 未作成
 - **支援員向けの案内1枚** — 未作成
 - チラシ裏面の「1週間の合計はおよそ60〜80分」は、セッションのみの数字。アプリ記録を含めると87〜94分
