@@ -23,10 +23,31 @@ function form(date: string): SaveRecordInput {
   return { ...rest, moodScore: 3 };
 }
 
-/** 送信は待たずに進むため、非同期の処理が一巡するまで待つ */
+/**
+ * 送信は待たずに進むため、非同期の処理が一巡するまで待つ。
+ *
+ * 「送っていないこと」を確かめるときだけ使う。送信の中には本物の
+ * `crypto.subtle.digest`（チェックサム）が入っており、何回のtickで終わるかは
+ * 決まっていない。回数で待つと、速いときだけ通るテストになる
+ * （実際に2件が時々落ちた）。
+ */
 async function settle() {
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  for (let i = 0; i < 5; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+}
+
+/** 送信が指定の回数に達するまで待つ。tick数ではなく結果で待つ */
+async function waitForSendCount(count: number, timeoutMs = 2_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (fetchMock.mock.calls.length < count) {
+    if (Date.now() > deadline) {
+      throw new Error(
+        `送信が${count}回に達しませんでした（実際: ${fetchMock.mock.calls.length}回）`
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
 }
 
 describe("記録を保存したあとの自動送信", () => {
@@ -65,7 +86,7 @@ describe("記録を保存したあとの自動送信", () => {
     const result = await saveRecord("2026-09-08", form("2026-09-08"));
     expect(result.ok).toBe(true);
 
-    await settle();
+    await waitForSendCount(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toBe("/api/cloud/snapshot");
     expect(fetchMock.mock.calls[0][1].method).toBe("PUT");
@@ -94,13 +115,13 @@ describe("記録を保存したあとの自動送信", () => {
   it("記録の削除も預け直す（消したはずの記録がクラウドに残らない）", async () => {
     saveCloudBackupConsent(true);
     await saveRecord("2026-09-08", form("2026-09-08"));
-    await settle();
+    await waitForSendCount(1);
     fetchMock.mockClear();
 
     const result = await deleteRecord("2026-09-08");
     expect(result.ok).toBe(true);
 
-    await settle();
+    await waitForSendCount(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][1].method).toBe("PUT");
   });
@@ -109,15 +130,15 @@ describe("記録を保存したあとの自動送信", () => {
     saveCloudBackupConsent(true);
 
     await addSelfCareItem("散歩する");
-    await settle();
+    await waitForSendCount(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     await addNotToDoItem("夜更かししない");
-    await settle();
+    await waitForSendCount(2);
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
     await saveReturnDate("2026-10-01");
-    await settle();
+    await waitForSendCount(3);
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
@@ -145,7 +166,7 @@ describe("記録を保存したあとの自動送信", () => {
     });
 
     await saveRecord("2026-09-08", form("2026-09-08"));
-    await settle();
+    await waitForSendCount(1);
     // 1件目の送信が終わっていないあいだは、2件目を送り始めない
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
@@ -155,10 +176,12 @@ describe("記録を保存したあとの自動送信", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     release?.();
-    await settle();
-    await settle();
+    await waitForSendCount(2);
 
     // 待っていた2件は、まとめて最新の内容1回で送り直す
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // それ以上は送らない（待っていた依頼をまとめて1回にしている）
+    await settle();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -169,7 +192,7 @@ describe("記録を保存したあとの自動送信", () => {
     const result = await saveRecord("2026-09-08", form("2026-09-08"));
 
     expect(result.ok).toBe(true);
-    await settle();
+    await waitForSendCount(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
