@@ -229,6 +229,64 @@ describe("cloud-session", () => {
       });
     });
 
+    it("Preview用の固定IDがあっても、本物のログインの方を優先する", async () => {
+      // 順序が逆（固定IDを先に見る）だと、実際にログインしている人の
+      // ownerId も許可リストの判定も固定IDに覆い隠されてしまう
+      configureRealAuthEnv();
+      process.env.USER_DATA_DEV_OWNER_ID = "preview-owner-1";
+      const createdAt = "2026-09-08T09:00:00.000Z";
+      getSession.mockResolvedValue(validSession({ createdAt }));
+
+      const status = await getCloudAuthStatus(
+        new Request("https://yorucare.example")
+      );
+      expect(status).toEqual({
+        status: "ok",
+        session: { ownerId: OWNER_ID, verifiedAt: new Date(createdAt) },
+      });
+    });
+
+    it("Preview用の固定IDがあっても、許可リスト外は not_allowed のままにする", async () => {
+      // 許可リストを空にして確かめたいときに、固定IDが判定を覆い隠さない
+      configureRealAuthEnv();
+      process.env.USER_DATA_DEV_OWNER_ID = "preview-owner-1";
+      delete process.env.USER_DATA_ALLOWED_EMAILS;
+      getSession.mockResolvedValue(validSession());
+
+      const status = await getCloudAuthStatus(
+        new Request("https://yorucare.example")
+      );
+      expect(status).toEqual({ status: "not_allowed" });
+    });
+
+    it("ログインしていないときだけ、Preview用の固定IDへ落とす（印を付ける）", async () => {
+      configureRealAuthEnv();
+      process.env.USER_DATA_DEV_OWNER_ID = "preview-owner-1";
+      getSession.mockResolvedValue({
+        data: { session: null, user: null },
+        error: null,
+      });
+
+      const status = await getCloudAuthStatus(
+        new Request("https://yorucare.example")
+      );
+      expect(status.status).toBe("ok");
+      expect(status).toMatchObject({ devOwner: true });
+      if (status.status === "ok") {
+        expect(status.session.ownerId).toBe("preview-owner-1");
+      }
+    });
+
+    it("本物のログインで通ったときは devOwner の印を付けない", async () => {
+      configureRealAuthEnv();
+      getSession.mockResolvedValue(validSession());
+
+      const status = await getCloudAuthStatus(
+        new Request("https://yorucare.example")
+      );
+      expect(status).not.toHaveProperty("devOwner");
+    });
+
     it("getCloudSession はこの関数のokだけをownerIdへ変換する", async () => {
       configureRealAuthEnv();
       getSession.mockResolvedValue(validSession({ email: "other@example.com" }));

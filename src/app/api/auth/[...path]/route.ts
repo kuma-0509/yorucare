@@ -89,11 +89,14 @@ async function withAuthHandler(
   const email = extractEmail(body);
   if (email !== null && !isEmailAllowed(email)) return emailNotAllowedResponse();
 
+  // 本文が無い要求（ログアウトなど）は、本文なしのまま渡す。空文字を本文
+  // として付けると、元は「本文なし」だった要求が「長さ0の本文あり」に変わり、
+  // 転送先での本文の解釈が変わることがある
   return handler.POST(
     new Request(request.url, {
       method: "POST",
       headers: request.headers,
-      body: text,
+      ...(text.length > 0 ? { body: text } : {}),
     }),
     context
   );

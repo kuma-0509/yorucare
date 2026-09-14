@@ -15,6 +15,8 @@ vi.mock("@neondatabase/auth/next/server", () => ({
   createNeonAuth: vi.fn(() => ({ getSession: vi.fn() })),
 }));
 
+// 削除前の再認証の判定（`cloud-reauth.ts`）はここで置き換えない。テスト用の
+// 置き換えでAPIの守りが消えないよう、判定は本物のまま通す
 vi.mock("@/lib/server/cloud-session", async () => {
   const actual = await vi.importActual<
     typeof import("@/lib/server/cloud-session")
@@ -287,11 +289,14 @@ describe("/api/cloud/snapshot", () => {
       expect(store.deleteAllUserData).toHaveBeenCalledTimes(1);
     });
 
-    it("読み書きは古いセッションでも続けられる", async () => {
+    it("断るときも読み書きは古いセッションのまま続けられる", async () => {
       getCloudSession.mockResolvedValue({
         ownerId: "owner-1",
         verifiedAt: new Date(Date.now() - 60 * 60 * 1000),
       });
+
+      store.getLatestSnapshot.mockResolvedValue(null);
+      expect((await GET(request("GET"))).status).toBe(404);
 
       const response = await PUT(request("PUT", await uploadBody()));
       expect(response.status).toBe(200);

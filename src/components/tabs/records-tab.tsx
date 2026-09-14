@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { DataBackupPanel } from "@/components/shared/data-backup-panel";
 import { AnonymousAnalyticsPanel } from "@/components/shared/anonymous-analytics-panel";
+import { CloudBackupPanel } from "@/components/shared/cloud-backup-panel";
 import { AiSharePanel } from "@/components/shared/ai-share-panel";
 import { LiveRegion } from "@/components/shared/live-region";
 import { RecordsTable } from "@/components/records/records-table";
@@ -203,6 +204,8 @@ export function RecordsTab({
           onDataImported?.();
         }}
       />
+
+      <CloudBackupPanel />
 
       <AnonymousAnalyticsPanel />
 

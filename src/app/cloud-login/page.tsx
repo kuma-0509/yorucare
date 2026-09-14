@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cloudAuthClient } from "@/lib/cloud-auth-client";
+import {
+  describeAuthError,
+  fetchCloudAuthState,
+  hintForSignOutError,
+} from "@/lib/cloud-auth-status";
+import {
+  describeDiagnostics,
+  fetchCloudDiagnostics,
+  type CloudDiagnostics,
+} from "@/lib/cloud-diagnostics";
 import { cloudLoginSendFailureReason } from "@/lib/cloud-login-errors";
 import { COPY } from "@/lib/copy";
 
@@ -32,51 +42,33 @@ function sendCodeErrorMessage(error: unknown): string {
     ? COPY.cloudLogin.sendNotAllowed
     : COPY.cloudLogin.sendFailed;
 }
-
-/**
- * `/api/cloud/session` の結果を4値に正規化する。
- *
- * サーバー側の判定（`getCloudAuthStatus`）だけを正とする。Better Authの
- * セッション有無を画面が自分で判断すると、許可リストに無いメール
- * アドレスでも「ログイン済みです」と表示してしまう（記録APIは401で
- * 拒否するが、画面の表示だけが食い違う）。
- *
- * `unknown`（通信できない・想定外の応答）は「未認証」ではない。呼び出し
- * 側が状況に応じて扱いを決める。マウント時のように何も分かっていない
- * 場面では未ログインへ倒してよいが、6桁コードの検証に成功した直後に
- * `unknown` が返った場合は、Cookieはすでに有効なはずなので未ログイン
- * 表示へ倒さない（`check_failed` として区別する）。
- */
-async function fetchCloudAuthOutcome(): Promise<
-  "ok" | "not_allowed" | "unauthenticated" | "unknown"
-> {
-  try {
-    const response = await fetch("/api/cloud/session", { method: "GET" });
-    if (response.status === 200) return "ok";
-    if (response.status === 401) return "unauthenticated";
-    if (response.status === 403) {
-      const body = (await response.json().catch(() => null)) as {
-        reason?: unknown;
-      } | null;
-      if (body?.reason === "not_allowed") return "not_allowed";
-    }
-  } catch {
-    // 通信できない場合は判定不能として扱う
-  }
-  return "unknown";
-}
-
 export default function CloudLoginPage() {
   const [phase, setPhase] = useState<Phase>({ step: "checking" });
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [devOwner, setDevOwner] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<CloudDiagnostics | null>(null);
+
+  // 検証用の状態確認。本番では経路が404になるため、何も出ない。
+  // 表示が変わるたびに取り直す。ログイン・ログアウトの後も古い判定を出し
+  // 続けると、原因の切り分けに使うための欄が逆に人を迷わせてしまう
+  useEffect(() => {
+    let cancelled = false;
+    fetchCloudDiagnostics().then((result) => {
+      if (!cancelled) setDiagnostics(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [phase.step]);
 
   useEffect(() => {
     let cancelled = false;
-    fetchCloudAuthOutcome().then((outcome) => {
+    fetchCloudAuthState().then(({ outcome, devOwner: isDevOwner }) => {
       if (cancelled) return;
+      setDevOwner(isDevOwner);
       // マウント時点では何も分かっていないため、判定不能（unknown）も
       // 未認証と同じくメール入力から始めさせてよい
       if (outcome === "ok") setPhase({ step: "signed_in" });
@@ -142,7 +134,8 @@ export default function CloudLoginPage() {
    * 出す。確定した401（`unauthenticated`）のときだけメール入力へ戻す。
    */
   async function recheckAfterSignIn() {
-    const outcome = await fetchCloudAuthOutcome();
+    const { outcome, devOwner: isDevOwner } = await fetchCloudAuthState();
+    setDevOwner(isDevOwner);
     if (outcome === "ok") setPhase({ step: "signed_in" });
     else if (outcome === "not_allowed") setPhase({ step: "not_allowed" });
     else if (outcome === "unauthenticated") setPhase({ step: "enter_email" });
@@ -157,15 +150,16 @@ export default function CloudLoginPage() {
       if (signOutError) {
         // 失敗したのに「ログアウトした」表示へ切り替えない。サーバー側の
         // セッションが生きたままなのに未ログイン表示になると、共有端末で
-        // 「ログアウトしたつもり」が成立してしまう
+        // 「ログアウトしたつもり」が成立してしまう。
+        // 併せて、原因の切り分けに要る最低限（状態番号）を画面に出す
         setError(
-          "ログアウトできませんでした。時間をおいてもう一度お試しください。"
+          `ログアウトできませんでした。時間をおいてもう一度お試しください。${describeAuthError(signOutError)}${hintForSignOutError(signOutError)}`
         );
         return;
       }
-    } catch {
+    } catch (caught) {
       setError(
-        "ログアウトできませんでした。時間をおいてもう一度お試しください。"
+        `ログアウトできませんでした。時間をおいてもう一度お試しください。${describeAuthError(caught)}`
       );
       return;
     } finally {
@@ -187,6 +181,18 @@ export default function CloudLoginPage() {
           行いません。
         </p>
       </div>
+
+      {devOwner && (
+        <p
+          role="status"
+          className="rounded-xl bg-muted px-3 py-2 text-sm leading-relaxed text-foreground"
+        >
+          検証用の固定IDで表示しています（USER_DATA_DEV_OWNER_ID
+          が設定されています）。この状態では、実際のログイン結果や許可リストの
+          判定を確かめられません。確かめたいときは、この環境変数を外してから
+          もう一度お試しください。
+        </p>
+      )}
 
       {phase.step === "checking" && (
         <p className="text-sm text-muted-foreground">確認しています…</p>
@@ -308,6 +314,27 @@ export default function CloudLoginPage() {
         <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
+      )}
+
+      {diagnostics && (
+        <details className="rounded-xl border border-border px-3 py-2">
+          <summary className="cursor-pointer text-sm text-muted-foreground">
+            検証用の情報（この画面がどの設定で動いているか）
+          </summary>
+          <dl className="mt-2 space-y-1">
+            {describeDiagnostics(diagnostics).map((row) => (
+              <div key={row.label} className="flex gap-2 text-xs">
+                <dt className="shrink-0 text-muted-foreground">{row.label}</dt>
+                <dd className="break-all text-foreground">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            環境変数を直したのに変わらないときは、「いま動いているコミット」を
+            確かめてください。Vercelはデプロイのたびに新しいURLを作り、環境変数は
+            デプロイごとに焼き付くため、古いURLを開いたままだと何も変わりません。
+          </p>
+        </details>
       )}
     </main>
   );

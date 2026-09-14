@@ -19,6 +19,7 @@ import {
 import { COPY } from "@/lib/copy";
 import { getTodayString } from "@/lib/dates";
 import { repository } from "@/lib/repository";
+import { saveReturnDate } from "@/lib/storage";
 import { storageErrorMessage } from "@/lib/result";
 
 interface AccumulationCardProps {
@@ -75,7 +76,7 @@ export function AccumulationCard({ refreshKey = 0 }: AccumulationCardProps) {
   }, [refreshKey, load]);
 
   const handleSaveStart = async () => {
-    const result = await repository.saveReturnDate(draft);
+    const result = await saveReturnDate(draft);
     if (!result.ok) {
       setMessage(storageErrorMessage(result.error));
       return;
@@ -86,7 +87,7 @@ export function AccumulationCard({ refreshKey = 0 }: AccumulationCardProps) {
   };
 
   const handleClearStart = async () => {
-    const result = await repository.saveReturnDate(null);
+    const result = await saveReturnDate(null);
     if (!result.ok) {
       setMessage(storageErrorMessage(result.error));
       return;

@@ -164,6 +164,11 @@ export const STORAGE_KEYS = {
    * 記録本体や送信対象には含めない
    */
   lastSleepTimes: "yorucare_last_sleep_times",
+  /**
+   * クラウド保存への同意。匿名分析の同意（analyticsConsent）とは別に持つ。
+   * 一方をONにしても、もう一方は変わらない
+   */
+  cloudBackupConsent: "yorucare_cloud_backup_consent",
 } as const;
 
 /** 利用者向けふりかえりタブに表示する予定機能（短く） */

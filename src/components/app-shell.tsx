@@ -8,6 +8,7 @@ import { StorageHealthBanner } from "@/components/shared/storage-health-banner";
 import { StorageNoticeBanner } from "@/components/shared/storage-notice-banner";
 import { BackupReminderBanner } from "@/components/shared/backup-reminder-banner";
 import { ReviewConsentDialog } from "@/components/shared/review-consent-dialog";
+import { backupAfterSave } from "@/lib/cloud-sync";
 import { repository } from "@/lib/repository";
 import { TodayRecordTab } from "@/components/tabs/today-record-tab";
 import { RecordsTab } from "@/components/tabs/records-tab";
@@ -40,6 +41,10 @@ export function AppShell() {
 
   useEffect(() => {
     void repository.runStorageMigrations();
+    // 前回の送信が届かないまま終わっていることがある（通信断、タブを閉じた等）。
+    // 起動のたびに1回だけ送り直す。同意していない・入口が閉じているときは
+    // `backupAfterSave` 側で何もしない
+    backupAfterSave();
   }, []);
 
   useEffect(() => {
