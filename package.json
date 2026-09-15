@@ -18,7 +18,8 @@
     "db:user-data:setup": "node scripts/setup-user-data-db.mjs",
     "analytics:summary": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/analytics-summary.mjs",
     "security:secret-scan": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/secret-scan-status.mjs",
-    "security:code-scan": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/code-scan-status.mjs"
+    "security:code-scan": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/code-scan-status.mjs",
+    "user-data:rewrap-keys": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/rewrap-user-data-keys.mjs"
   },
   "dependencies": {
     "@neondatabase/auth": "^0.5.0-beta",

@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   checksumMatches,
+  currentUserDataKeyVersion,
   decryptSnapshot,
   encryptSnapshot,
   isUserDataKeyConfigured,
@@ -43,6 +44,11 @@ describe("user-data-crypto", () => {
   it("長さの違う親鍵を受け付けない", () => {
     process.env.USER_DATA_KEK = `v1:${randomBytes(16).toString("base64")}`;
     expect(isUserDataKeyConfigured()).toBe(false);
+  });
+
+  it("いまの親鍵の版だけを返し、鍵そのものは返さない", () => {
+    expect(currentUserDataKeyVersion()).toBe("v1");
+    expect(currentUserDataKeyVersion()).not.toContain(KEY_V1);
   });
 
   it("暗号化して復号すると元のJSONへ戻る", () => {
