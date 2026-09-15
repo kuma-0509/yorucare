@@ -41,6 +41,10 @@ import {
   summarizePayload,
   type SnapshotSummary,
 } from "@/lib/cloud-sync";
+import {
+  CLOUD_LOGIN_PATH,
+  CLOUD_LOGIN_REAUTH_PATH,
+} from "@/lib/cloud-login-path";
 import { COPY } from "@/lib/copy";
 import {
   formatDateLabel,
@@ -59,7 +63,6 @@ import { repository } from "@/lib/repository";
  */
 
 const CLOUD = COPY.cloudBackup;
-const LOGIN_PATH = "/cloud-login";
 
 type Phase =
   /** 入口が閉じている、または確認中 */
@@ -179,7 +182,7 @@ export function CloudBackupPanel() {
 
     if (result === "reauth_required") {
       setBusy(false);
-      // 確認の画面を閉じてから案内する。開いたままだと、もう一度ログインする
+      // 確認の画面を閉じてから案内する。開いたままだと、もう一度本人確認する
       // ための導線が画面の裏に隠れてしまう
       setConfirm(null);
       setNeedsReauth(true);
@@ -256,7 +259,7 @@ export function CloudBackupPanel() {
                 {CLOUD.signInBody}
               </p>
               <Button asChild variant="outline" className="w-full">
-                <a href={LOGIN_PATH}>{CLOUD.signInAction}</a>
+                <a href={CLOUD_LOGIN_PATH}>{CLOUD.signInAction}</a>
               </Button>
             </div>
           )}
@@ -270,7 +273,7 @@ export function CloudBackupPanel() {
                 {CLOUD.notAllowedBody}
               </p>
               <Button asChild variant="outline" className="w-full">
-                <a href={LOGIN_PATH}>{CLOUD.notAllowedAction}</a>
+                <a href={CLOUD_LOGIN_PATH}>{CLOUD.notAllowedAction}</a>
               </Button>
             </div>
           )}
@@ -397,7 +400,7 @@ export function CloudBackupPanel() {
 
           {needsReauth && (
             <Button asChild variant="outline" className="w-full">
-              <a href={LOGIN_PATH}>{CLOUD.reauthAction}</a>
+              <a href={CLOUD_LOGIN_REAUTH_PATH}>{CLOUD.reauthAction}</a>
             </Button>
           )}
 

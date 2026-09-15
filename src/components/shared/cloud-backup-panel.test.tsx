@@ -461,7 +461,7 @@ describe("クラウド保存の設定", () => {
 
         expect((await screen.findAllByText(CLOUD.reauthRequired)).length).toBeGreaterThan(0);
         const link = screen.getByRole("link", { name: CLOUD.reauthAction });
-        expect(link.getAttribute("href")).toBe("/cloud-login");
+        expect(link.getAttribute("href")).toBe("/cloud-login?reauth=1");
       });
     });
   });

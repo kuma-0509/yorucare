@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,18 +17,21 @@ import {
   type CloudDiagnostics,
 } from "@/lib/cloud-diagnostics";
 import { cloudLoginSendFailureReason } from "@/lib/cloud-login-errors";
+import { isCloudLoginReauthSearch } from "@/lib/cloud-login-path";
 import { COPY } from "@/lib/copy";
 
 /**
  * クラウドバックアップの本人確認が動くかどうかだけを確かめる、最小限の画面。
  *
  * メールアドレスを入れる→届いた6桁コードを入れる→ログイン、および
- * ログアウトだけを行う。クラウド保存の設定・復元はここでは扱わない
- * （別タスク）。
+ * ログアウトを行う。ログイン済みのときは、ログアウトせずに6桁コードだけ
+ * やり直す再認証もできる。クラウド保存の設定・復元はここでは扱わない。
  *
  * メールアドレスと6桁コードは、送信・検証のためだけに使い、この画面の外
  * （ログ・エラー画面）へは出さない。
  */
+
+const LOGIN = COPY.cloudLogin;
 
 type Phase =
   | { step: "checking" }
@@ -35,15 +39,25 @@ type Phase =
   | { step: "not_allowed" }
   | { step: "check_failed" }
   | { step: "enter_email" }
-  | { step: "enter_code" };
+  | { step: "enter_code" }
+  | { step: "reauth_done" };
+
+type Purpose = "login" | "reauth";
 
 function sendCodeErrorMessage(error: unknown): string {
   return cloudLoginSendFailureReason(error) === "not_allowed"
-    ? COPY.cloudLogin.sendNotAllowed
-    : COPY.cloudLogin.sendFailed;
+    ? LOGIN.sendNotAllowed
+    : LOGIN.sendFailed;
 }
+
+function wantsReauthNow(): boolean {
+  if (typeof window === "undefined") return false;
+  return isCloudLoginReauthSearch(window.location.search);
+}
+
 export default function CloudLoginPage() {
   const [phase, setPhase] = useState<Phase>({ step: "checking" });
+  const [purpose, setPurpose] = useState<Purpose>("login");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -71,14 +85,40 @@ export default function CloudLoginPage() {
       setDevOwner(isDevOwner);
       // マウント時点では何も分かっていないため、判定不能（unknown）も
       // 未認証と同じくメール入力から始めさせてよい
-      if (outcome === "ok") setPhase({ step: "signed_in" });
-      else if (outcome === "not_allowed") setPhase({ step: "not_allowed" });
+      if (outcome === "ok") {
+        // ログイン済みでも、設定画面から再認証で来たときは6桁コードの入力へ
+        // 進む。「ログイン済みです」だけだと、消す操作が止まってしまう
+        if (wantsReauthNow()) {
+          setPurpose("reauth");
+          setPhase({ step: "enter_email" });
+          return;
+        }
+        setPhase({ step: "signed_in" });
+        return;
+      }
+      if (outcome === "not_allowed") setPhase({ step: "not_allowed" });
       else setPhase({ step: "enter_email" });
     });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  function startReauth() {
+    setError(null);
+    setEmail("");
+    setCode("");
+    setPurpose("reauth");
+    setPhase({ step: "enter_email" });
+  }
+
+  function cancelReauth() {
+    setError(null);
+    setEmail("");
+    setCode("");
+    setPurpose("login");
+    setPhase({ step: "signed_in" });
+  }
 
   async function handleSendCode(formEvent: React.FormEvent) {
     formEvent.preventDefault();
@@ -136,8 +176,11 @@ export default function CloudLoginPage() {
   async function recheckAfterSignIn() {
     const { outcome, devOwner: isDevOwner } = await fetchCloudAuthState();
     setDevOwner(isDevOwner);
-    if (outcome === "ok") setPhase({ step: "signed_in" });
-    else if (outcome === "not_allowed") setPhase({ step: "not_allowed" });
+    if (outcome === "ok") {
+      setPhase(purpose === "reauth" ? { step: "reauth_done" } : { step: "signed_in" });
+      return;
+    }
+    if (outcome === "not_allowed") setPhase({ step: "not_allowed" });
     else if (outcome === "unauthenticated") setPhase({ step: "enter_email" });
     else setPhase({ step: "check_failed" });
   }
@@ -167,18 +210,22 @@ export default function CloudLoginPage() {
     }
     setEmail("");
     setCode("");
+    setPurpose("login");
     setPhase({ step: "enter_email" });
   }
+
+  const reauth = purpose === "reauth";
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-lg space-y-6 px-4 py-8 pb-safe">
       <div>
         <h1 className="text-xl font-medium text-foreground">
-          クラウド保存のログイン確認
+          {reauth ? LOGIN.reauthHeading : "クラウド保存のログイン確認"}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          本人確認だけを確かめる検証用の画面です。記録の保存や復元はここでは
-          行いません。
+          {reauth
+            ? LOGIN.reauthBody
+            : "本人確認だけを確かめる検証用の画面です。記録の保存や復元はここでは行いません。"}
         </p>
       </div>
 
@@ -203,6 +250,9 @@ export default function CloudLoginPage() {
           <p className="text-sm leading-relaxed text-foreground">
             ログイン済みです。
           </p>
+          <Button type="button" variant="outline" onClick={startReauth} disabled={busy}>
+            {LOGIN.reauthStartAction}
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -210,6 +260,17 @@ export default function CloudLoginPage() {
             disabled={busy}
           >
             ログアウトする
+          </Button>
+        </div>
+      )}
+
+      {phase.step === "reauth_done" && (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-foreground" role="status">
+            {LOGIN.reauthDone}
+          </p>
+          <Button asChild>
+            <Link href="/">{LOGIN.reauthBackAction}</Link>
           </Button>
         </div>
       )}
@@ -270,6 +331,11 @@ export default function CloudLoginPage() {
           <Button type="submit" disabled={busy || !email}>
             コードを送る
           </Button>
+          {reauth && (
+            <Button type="button" variant="ghost" disabled={busy} onClick={cancelReauth}>
+              {LOGIN.reauthCancelAction}
+            </Button>
+          )}
         </form>
       )}
 
@@ -292,7 +358,7 @@ export default function CloudLoginPage() {
           </div>
           <div className="flex gap-3">
             <Button type="submit" disabled={busy || code.length === 0}>
-              ログインする
+              {reauth ? LOGIN.reauthVerifyAction : "ログインする"}
             </Button>
             <Button
               type="button"
