@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ヨルケア プロボノ募集（アプリ開発伴走）工数・期間計画</title>
+<meta name="description" content="メンタル不調から復職した方が夜と休日に使うセルフケア記録アプリ「ヨルケア」の、アプリ開発伴走プロボノ募集（工数・期間の見込み）。" />
+<meta name="robots" content="noindex, nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --night-950: #0b1026;
+    --night-900: #111736;
+    --night-800: #1a2148;
+    --night-700: #252d5c;
+    --night-600: #333c74;
+    --moon-300: #fde68a;
+    --moon-400: #fcd34d;
+    --care-300: #a5b4fc;
+    --care-400: #818cf8;
+    --ink: #e8eaf6;
+    --ink-dim: #aab0d0;
+    --s1: #86efac;
+    --s2: #7dd3fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--night-950);
+    color: var(--ink);
+    font-family: "Noto Sans JP", sans-serif;
+    line-height: 1.8;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+  .maru { font-family: "Zen Maru Gothic", sans-serif; }
+  .accent { color: var(--moon-300); }
+
+  header.hero { text-align: center; padding: 48px 12px 28px; }
+  .chip {
+    display: inline-block; font-size: 13px; font-weight: 700;
+    color: var(--night-950); background: var(--moon-400);
+    border-radius: 999px; padding: 4px 16px; letter-spacing: .06em;
+  }
+  header.hero h1 {
+    font-size: clamp(26px, 4.6vw, 42px); font-weight: 900; margin: 18px 0 10px;
+    font-family: "Zen Maru Gothic", sans-serif; line-height: 1.35;
+  }
+  header.hero p.sub { color: var(--ink-dim); font-size: 15px; }
+  .meta {
+    margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  }
+  .meta span {
+    font-size: 12.5px; color: var(--ink-dim); border: 1px solid var(--night-700);
+    background: var(--night-900); border-radius: 999px; padding: 4px 12px;
+  }
+
+  nav.toc {
+    margin: 8px auto 0; max-width: 820px;
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  }
+  nav.toc a {
+    color: var(--care-300); text-decoration: none; font-size: 13px; font-weight: 700;
+    border: 1px solid var(--night-700); border-radius: 999px; padding: 4px 12px;
+    background: var(--night-900);
+  }
+  nav.toc a:hover { border-color: var(--care-400); }
+
+  section { margin-top: 56px; }
+  .sec-label { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .sec-label .num {
+    flex: none; width: 40px; height: 40px; border-radius: 12px;
+    background: var(--night-700); color: var(--moon-300);
+    display: grid; place-items: center; font-weight: 900; font-size: 18px;
+    font-family: "Zen Maru Gothic", sans-serif;
+  }
+  .sec-label h2 { font-size: clamp(20px, 3vw, 27px); font-weight: 900; font-family: "Zen Maru Gothic", sans-serif; }
+
+  .card {
+    background: var(--night-900); border: 1px solid var(--night-700);
+    border-radius: 18px; padding: 24px 26px;
+  }
+  .card p, .card li { font-size: 15px; }
+  .card ul { padding-left: 1.3em; }
+  .card li { margin: 4px 0; }
+  .note { color: var(--ink-dim); font-size: 13.5px; margin-top: 12px; }
+  .lead { font-size: 16px; margin-bottom: 16px; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0;
+  }
+  @media (max-width: 900px) { .stats { grid-template-columns: 1fr 1fr; } }
+  .stat {
+    background: var(--night-900); border: 1px solid var(--night-700);
+    border-radius: 16px; padding: 16px 18px;
+  }
+  .stat .k { font-size: 12px; color: var(--ink-dim); font-weight: 700; letter-spacing: .04em; }
+  .stat .v { font-size: 20px; font-weight: 900; font-family: "Zen Maru Gothic", sans-serif; color: var(--moon-300); line-height: 1.4; margin-top: 4px; }
+  .stat .d { font-size: 12.5px; color: var(--ink-dim); margin-top: 2px; }
+
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 980px) { .flow { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .flow { grid-template-columns: 1fr; } }
+  .flow .step {
+    background: var(--night-900); border: 1px solid var(--night-700);
+    border-radius: 14px; padding: 14px 16px;
+  }
+  .flow .step .s-num { font-size: 12px; font-weight: 900; color: var(--moon-400); letter-spacing: .08em; }
+  .flow .step .s-title { font-weight: 900; margin: 4px 0 4px; font-size: 15px; font-family: "Zen Maru Gothic", sans-serif; }
+  .flow .step p { font-size: 12.5px; color: var(--ink-dim); }
+
+  .season-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .season-grid { grid-template-columns: 1fr; } }
+  .season { border-radius: 18px; border: 1px solid var(--night-700); background: var(--night-900); overflow: hidden; }
+  .season .head { padding: 16px 20px 12px; }
+  .season.s1 .head { border-top: 4px solid var(--s1); }
+  .season.s2 .head { border-top: 4px solid var(--s2); }
+  .season .tag { font-size: 12px; font-weight: 900; letter-spacing: .12em; }
+  .season.s1 .tag { color: var(--s1); }
+  .season.s2 .tag { color: var(--s2); }
+  .season h3 { font-family: "Zen Maru Gothic", sans-serif; font-weight: 900; font-size: 20px; }
+  .season .body { padding: 0 20px 18px; font-size: 14px; color: var(--ink-dim); }
+
+  .phase {
+    background: var(--night-900); border: 1px solid var(--night-700);
+    border-radius: 18px; padding: 22px 24px; margin-top: 14px;
+  }
+  .phase .ph-top { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; margin-bottom: 8px; }
+  .phase .ph-id { font-size: 12px; font-weight: 900; color: var(--moon-400); letter-spacing: .1em; }
+  .phase h3 { font-family: "Zen Maru Gothic", sans-serif; font-weight: 900; font-size: 18px; }
+  .phase .hours { font-size: 13px; color: var(--care-300); font-weight: 700; }
+  .phase .biz { font-size: 13.5px; color: var(--ink-dim); margin-bottom: 8px; }
+  .phase ul { padding-left: 1.2em; }
+  .phase li { font-size: 14.5px; margin: 3px 0; }
+  .deliver { margin-top: 10px; font-size: 13.5px; color: var(--moon-300); }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--night-700); border-radius: 16px; background: var(--night-900); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 640px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--night-800); vertical-align: top; }
+  th { color: var(--care-300); font-size: 12.5px; letter-spacing: .04em; background: var(--night-800); }
+  tr:last-child td { border-bottom: 0; }
+  tr.total td { color: var(--moon-300); font-weight: 800; background: rgba(253,230,138,.06); }
+  td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  .copybox {
+    background: var(--night-950); border: 1px dashed var(--care-400);
+    border-radius: 14px; padding: 18px 20px; margin-top: 12px;
+    white-space: pre-wrap; font-size: 14px; line-height: 1.85;
+    font-family: "Noto Sans JP", sans-serif;
+  }
+  .copybox h3 { font-size: 15px; color: var(--care-300); margin-bottom: 8px; font-family: "Zen Maru Gothic", sans-serif; }
+
+  .warn {
+    margin-top: 14px; border: 1px solid rgba(253,230,138,.35);
+    background: rgba(253,230,138,.08); border-radius: 14px; padding: 14px 18px;
+    font-size: 14.5px;
+  }
+  .warn strong { color: var(--moon-300); }
+
+  footer {
+    margin-top: 64px; text-align: center; color: var(--ink-dim);
+    font-size: 12.5px; line-height: 2;
+  }
+  footer .disc { max-width: 720px; margin: 0 auto 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="chip">プロボノ募集要綱 別紙 · 承認済み 2026-09-10</span>
+    <h1>アプリ開発伴走の<br><span class="accent">工数・期間計画</span></h1>
+    <p class="sub">ヨルケアの実装は当方で行う。見ていただくのは、安全の線引き・続く形・確かめ方の3点。</p>
+    <div class="meta">
+      <span>対象：アプリ開発伴走（コミュニティ運営は別枠）</span>
+      <span>オンライン / NDA対応可</span>
+      <span>参加者本人の記録・個人情報には触れない</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="目次">
+    <a href="#overview">全体像</a>
+    <a href="#phases">8ステップ</a>
+    <a href="#hours">工数</a>
+    <a href="#teams">チーム</a>
+    <a href="#money">お金</a>
+    <a href="#backup">予備プラン</a>
+    <a href="#copy">記載案</a>
+  </nav>
+
+  <section id="overview">
+    <div class="sec-label">
+      <div class="num">1</div>
+      <h2>全体像</h2>
+    </div>
+    <p class="lead">事業計画の逆算スケジュール（試運転 → 振り返り → 無料モニター本編 → エビデンス → 個人会員募集 → 個人向けサービス開始 → 企業営業 → 企業受注）の8ステップに、アプリ側でやることを1つずつ重ねます。</p>
+
+    <div class="stats">
+      <div class="stat"><div class="k">支援期間</div><div class="v">18か月</div><div class="d">2026年10月〜2028年3月</div></div>
+      <div class="stat"><div class="k">募集</div><div class="v">2期 × 6名</div><div class="d">3チーム×2名 ＋ スポット</div></div>
+      <div class="stat"><div class="k">1人あたり</div><div class="v">約200時間</div><div class="d">S1 約95h / S2 約105h</div></div>
+      <div class="stat"><div class="k">延べ工数</div><div class="v">約1,200時間</div><div class="d">コア6名 ＋ スポット枠</div></div>
+    </div>
+
+    <div class="season-grid">
+      <article class="season s1">
+        <div class="head">
+          <div class="tag">SEASON 1</div>
+          <h3>つくる・確かめる</h3>
+        </div>
+        <div class="body">
+          2026年10月5日(月)〜2027年5月28日(金)<br>
+          34週 · 1人あたり約95時間
+        </div>
+      </article>
+      <article class="season s2">
+        <div class="head">
+          <div class="tag">SEASON 2</div>
+          <h3>売れる形にする</h3>
+        </div>
+        <div class="body">
+          2027年6月1日(火)〜2028年3月31日(金)<br>
+          43週 · 1人あたり約105時間
+        </div>
+      </article>
+    </div>
+    <p class="note">18か月を1期で募集すると離脱リスクが高いため、2期に分けます。Season 2 は Season 1 のメンバーに継続を打診し、不足分だけ新規募集します（プロボノ倶楽部の前例：BANSO-CO様支援プロジェクト Season1〜3 と同じ形）。</p>
+  </section>
+
+  <section id="phases">
+    <div class="sec-label">
+      <div class="num">2</div>
+      <h2>フェーズ別の依頼内容</h2>
+    </div>
+    <p class="note" style="margin-top:-8px;margin-bottom:16px;">週工数はすべて「1人あたり」です。</p>
+
+    <div class="flow" aria-hidden="true">
+      <div class="step"><div class="s-num">01</div><div class="s-title">試運転</div><p>2026年10月 · 週5h</p></div>
+      <div class="step"><div class="s-num">02</div><div class="s-title">振り返り</div><p>2026年11月 · 週4h</p></div>
+      <div class="step"><div class="s-num">03</div><div class="s-title">本編21名</div><p>12月〜4月 · 週2h</p></div>
+      <div class="step"><div class="s-num">04</div><div class="s-title">GATE判断</div><p>2027年5月 · 週4h</p></div>
+      <div class="step"><div class="s-num">05</div><div class="s-title">会員募集</div><p>2027年6月 · 週3h</p></div>
+      <div class="step"><div class="s-num">06</div><div class="s-title">有料版</div><p>2027年7月 · 週4h</p></div>
+      <div class="step"><div class="s-num">07</div><div class="s-title">企業の守り</div><p>8月〜2月 · 週2h</p></div>
+      <div class="step"><div class="s-num">08</div><div class="s-title">試験導入</div><p>2028年3月 · 週3h</p></div>
+    </div>
+
+    <article class="phase">
+      <div class="ph-top"><span class="ph-id">01</span><h3>試運転・集中レビュー</h3><span class="hours">2026年10月 · 4週 · 週5時間 · 計20時間</span></div>
+      <p class="biz">事業側は試運転（1か月・最少3名）。</p>
+      <ul>
+        <li>いまのコードと設計を見て、「ここが一番危ない」を3つ挙げる</li>
+        <li>クラウド保存の構成を「いま必要／後でよい／要らない」に仕分けた表1枚をつくる</li>
+        <li>セキュリティに使える5万円を、どこに置くのが一番効くか順位をつける</li>
+        <li>無償で代替できる確認手順（依存の脆弱性・シークレット検出・静的解析・ヘッダ検査）の型を出す</li>
+        <li>3名が実際に書けているかを、何を見て判断するのかを決める</li>
+      </ul>
+      <p class="deliver">成果物：仕分け表1枚／危険箇所トップ3／5万円の使い道</p>
+    </article>
+
+    <article class="phase">
+      <div class="ph-top"><span class="ph-id">02</span><h3>振り返り・ブラッシュアップ</h3><span class="hours">2026年11月 · 4週 · 週4時間 · 計16時間</span></div>
+      <p class="biz">事業側は試運転の振り返りと、本編21名の募集・ベースライン調査。</p>
+      <ul>
+        <li>試運転3名の記録の付き方を見て、入力項目と画面の言葉を削る</li>
+        <li>10月の指摘を反映した結果を確認する（実装は当方）</li>
+        <li>自動チェックを GitHub Actions に組み込む（依存の脆弱性・シークレット検出・静的解析）</li>
+        <li>21名になると出てくる差（端末・ブラウザ・問い合わせ）を先に洗い出す</li>
+        <li>参加前アンケートとアプリ記録を、どう突き合わせるかを決める</li>
+      </ul>
+      <p class="deliver">成果物：改善リスト（優先順位つき）／CIチェックの構成</p>
+    </article>
+
+    <article class="phase">
+      <div class="ph-top"><span class="ph-id">03</span><h3>本編21名の並走</h3><span class="hours">2026年12月〜2027年4月 · 22週 · 週2時間 · 計44時間</span></div>
+      <p class="biz">事業側は5か月プログラム本編（無料・21名）。</p>
+      <ul>
+        <li>月1回、継続の数字を一緒に読む（初週の複数日記録率／Week 2継続率／Week 4継続率／端末を変えたときの離脱）</li>
+        <li>数字が落ちた月に、原因の見立てを出す</li>
+        <li>中間アンケート（2027年2月）に合わせて中間レビューを1回</li>
+        <li>不具合と改善要望に優先順位をつける（本編中は大きく変えない前提で、何を今直すかを決める）</li>
+      </ul>
+      <p class="deliver">成果物：月次の継続レポート／改善の優先順位</p>
+    </article>
+
+    <article class="phase">
+      <div class="ph-top"><span class="ph-id">04</span><h3>エビデンス・GATE判断</h3><span class="hours">2027年5月 · 4週 · 週4時間 · 計16時間</span></div>
+      <p class="biz">事業側はエビデンスづくりと、続ける／やめるの判定。</p>
+      <ul>
+        <li><strong>GATE：</strong>21名5か月の実データで、クラウド保存に進むか、端末内保存のままで行くかを結論づける</li>
+        <li>進む場合、最小構成はどこまでかを設計レビューで確定する</li>
+        <li>アプリの継続の数字を、企業に見せられる形に整理する（「効果があった」とは書かない前提で）</li>
+      </ul>
+      <p class="deliver">成果物：GATE判断の結論と根拠／進む場合の最小構成</p>
+    </article>
+
+    <article class="phase">
+      <div class="ph-top"><span class="ph-id">05</span><h3>個人会員募集の準備</h3><span class="hours">2027年6月 · 4週 · 週3時間 · 計12時間</span></div>
+      <p class="biz">事業側は個人会員の募集（1か月）。</p>
+      <ul>
+        <li>有料版に必要な最小機能の線引き（無料版と何が違うのか）</li>
+        <li>申込みから利用開始までの画面の流れをレビューする</li>
+        <li>有料である以上必要になる備え（問い合わせ、復旧手順、バックアップ、退会時のデータの扱い）を確認する</li>
+      </ul>
+      <p class="deliver">成果物：有料版の機能線引き／運用チェックリスト</p>
+    </article>
+
+    <article class="phase">
+      <div class="ph-top"><span class="ph-id">06</span><h3>有料版リリース伴走</h3><span class="hours">2027年7月 · 4週 · 週4時間 · 計16時間</span></div>
+      <p class="biz">事業側は個人向け有料サービス開始（月5,000円）。</p>
+      <ul>
+        <li>公開直後の不具合の切り分けに付き合う（最初の2週間が山場）</li>
+        <li>お金まわりの安全確認。決済情報を自前で持たない設計にできるかを見る</li>
+        <li>クラウド保存に進む判断だった場合、段階リリースの設計と各段階のレビュー</li>
+      </ul>
+      <p class="deliver">成果物：リリース判定／段階リリース計画</p>
+    </article>
+
+    <article class="phase">
+      <div class="ph-top"><span class="ph-id">07</span><h3>企業向けの守り固め</h3><span class="hours">2027年8月〜2028年2月 · 30週 · 週2時間 · 計60時間</span></div>
+      <p class="biz">事業側は企業・支援機関への営業。</p>
+      <ul>
+        <li><strong>企業のセキュリティチェックシートへの回答をつくる。ここが受注の一番の関門になる</strong></li>
+        <li>産業医・情報システム部門の審査に耐える説明資料（データの流れ図、保存場所、削除、権限、委託先）</li>
+        <li>「人事は本人の記録を見られない」という設計を、文書として明文化する</li>
+        <li>商談で出た技術的な質問の持ち帰り対応（月1〜2件想定）</li>
+      </ul>
+      <p class="deliver">成果物：チェックシート回答テンプレ／データフロー図／導入企業向け説明資料</p>
+    </article>
+
+    <article class="phase">
+      <div class="ph-top"><span class="ph-id">08</span><h3>受注・試験導入の受け入れ</h3><span class="hours">2028年3月 · 5週 · 週3時間 · 計15時間</span></div>
+      <p class="biz">事業側は企業1社からの試験導入受注（1〜3名分）。</p>
+      <ul>
+        <li>試験導入1社を受け入れる初期設定とサポート手順の確認</li>
+        <li>導入前の最終チェック。フェーズ03〜07で先送りにしたものを棚卸しする</li>
+        <li>次の期に何を残すかの引き継ぎ</li>
+      </ul>
+      <p class="deliver">成果物：導入手順書／積み残しリスト</p>
+    </article>
+  </section>
+
+  <section id="hours">
+    <div class="sec-label">
+      <div class="num">3</div>
+      <h2>工数の集計</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>フェーズ</th><th>期間</th><th class="num">週数</th><th class="num">週工数</th><th class="num">1人あたり</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>01 試運転・集中レビュー</td><td>2026年10月</td><td class="num">4</td><td class="num">5h</td><td class="num">20h</td></tr>
+          <tr><td>02 振り返り・ブラッシュアップ</td><td>2026年11月</td><td class="num">4</td><td class="num">4h</td><td class="num">16h</td></tr>
+          <tr><td>03 本編21名の並走</td><td>2026年12月〜2027年4月</td><td class="num">22</td><td class="num">2h</td><td class="num">44h</td></tr>
+          <tr><td>04 エビデンス・GATE判断</td><td>2027年5月</td><td class="num">4</td><td class="num">4h</td><td class="num">16h</td></tr>
+          <tr class="total"><td>Season 1 小計</td><td>8か月</td><td class="num">34</td><td class="num">—</td><td class="num">96h</td></tr>
+          <tr><td>05 個人会員募集の準備</td><td>2027年6月</td><td class="num">4</td><td class="num">3h</td><td class="num">12h</td></tr>
+          <tr><td>06 有料版リリース伴走</td><td>2027年7月</td><td class="num">4</td><td class="num">4h</td><td class="num">16h</td></tr>
+          <tr><td>07 企業向けの守り固め</td><td>2027年8月〜2028年2月</td><td class="num">30</td><td class="num">2h</td><td class="num">60h</td></tr>
+          <tr><td>08 受注・試験導入の受け入れ</td><td>2028年3月</td><td class="num">5</td><td class="num">3h</td><td class="num">15h</td></tr>
+          <tr class="total"><td>Season 2 小計</td><td>10か月</td><td class="num">43</td><td class="num">—</td><td class="num">103h</td></tr>
+          <tr class="total"><td>通し合計（1人）</td><td>18か月</td><td class="num">77</td><td class="num">—</td><td class="num">約200h</td></tr>
+          <tr class="total"><td>延べ工数（コア6名＋スポット枠）</td><td>18か月</td><td class="num">—</td><td class="num">—</td><td class="num">約1,200h</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">内訳の目安：全体定例（隔週1回60分）＋チーム別ワーク（週2〜5時間）。</p>
+  </section>
+
+  <section id="teams">
+    <div class="sec-label">
+      <div class="num">4</div>
+      <h2>チーム編成</h2>
+    </div>
+    <p class="lead">「見ていただきたい3つ」に、そのままチームを当てます。Season 2 は企業対応の比重が上がるため配分を変えます。</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>チーム</th><th>見ていただくこと</th><th class="num">Season 1</th><th class="num">Season 2</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>安全の線引き</td><td>5万円の使いどころ、クラウド保存の要否、企業の審査対応</td><td class="num">2名</td><td class="num">3名</td></tr>
+          <tr><td>続く形</td><td>書く負担、画面の言葉、調子が悪い日でも開けるか</td><td class="num">2名</td><td class="num">2名</td></tr>
+          <tr><td>確かめ方</td><td>「続いた」と言うために、何をどう数えるか</td><td class="num">2名</td><td class="num">1名</td></tr>
+          <tr class="total"><td>合計</td><td></td><td class="num">6名</td><td class="num">6名</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">別枠で、単発1回・1〜2時間のスポットレビュアーを受け入れます（人数は決めない）。</p>
+  </section>
+
+  <section id="money">
+    <div class="sec-label">
+      <div class="num">5</div>
+      <h2>お金の扱い</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>項目</th><th>金額</th><th>扱い</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>アプリ開発関連予算</td>
+            <td>62.2万円（助成金申請中・6か月分）</td>
+            <td>18か月の伴走なので、Season 1 の途中（2027年初め）に継続申請または次の助成金の準備が必要。フェーズ04のGATE判断の結論が、そのまま申請内容になる</td>
+          </tr>
+          <tr>
+            <td>セキュリティレビュー・不具合修正枠</td>
+            <td>50,000円（開発関連費の8%）</td>
+            <td>プロボノは無償のため使わずに残る。フェーズ01の仕分け表で「ここだけはプロボノでは埋められない／有償でやるべき」と判定された1点に、あとから集中投下する。先に使い道を決めない</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="backup">
+    <div class="sec-label">
+      <div class="num">6</div>
+      <h2>確定事項と予備プラン</h2>
+    </div>
+    <div class="warn">
+      <strong>本編の開始月は確定。</strong>試運転10月＋振り返り11月＋本編2026年12月〜2027年4月。プロボノ募集資料（アプリ版）に「実践研究 2026年11月〜・5か月」とある箇所は、「2026年12月〜」に直す必要があります。
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h3 class="maru" style="margin-bottom:8px;">募集が間に合わない場合</h3>
+      <p>フェーズ01（集中レビュー）を11月にずらし、<strong>試運転そのものも11月に動かします。</strong>試運転をレビューなしで走らせることはしません。以降の全ステップが1か月ずつ後ろにずれます。工数と募集人数は変わりません。</p>
+    </div>
+    <div class="table-wrap" style="margin-top:16px;">
+      <table>
+        <thead>
+          <tr><th>フェーズ</th><th>本プラン</th><th>予備プラン</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>01 試運転・集中レビュー</td><td>2026年10月</td><td>2026年11月</td></tr>
+          <tr><td>02 振り返り</td><td>2026年11月</td><td>2026年12月</td></tr>
+          <tr><td>03 本編21名</td><td>2026年12月〜2027年4月</td><td>2027年1月〜5月</td></tr>
+          <tr><td>04 エビデンス・GATE判断</td><td>2027年5月</td><td>2027年6月</td></tr>
+          <tr><td>05 個人会員の募集</td><td>2027年6月</td><td>2027年7月</td></tr>
+          <tr><td>06 個人向けサービス開始</td><td>2027年7月</td><td>2027年8月</td></tr>
+          <tr><td>07 企業・支援機関へ営業</td><td>2027年8月〜2028年2月</td><td>2027年9月〜2028年3月</td></tr>
+          <tr><td>08 企業から試験導入を受注</td><td>2028年3月</td><td>2028年4月</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">予備プラン適用時の期の区切り：Season 1 は 2026年11月2日(月)〜2027年6月25日(金)、Season 2 は 2027年6月28日(月)〜2028年4月28日(金)。<strong>切り替えの判断は2026年9月末。</strong>この時点でプロボノの応募が集まっていなければ、予備プランに移ります。企業受注のゴールも 2028年3月から2028年4月へずれます。</p>
+  </section>
+
+  <section id="copy">
+    <div class="sec-label">
+      <div class="num">7</div>
+      <h2>募集要綱への記載案</h2>
+    </div>
+    <p class="note" style="margin-top:-8px;margin-bottom:8px;">Googleスライド「株式会社mimococo様プロボノ倶楽部募集要綱（外部共有用）」の該当欄に、そのまま貼り替えます。</p>
+
+    <div class="copybox"><h3>プロボノ支援内容</h3>メンタル不調から復職した方が夜と休日に使うセルフケア記録アプリ
+「ヨルケア」(Next.js/Vercel・プロトタイプ稼働中)について、
+①調子が悪い日でも書き続けられる形になっているかのUXレビュー、
+②健康情報を扱うアプリとしての安全性の線引き、
+③「続いた」と言うために何をどう数えるかの指標設計、
+の3点をご支援頂きます。
+
+試運転(3名)から無料モニター本編(21名・5か月)、個人向け有料サービス
+の開始、企業への試験導入受注までの各段階に並走頂き、段階ごとに必要
+なレビューと判断材料の作成をお願いします。
+
+実装は当方で行いますので、手を動かして頂くことは前提にしません。
+参加者ご本人の記録・個人情報には触れない範囲でのご協力をお願いして
+います。</div>
+
+    <div class="copybox"><h3>募集概要</h3>募集人数：各期6名程度(3チーム編成／1チーム2名)
+　　　　　＋スポットレビュアー若干名
+　　　　　(単発1回・1～2時間のみのご参加も歓迎です)
+活動形態：オンライン(Zoom)　※全国からの対応が可能です。NDA対応可。
+支援期間：全18か月を2期に分けて募集します。
+　　　　　Season1「つくる・確かめる」
+　　　　　　2026年10月5日(月)～2027年5月28日(金)
+　　　　　Season2「売れる形にする」
+　　　　　　2027年6月1日(火)～2028年3月31日(金)
+　　　　　※Season2はSeason1メンバに継続を打診し、不足分を新規募集
+　　　　　　します。Season2からのご参加も歓迎です。
+活動時間帯：基本的には、平日定時後(20:00～21:00を想定。要調整。)
+活動工数：全体定例(隔週1回60分)＋チーム別ワーク(週2～5時間)
+　　　　　＝1人あたり Season1で約95時間／Season2で約105時間
+　　　　　※2026年10月が最も重く(週5時間程度)、モニター本編中と
+　　　　　　企業営業中は週2時間程度に下がります。
+そのほか：募集状況により、全体を1か月後ろ倒しする場合があります
+　　　　　(Season1の開始が2026年11月2日(月)になります)。
+　　　　　工数・募集人数は変わりません。</div>
+
+    <div class="copybox"><h3>こんな方を募集します</h3>プロボノ初心者から経験者まで大歓迎です！特に、セキュリティやインフラ
+の実務経験がある方、企業のセキュリティ審査に回答した経験がある方、
+UXデザイン・UXライティングの知見がある方、プロダクトの継続率など
+データ分析の経験がある方、また、ご自身に休職・復職の経験があり当事者
+の立場からアプリを見てくださる方を広く募集致します。
+「単発で2時間だけ設計を見る」という関わり方も歓迎しますので、まずは
+一度だけ、という方もぜひご応募ください。</div>
+  </section>
+
+  <footer>
+    <p class="disc">
+      事業内容の整理：株式会社mimococo「支援の空白を埋める〜復職後の夜間・休日オンラインケア〜」（Vision Hacker Association 2026 エントリーシート記載内容に基づく）<br>
+      プログラム仕様：ヨルケア「5か月間オンラインプログラム 実施・研究・安全管理に関する確定仕様」（2026年）
+    </p>
+    <p class="disc">
+      ヨルケア／本プログラムは診断・治療・処方を行うものではありません。<br>
+      ヨルケアは医療・緊急支援サービスではありません。アプリの記録はリアルタイムには確認されません。
+    </p>
+    <p>作成日 2026-09-10 · 文書種別：プロボノ募集要綱の別紙（工数・期間の見込み）</p>
+  </footer>
+
+</div>
+</body>
+</html>
