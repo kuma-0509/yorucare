@@ -130,7 +130,7 @@
 
 次回候補: YC-UX-STORAGE-NOTICES（PR #64 が未マージなら再実装しない）。YC-MON-REQUIRED-CHECKSは担当者のGitHub設定。YC-UX-NORMAL-ENTRYは運営者の移行判断が先。
 
-PR: （作成後に記載）
+PR: https://github.com/kuma-0509/yorucare/pull/70
 
 ### 2026-09-15
 
