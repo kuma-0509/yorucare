@@ -52,9 +52,11 @@ describe("CloudLoginPage", () => {
     signOut.mockReset();
     getSession.mockReset();
     getSession.mockResolvedValue({ data: { user: null }, error: null });
+    window.history.replaceState({}, "", "/cloud-login");
   });
 
   afterEach(() => {
+    window.history.replaceState({}, "", "/cloud-login");
     vi.unstubAllGlobals();
     cleanup();
   });
@@ -521,6 +523,111 @@ describe("CloudLoginPage", () => {
           "このメールアドレスはクラウド保存の利用対象に登録されていません。記録の保存や復元は行えません。"
         )
       ).toBeTruthy();
+    });
+  });
+
+  describe("再認証", () => {
+    it("ログイン済み画面から本人確認をやり直すとき、ログアウトしない", async () => {
+      sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
+
+      render(<CloudLoginPage />);
+      await waitFor(() => screen.getByText("ログイン済みです。"));
+
+      fireEvent.click(
+        screen.getByRole("button", { name: COPY.cloudLogin.reauthStartAction })
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("メールアドレス")).toBeTruthy();
+      });
+      expect(screen.getByText(COPY.cloudLogin.reauthHeading)).toBeTruthy();
+      expect(screen.getByText(COPY.cloudLogin.reauthBody)).toBeTruthy();
+      expect(signOut).not.toHaveBeenCalled();
+      expect(screen.queryByText("ログイン済みです。")).toBeNull();
+    });
+
+    it("再認証をやめると、ログイン済み表示に戻りログアウトしない", async () => {
+      sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
+
+      render(<CloudLoginPage />);
+      await waitFor(() => screen.getByText("ログイン済みです。"));
+      fireEvent.click(
+        screen.getByRole("button", { name: COPY.cloudLogin.reauthStartAction })
+      );
+      await waitFor(() => screen.getByLabelText("メールアドレス"));
+
+      fireEvent.click(
+        screen.getByRole("button", { name: COPY.cloudLogin.reauthCancelAction })
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("ログイン済みです。")).toBeTruthy();
+      });
+      expect(signOut).not.toHaveBeenCalled();
+      expect(screen.queryByLabelText("メールアドレス")).toBeNull();
+    });
+
+    it("ログイン済みで ?reauth=1 のときは、ログイン済みです を出さずメール入力へ進む", async () => {
+      window.history.replaceState({}, "", "/cloud-login?reauth=1");
+      sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
+
+      render(<CloudLoginPage />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("メールアドレス")).toBeTruthy();
+      });
+      expect(screen.getByText(COPY.cloudLogin.reauthHeading)).toBeTruthy();
+      expect(screen.queryByText("ログイン済みです。")).toBeNull();
+      expect(signOut).not.toHaveBeenCalled();
+    });
+
+    it("未ログインで ?reauth=1 のときは、ログインは続いているとは案内しない", async () => {
+      window.history.replaceState({}, "", "/cloud-login?reauth=1");
+      sessionFetch.mockResolvedValue(
+        jsonResponse(401, { ok: false, reason: "unauthenticated" })
+      );
+
+      render(<CloudLoginPage />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("メールアドレス")).toBeTruthy();
+      });
+      expect(screen.queryByText(COPY.cloudLogin.reauthHeading)).toBeNull();
+      expect(screen.queryByText(COPY.cloudLogin.reauthBody)).toBeNull();
+      expect(screen.getByRole("button", { name: "コードを送る" })).toBeTruthy();
+    });
+
+    it("再認証でコード検証が成功すると、設定へ戻る案内を出す", async () => {
+      window.history.replaceState({}, "", "/cloud-login?reauth=1");
+      sessionFetch.mockResolvedValue(jsonResponse(200, { ok: true }));
+      sendVerificationOtp.mockResolvedValue({ data: {}, error: null });
+      signInEmailOtp.mockResolvedValue({ data: {}, error: null });
+
+      render(<CloudLoginPage />);
+      await waitFor(() => screen.getByLabelText("メールアドレス"));
+
+      fireEvent.change(screen.getByLabelText("メールアドレス"), {
+        target: { value: "sanka@example.com" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "コードを送る" }));
+
+      await waitFor(() => screen.getByLabelText("6桁のコード"));
+      fireEvent.change(screen.getByLabelText("6桁のコード"), {
+        target: { value: "123456" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: COPY.cloudLogin.reauthVerifyAction })
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(COPY.cloudLogin.reauthDone)).toBeTruthy();
+      });
+      const backLink = screen.getByRole("link", {
+        name: COPY.cloudLogin.reauthBackAction,
+      });
+      expect(backLink.getAttribute("href")).toBe("/");
+      expect(screen.queryByText("ログイン済みです。")).toBeNull();
+      expect(signOut).not.toHaveBeenCalled();
     });
   });
 });
